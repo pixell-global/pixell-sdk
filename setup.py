@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pixell-kit",
-    version="0.1.0",
+    version="0.2.0",
     author="Pixell Core Team",
     author_email="dev@pixell.global",
     description="A lightweight developer kit for packaging AI agents into portable APKG files",
@@ -17,7 +17,7 @@ setup(
         "Documentation": "https://docs.pixell.global/pixell",
         "Source Code": "https://github.com/pixell-global/pixell-kit",
     },
-    packages=find_packages(),
+    packages=find_packages(include=['pixell', 'pixell.*']),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
