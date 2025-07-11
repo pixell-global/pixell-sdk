@@ -12,6 +12,7 @@ from pydantic import BaseModel
 import uvicorn
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+# Type imports
 
 from pixell.models.agent_manifest import AgentManifest
 from pixell.core.validator import AgentValidator
@@ -59,7 +60,7 @@ class DevServer:
         self.port = port
         self.app = FastAPI(title="Pixell Agent Development Server")
         self.manifest: Optional[AgentManifest] = None
-        self.observer: Optional[Observer] = None
+        self.observer: Optional[Any] = None  # Observer type
         
         # Setup routes
         self._setup_routes()
@@ -157,6 +158,8 @@ class DevServer:
     
     async def _invoke_agent(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
         """Invoke the agent with the given request."""
+        if not self.manifest:
+            raise RuntimeError("No manifest loaded")
         module_path, function_name = self.manifest.entry_point.split(':', 1)
         
         # Prepare the environment
@@ -194,7 +197,8 @@ print(json.dumps(result))
             raise RuntimeError(f"Agent execution failed: {stderr.decode()}")
         
         try:
-            return json.loads(stdout.decode())
+            result: Dict[str, Any] = json.loads(stdout.decode())
+            return result
         except json.JSONDecodeError:
             raise RuntimeError(f"Invalid JSON response from agent: {stdout.decode()}")
     

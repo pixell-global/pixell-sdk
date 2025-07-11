@@ -136,7 +136,7 @@ class AgentValidator:
     
     def _validate_mcp_config(self, manifest: AgentManifest):
         """Validate MCP configuration if enabled."""
-        if manifest.mcp.config_file:
+        if manifest.mcp and manifest.mcp.config_file:
             mcp_path = self.project_dir / manifest.mcp.config_file
             if not mcp_path.exists():
                 self.errors.append(f"MCP config file not found: {manifest.mcp.config_file}")

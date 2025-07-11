@@ -52,6 +52,8 @@ class AgentBuilder:
             output_dir.mkdir(parents=True, exist_ok=True)
         
         # Create APKG filename
+        if not self.manifest:
+            raise BuildError("Manifest not loaded")
         version = self.manifest.metadata.version
         apkg_filename = f"{self.manifest.name}-{version}.apkg"
         output_path = output_dir / apkg_filename
@@ -92,7 +94,7 @@ class AgentBuilder:
         optional_items = ['requirements.txt', 'README.md', 'LICENSE']
         
         # MCP config if specified
-        if self.manifest.mcp and self.manifest.mcp.config_file:
+        if self.manifest and self.manifest.mcp and self.manifest.mcp.config_file:
             optional_items.append(self.manifest.mcp.config_file)
         
         # Copy required items
@@ -121,6 +123,8 @@ class AgentBuilder:
         metadata_dir.mkdir(exist_ok=True)
         
         # Create package metadata
+        if not self.manifest:
+            raise BuildError("Manifest not loaded")
         package_meta = {
             'format_version': '1.0',
             'created_by': 'pixell-kit',
@@ -135,7 +139,7 @@ class AgentBuilder:
         """Create requirements.txt from manifest if not present."""
         req_path = build_dir / 'requirements.txt'
         
-        if not req_path.exists() and self.manifest.dependencies:
+        if not req_path.exists() and self.manifest and self.manifest.dependencies:
             with open(req_path, 'w') as f:
                 for dep in self.manifest.dependencies:
                     f.write(f"{dep}\n")

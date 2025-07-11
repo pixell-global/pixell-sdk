@@ -50,6 +50,7 @@ dev = [
     "ruff>=0.1",
     "build>=1.0",
     "twine>=4.0",
+    "types-PyYAML>=6.0",
 ]
 signing = [
     "python-gnupg>=0.5",
