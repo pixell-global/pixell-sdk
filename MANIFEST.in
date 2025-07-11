@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+recursive-include pixell/templates *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude tests *
+exclude .gitignore
+exclude CLAUDE.md
+exclude pak_prd.md
+exclude steps.md
