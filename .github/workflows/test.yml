@@ -58,6 +58,7 @@ jobs:
         echo 'metadata:' >> test-agent/agent.yaml
         echo '  version: "0.1.0"' >> test-agent/agent.yaml
         echo 'def main(): pass' > test-agent/src/main.py
+        echo '' > test-agent/src/__init__.py
         
         # Test commands
         pixell validate -p test-agent
