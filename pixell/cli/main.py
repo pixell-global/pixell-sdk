@@ -40,17 +40,17 @@ def build(path, output):
         # Show build info
         size_mb = output_path.stat().st_size / (1024 * 1024)
         click.echo()
-        click.secho("✅ Build successful!", fg='green', bold=True)
-        click.echo(f"  📦 Package: {output_path.name}")
-        click.echo(f"  📁 Location: {output_path.parent}")
-        click.echo(f"  📏 Size: {size_mb:.2f} MB")
+        click.secho("SUCCESS: Build successful!", fg='green', bold=True)
+        click.echo(f"  [Package] {output_path.name}")
+        click.echo(f"  [Location] {output_path.parent}")
+        click.echo(f"  [Size] {size_mb:.2f} MB")
         
     except BuildError as e:
-        click.secho(f"❌ Build failed: {e}", fg='red')
+        click.secho(f"FAILED: Build failed: {e}", fg='red')
         ctx = click.get_current_context()
         ctx.exit(1)
     except Exception as e:
-        click.secho(f"❌ Unexpected error: {e}", fg='red')
+        click.secho(f"ERROR: Unexpected error: {e}", fg='red')
         ctx = click.get_current_context()
         ctx.exit(1)
 
@@ -69,9 +69,9 @@ def run_dev(path, port):
         server = DevServer(project_dir, port=port)
         server.run()
     except KeyboardInterrupt:
-        click.echo("\n👋 Shutting down development server...")
+        click.echo("\nShutting down development server...")
     except Exception as e:
-        click.secho(f"❌ Server error: {e}", fg='red')
+        click.secho(f"ERROR: Server error: {e}", fg='red')
         ctx = click.get_current_context()
         ctx.exit(1)
 
@@ -99,19 +99,19 @@ def validate(path):
     
     # Display results
     if errors:
-        click.secho("❌ Validation failed:", fg='red', bold=True)
+        click.secho("FAILED: Validation failed:", fg='red', bold=True)
         for error in errors:
-            click.echo(f"  • {error}")
+            click.echo(f"  - {error}")
     
     if warnings:
         click.echo()
-        click.secho("⚠️  Warnings:", fg='yellow', bold=True)
+        click.secho("WARNING: Warnings:", fg='yellow', bold=True)
         for warning in warnings:
-            click.echo(f"  • {warning}")
+            click.echo(f"  - {warning}")
     
     if is_valid:
         click.echo()
-        click.secho("✅ Validation passed!", fg='green', bold=True)
+        click.secho("SUCCESS: Validation passed!", fg='green', bold=True)
         ctx = click.get_current_context()
         ctx.exit(0)
     else:

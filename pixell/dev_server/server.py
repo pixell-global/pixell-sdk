@@ -139,17 +139,17 @@ class DevServer:
         if str(self.project_dir) not in sys.path:
             sys.path.insert(0, str(self.project_dir))
         
-        print(f"✅ Loaded agent: {self.manifest.display_name} v{self.manifest.metadata.version}")
+        print(f"[SUCCESS] Loaded agent: {self.manifest.display_name} v{self.manifest.metadata.version}")
     
     def _start_file_watcher(self):
         """Start watching for file changes."""
         def reload_callback():
-            print("🔄 Detected changes, reloading agent...")
+            print("[RELOAD] Detected changes, reloading agent...")
             try:
                 self._load_agent()
-                print("✅ Agent reloaded successfully")
+                print("[SUCCESS] Agent reloaded successfully")
             except Exception as e:
-                print(f"❌ Reload failed: {e}")
+                print(f"[ERROR] Reload failed: {e}")
         
         event_handler = AgentReloader(reload_callback)
         self.observer = Observer()
@@ -204,9 +204,9 @@ print(json.dumps(result))
     
     def run(self):
         """Start the development server."""
-        print(f"🚀 Starting Pixell development server on http://localhost:{self.port}")
-        print(f"📁 Serving agent from: {self.project_dir}")
-        print("👀 Watching for file changes...")
+        print(f"Starting Pixell development server on http://localhost:{self.port}")
+        print(f"Serving agent from: {self.project_dir}")
+        print("Watching for file changes...")
         print("\nPress Ctrl+C to stop")
         
         uvicorn.run(
