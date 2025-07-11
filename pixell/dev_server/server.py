@@ -1,13 +1,13 @@
 """Development server for testing agents locally."""
 import asyncio
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 from watchdog.observers import Observer
@@ -212,6 +212,3 @@ print(json.dumps(result))
             log_level="info",
             reload=False  # We handle reloading ourselves
         )
-
-
-import os

@@ -66,7 +66,7 @@ def main():
     print(f"   git add -A && git commit -m 'Release v{new_version}'")
     print("3. Create and push tag:")
     print(f"   git tag -a v{new_version} -m 'Release version {new_version}'")
-    print(f"   git push origin main")
+    print("   git push origin main")
     print(f"   git push origin v{new_version}")
     print("4. Create a release on GitHub")
 

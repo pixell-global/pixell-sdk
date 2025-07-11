@@ -1,5 +1,4 @@
 """Agent validation functionality."""
-import os
 from pathlib import Path
 from typing import List, Tuple, Optional
 import yaml
