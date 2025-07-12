@@ -408,6 +408,262 @@ metadata:
 - Join the community forum
 - Report issues on GitHub
 
+## Agent Registry
+
+### Discovering Agents
+
+Pixell Kit includes a powerful registry system for discovering and managing installed agents:
+
+```bash
+# List all installed agents
+pixell list
+
+# Search for specific agents
+pixell list --search "text"
+pixell list --search "nlp"
+
+# View detailed information about all agents
+pixell list --format detailed
+
+# Export agent list as JSON
+pixell list --format json > agents.json
+
+# Show sub-agents in table view
+pixell list --show-sub-agents
+```
+
+### Agent Information Structure
+
+Each registered agent provides extensive metadata:
+
+#### Basic Information
+- **Name**: Technical package name (e.g., `text-summarizer`)
+- **Display Name**: Human-friendly name (e.g., "Text Summarizer Pro")
+- **Version**: Semantic version number
+- **Author**: Creator or organization
+- **License**: Distribution license
+- **Description**: Brief one-line description
+
+#### Extended Information
+- **Extensive Description**: Detailed explanation of capabilities and features
+- **Capabilities**: List of agent capabilities (e.g., `["text-generation", "multi-language"]`)
+- **Tags**: Searchable keywords for discovery
+- **Homepage**: Project website or repository URL
+
+#### Sub-Agents
+
+Agents can expose sub-agents for specific functionalities:
+
+```yaml
+sub_agents:
+  - name: "extractive-summarizer"
+    description: "Extract key sentences from text"
+    endpoint: "/summarize/extractive"
+    capabilities: ["sentence-ranking", "key-phrase-extraction"]
+    public: true  # Accessible without authentication
+  
+  - name: "security-scanner"
+    description: "Scan for vulnerabilities"
+    endpoint: "/analyze/security"
+    capabilities: ["vulnerability-detection", "SAST"]
+    public: false  # Requires authentication
+```
+
+Sub-agents allow you to:
+- Provide specialized endpoints for different tasks
+- Control access with public/private flags
+- Organize complex functionality
+- Enable microservice-like architecture
+
+#### Usage Information
+
+Include comprehensive usage guides:
+
+```yaml
+usage_guide: |
+  Basic usage:
+  ```bash
+  echo '{"action": "summarize", "text": "..."}' | pixell run text-summarizer
+  ```
+  
+  Advanced usage with sub-agents:
+  ```bash
+  curl -X POST http://localhost:8080/summarize/extractive \
+    -H "Content-Type: application/json" \
+    -d '{"text": "...", "num_sentences": 3}'
+  ```
+
+examples:
+  - title: "Basic Summarization"
+    code: '{"action": "summarize", "text": "...", "max_length": 150}'
+  - title: "Extract Keywords"
+    code: '{"action": "keywords", "text": "...", "num_keywords": 10}'
+```
+
+### Registering Your Agent
+
+When you install an agent, it's automatically registered with metadata from the APKG package:
+
+```bash
+# Install and register an agent
+pixell install my-agent.apkg
+
+# Install from registry
+pixell install text-summarizer
+```
+
+The registry stores:
+- Complete agent metadata
+- Installation date and location
+- Package size
+- Runtime requirements
+- Dependencies
+
+### Registry Storage
+
+Agent metadata is stored in:
+- **Unix/Linux/macOS**: `~/.pixell/registry/`
+- **Windows**: `%USERPROFILE%\.pixell\registry\`
+
+Structure:
+```
+~/.pixell/registry/
+├── agents/          # Installed agent files
+└── metadata/        # JSON metadata files
+    ├── text-summarizer.json
+    ├── code-analyzer.json
+    └── ...
+```
+
+### Best Practices for Agent Metadata
+
+1. **Comprehensive Descriptions**
+   - Provide both brief and extensive descriptions
+   - Explain unique features and use cases
+   - List supported languages/formats
+
+2. **Clear Sub-Agent Documentation**
+   - Document each endpoint's purpose
+   - Specify authentication requirements
+   - Include example requests/responses
+
+3. **Practical Examples**
+   - Show real-world use cases
+   - Include both simple and advanced examples
+   - Demonstrate sub-agent usage
+
+4. **Accurate Capabilities**
+   - Use standard capability names when possible
+   - Be specific about what your agent can do
+   - Update capabilities as features are added
+
+5. **Helpful Tags**
+   - Include relevant technology tags
+   - Add use-case tags (e.g., "productivity", "automation")
+   - Consider language/framework tags
+
+### Example: Complete Agent Manifest
+
+```yaml
+# agent.yaml with full metadata
+version: "1.0"
+name: "doc-processor"
+display_name: "Document Processor Suite"
+description: "All-in-one document processing and analysis"
+author: "DocTools Inc."
+license: "Apache-2.0"
+
+# Extended metadata for registry
+metadata:
+  version: "2.0.1"
+  homepage: "https://github.com/doctools/doc-processor"
+  extensive_description: |
+    Document Processor Suite provides comprehensive document handling:
+    
+    - Format conversion (PDF, Word, HTML, Markdown)
+    - Text extraction with layout preservation
+    - Metadata extraction and indexing
+    - OCR for scanned documents
+    - Document comparison and diff
+    - Batch processing capabilities
+    
+    Supports 50+ file formats and 20+ languages.
+  
+  tags:
+    - "document-processing"
+    - "pdf"
+    - "ocr"
+    - "text-extraction"
+    - "file-conversion"
+  
+  sub_agents:
+    - name: "pdf-converter"
+      description: "Convert PDFs to other formats"
+      endpoint: "/convert/pdf"
+      capabilities: ["pdf-to-text", "pdf-to-html", "pdf-to-docx"]
+      public: true
+    
+    - name: "ocr-engine"
+      description: "Extract text from images and scanned docs"
+      endpoint: "/ocr/extract"
+      capabilities: ["optical-character-recognition", "layout-analysis"]
+      public: true
+    
+    - name: "doc-comparer"
+      description: "Compare and diff documents"
+      endpoint: "/compare"
+      capabilities: ["diff-generation", "change-tracking"]
+      public: false
+  
+  usage_guide: |
+    # Basic PDF to text conversion
+    curl -X POST http://localhost:8080/convert/pdf \
+      -F "file=@document.pdf" \
+      -F "format=text"
+    
+    # OCR with language specification
+    curl -X POST http://localhost:8080/ocr/extract \
+      -F "file=@scan.jpg" \
+      -F "language=eng+fra"
+    
+    # Document comparison (requires auth)
+    curl -X POST http://localhost:8080/compare \
+      -H "Authorization: Bearer YOUR_TOKEN" \
+      -F "original=@v1.docx" \
+      -F "modified=@v2.docx"
+  
+  examples:
+    - title: "Convert PDF to Markdown"
+      code: |
+        curl -X POST http://localhost:8080/convert/pdf \
+          -F "file=@report.pdf" \
+          -F "format=markdown" \
+          -F "preserve_layout=true"
+    
+    - title: "Batch OCR Processing"
+      code: |
+        echo '{"files": ["scan1.jpg", "scan2.jpg"], "language": "eng"}' | \
+        pixell run doc-processor --action batch-ocr
+
+# Standard configuration continues...
+entry_point: "src.main:main"
+capabilities:
+  - "document-processing"
+  - "format-conversion"
+  - "text-extraction"
+
+runtime:
+  python_version: ">=3.8"
+  memory: "1GB"
+  timeout: 600
+
+dependencies:
+  - pypdf2>=3.0
+  - python-docx>=0.8
+  - pytesseract>=0.3
+  - pillow>=9.0
+```
+
 ## Next Steps
 
 1. Explore advanced features in the PRD
