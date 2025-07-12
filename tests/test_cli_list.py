@@ -78,8 +78,8 @@ class TestListCommand:
         result = runner.invoke(cli, ['list'])
         
         assert result.exit_code == 0
-        # Should either show agents or indicate loading sample agents
-        assert ('Loading sample agents' in result.output or 
+        # With no agents installed, should show empty message
+        assert ('No agents installed' in result.output or 
                 'Name' in result.output and 'Version' in result.output)
     
     def test_list_json_format(self):
@@ -123,8 +123,9 @@ class TestListCommand:
         
         assert result.exit_code == 0
         
-        # Detailed format should show extensive information
-        if 'Loading sample agents' not in result.output:
+        # Detailed format with no agents shows nothing (empty output)
+        # or if there are agents, shows detailed sections
+        if result.output.strip():  # If there's any output
             # Check for detailed sections
             assert any(keyword in result.output for keyword in [
                 'Package name:', 'Author:', 'License:', 
@@ -142,8 +143,7 @@ class TestListCommand:
         # Search for something that likely doesn't exist
         result = runner.invoke(cli, ['list', '--search', 'nonexistentxyz123'])
         assert result.exit_code == 0
-        assert ('No agents found matching' in result.output or
-                'Loading sample agents' in result.output)
+        assert 'No agents found matching' in result.output
     
     def test_list_show_sub_agents(self):
         """Test list command with sub-agents flag."""
@@ -153,7 +153,7 @@ class TestListCommand:
         assert result.exit_code == 0
         
         # If agents with sub-agents are shown, check for indication
-        if 'Loading sample agents' not in result.output and 'Total:' in result.output:
+        if 'No agents installed' not in result.output and 'Total:' in result.output:
             # Sub-agents would be shown with indentation
             assert ('└─' in result.output or 'No agents' in result.output)
     

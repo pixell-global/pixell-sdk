@@ -126,16 +126,10 @@ def validate(path):
 @click.option('--show-sub-agents', is_flag=True, help='Show sub-agents in table view')
 def list(format, search, show_sub_agents):
     """List installed agents with detailed information."""
-    from pixell.core.registry import Registry, create_sample_agents
+    from pixell.core.registry import Registry
     import json
     
     registry = Registry()
-    
-    # For demo purposes, register sample agents if registry is empty
-    if not registry.list_agents():
-        click.echo("No agents found. Loading sample agents for demonstration...")
-        for agent in create_sample_agents():
-            registry.register_agent(agent)
     
     # Get agents based on search
     if search:
