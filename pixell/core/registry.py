@@ -1,7 +1,6 @@
 """Registry module for managing agent metadata and installations."""
 
 import json
-import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict

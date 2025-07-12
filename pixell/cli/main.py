@@ -128,7 +128,6 @@ def list(format, search, show_sub_agents):
     """List installed agents with detailed information."""
     from pixell.core.registry import Registry, create_sample_agents
     import json
-    from datetime import datetime
     
     registry = Registry()
     
