@@ -34,16 +34,16 @@ class AgentInfo:
     
     # Extended info
     extensive_description: Optional[str] = None
-    capabilities: List[str] = None
-    tags: List[str] = None
+    capabilities: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
     homepage: Optional[str] = None
     
     # Sub-agents
-    sub_agents: List[SubAgent] = None
+    sub_agents: Optional[List[SubAgent]] = None
     
     # Usage information
     usage_guide: Optional[str] = None
-    examples: List[Dict[str, str]] = None
+    examples: Optional[List[Dict[str, str]]] = None
     
     # Installation info
     install_date: Optional[datetime] = None
@@ -51,8 +51,8 @@ class AgentInfo:
     package_size: Optional[int] = None
     
     # Runtime info
-    runtime_requirements: Dict[str, Any] = None
-    dependencies: List[str] = None
+    runtime_requirements: Optional[Dict[str, Any]] = None
+    dependencies: Optional[List[str]] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
