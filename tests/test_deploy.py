@@ -167,15 +167,19 @@ class TestGetApiKey:
     @patch.dict(os.environ, {}, clear=True)
     @patch('builtins.open', new_callable=mock_open, read_data='{"api_key": "config-key"}')
     @patch.object(Path, 'exists')
-    def test_get_api_key_from_config(self, mock_exists, mock_file):
+    @patch('pixell.core.deployment.Path.home')
+    def test_get_api_key_from_config(self, mock_home, mock_exists, mock_file):
         """Test getting API key from config file."""
+        mock_home.return_value = Path('/fake/home')
         mock_exists.return_value = True
         assert get_api_key() == 'config-key'
     
     @patch.dict(os.environ, {}, clear=True)
     @patch.object(Path, 'exists')
-    def test_get_api_key_no_config(self, mock_exists):
+    @patch('pixell.core.deployment.Path.home')
+    def test_get_api_key_no_config(self, mock_home, mock_exists):
         """Test getting API key when no config exists."""
+        mock_home.return_value = Path('/fake/home')
         mock_exists.return_value = False
         assert get_api_key() is None
 
