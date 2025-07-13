@@ -2,9 +2,13 @@
 
 import os
 import time
+import json
+import zipfile
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any
 import requests  # type: ignore
+import yaml
 from urllib.parse import urljoin
 
 
@@ -26,6 +30,40 @@ class InsufficientCreditsError(DeploymentError):
 class ValidationError(DeploymentError):
     """Package validation failed."""
     pass
+
+
+def extract_version_from_apkg(apkg_file: Path) -> Optional[str]:
+    """Extract version from APKG file.
+    
+    Args:
+        apkg_file: Path to the APKG file
+        
+    Returns:
+        Version string if found, None otherwise
+    """
+    try:
+        with zipfile.ZipFile(apkg_file, 'r') as zf:
+            # Try to read from .pixell/package.json first (most reliable)
+            try:
+                with zf.open('.pixell/package.json') as f:
+                    package_data = json.load(f)
+                    return package_data.get('manifest', {}).get('metadata', {}).get('version')
+            except KeyError:
+                pass
+            
+            # Fallback to agent.yaml
+            try:
+                with zf.open('agent.yaml') as f:
+                    manifest_data = yaml.safe_load(f)
+                    return manifest_data.get('metadata', {}).get('version')
+            except KeyError:
+                pass
+                
+    except Exception:
+        # If anything fails, return None
+        pass
+    
+    return None
 
 
 class DeploymentClient:
@@ -89,6 +127,12 @@ class DeploymentClient:
         if not apkg_file.exists():
             raise FileNotFoundError(f"APKG file not found: {apkg_file}")
         
+        # Extract version from APKG if not provided
+        if not version:
+            version = extract_version_from_apkg(apkg_file)
+            if not version:
+                raise ValidationError("Version not provided and could not be extracted from APKG file")
+        
         # Prepare the deployment request
         url = urljoin(self.base_url, f'/api/agent-apps/{app_id}/packages/deploy')
         
@@ -96,9 +140,9 @@ class DeploymentClient:
             'file': ('agent.apkg', open(apkg_file, 'rb'), 'application/octet-stream')
         }
         
-        data = {}
-        if version:
-            data['version'] = version
+        data = {
+            'version': version  # Version is now always required
+        }
         if release_notes:
             data['release_notes'] = release_notes
             

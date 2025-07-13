@@ -13,7 +13,8 @@ from pixell.core.deployment import (
     AuthenticationError, 
     InsufficientCreditsError, 
     ValidationError,
-    get_api_key
+    get_api_key,
+    extract_version_from_apkg
 )
 
 
@@ -99,7 +100,7 @@ class TestDeploymentClient:
             client = DeploymentClient(environment='prod', api_key='invalid-key')
             
             with pytest.raises(AuthenticationError):
-                client.deploy('app-123', apkg_path)
+                client.deploy('app-123', apkg_path, version='1.0.0')
         finally:
             apkg_path.unlink()
     
@@ -122,7 +123,7 @@ class TestDeploymentClient:
             client = DeploymentClient(environment='prod', api_key='test-key')
             
             with pytest.raises(InsufficientCreditsError, match="Required: 10, Available: 5"):
-                client.deploy('app-123', apkg_path)
+                client.deploy('app-123', apkg_path, version='1.0.0')
         finally:
             apkg_path.unlink()
     
@@ -144,7 +145,7 @@ class TestDeploymentClient:
             client = DeploymentClient(environment='prod', api_key='test-key')
             
             with pytest.raises(ValidationError, match="Package validation failed"):
-                client.deploy('app-123', apkg_path)
+                client.deploy('app-123', apkg_path, version='1.0.0')
         finally:
             apkg_path.unlink()
     
@@ -182,6 +183,82 @@ class TestGetApiKey:
         mock_home.return_value = Path('/fake/home')
         mock_exists.return_value = False
         assert get_api_key() is None
+
+
+class TestVersionExtraction:
+    """Test the extract_version_from_apkg function."""
+    
+    def test_extract_version_from_valid_apkg(self):
+        """Test extracting version from a valid APKG file."""
+        import zipfile
+        import json
+        import yaml
+        
+        # Create a temporary APKG file with version info
+        with tempfile.NamedTemporaryFile(suffix='.apkg', delete=False) as f:
+            apkg_path = Path(f.name)
+        
+        try:
+            # Create a simple APKG structure
+            with zipfile.ZipFile(apkg_path, 'w') as zf:
+                # Add agent.yaml with version
+                agent_manifest = {
+                    'name': 'test-agent',
+                    'version': '1.0',
+                    'metadata': {
+                        'version': '2.1.0'
+                    }
+                }
+                zf.writestr('agent.yaml', yaml.dump(agent_manifest))
+                
+                # Add package.json with version (more reliable)
+                package_meta = {
+                    'format_version': '1.0',
+                    'manifest': {
+                        'metadata': {
+                            'version': '2.1.0'
+                        }
+                    }
+                }
+                zf.writestr('.pixell/package.json', json.dumps(package_meta))
+            
+            # Test version extraction
+            version = extract_version_from_apkg(apkg_path)
+            assert version == '2.1.0'
+            
+        finally:
+            apkg_path.unlink()
+    
+    def test_extract_version_from_invalid_apkg(self):
+        """Test version extraction from invalid APKG file."""
+        # Create a temporary file that's not a valid ZIP
+        with tempfile.NamedTemporaryFile(suffix='.apkg', delete=False) as f:
+            f.write(b'not a zip file')
+            apkg_path = Path(f.name)
+        
+        try:
+            version = extract_version_from_apkg(apkg_path)
+            assert version is None
+        finally:
+            apkg_path.unlink()
+    
+    def test_extract_version_missing_metadata(self):
+        """Test version extraction when metadata is missing."""
+        import zipfile
+        
+        with tempfile.NamedTemporaryFile(suffix='.apkg', delete=False) as f:
+            apkg_path = Path(f.name)
+        
+        try:
+            # Create APKG without version info
+            with zipfile.ZipFile(apkg_path, 'w') as zf:
+                zf.writestr('some_file.txt', 'no version here')
+            
+            version = extract_version_from_apkg(apkg_path)
+            assert version is None
+            
+        finally:
+            apkg_path.unlink()
 
 
 class TestDeployCommand:
