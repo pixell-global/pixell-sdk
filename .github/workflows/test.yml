@@ -54,7 +54,8 @@ jobs:
         echo 'description: "Test"' >> test-agent/agent.yaml
         echo 'author: "Test"' >> test-agent/agent.yaml
         echo 'license: "MIT"' >> test-agent/agent.yaml
-        echo 'entry_point: "src.main:main"' >> test-agent/agent.yaml
+        echo 'entrypoint: "src.main:main"' >> test-agent/agent.yaml
+        echo 'runtime: "python3.11"' >> test-agent/agent.yaml
         echo 'metadata:' >> test-agent/agent.yaml
         echo '  version: "0.1.0"' >> test-agent/agent.yaml
         echo 'def main(): pass' > test-agent/src/main.py
