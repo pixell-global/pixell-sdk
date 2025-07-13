@@ -102,10 +102,17 @@ class AgentBuilder:
             src_path = self.project_dir / item
             dest_path = dest_dir / item
             
+            print(f"Copying {item}: {src_path} -> {dest_path}")
             if src_path.is_dir():
                 shutil.copytree(src_path, dest_path, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+                # List files in the copied directory for debugging
+                for root, dirs, files in os.walk(dest_path):
+                    for file in files:
+                        file_path = Path(root) / file
+                        print(f"  Included: {file_path.relative_to(dest_dir)}")
             else:
                 shutil.copy2(src_path, dest_path)
+                print(f"  Included: {dest_path.relative_to(dest_dir)}")
         
         # Copy optional items if they exist
         for item in optional_items:

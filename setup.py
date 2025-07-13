@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pixell-kit",
-    version="0.2.0",
+    version="0.2.1",
     author="Pixell Core Team",
     author_email="dev@pixell.global",
     description="A lightweight developer kit for packaging AI agents into portable APKG files",
@@ -40,6 +40,7 @@ setup(
         "python-dotenv>=1.0",
         "tabulate>=0.9",
         "jinja2>=3.0",
+        "requests>=2.31.0",
     ],
     extras_require={
         "dev": [

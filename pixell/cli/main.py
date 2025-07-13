@@ -250,6 +250,157 @@ def list(format, search, show_sub_agents):
 
 
 @cli.command()
+@click.argument('deployment_id')
+@click.option('--env', '-e', type=click.Choice(['local', 'prod']), default='prod',
+              help='Deployment environment (local or prod)')
+@click.option('--api-key', '-k', help='API key for authentication (can also use PIXELL_API_KEY env var)')
+@click.option('--follow', '-f', is_flag=True, help='Follow deployment progress in real-time')
+@click.option('--json', 'json_output', is_flag=True, help='Output status as JSON')
+def status(deployment_id, env, api_key, follow, json_output):
+    """Monitor deployment status."""
+    from pixell.core.deployment import DeploymentClient, DeploymentError, AuthenticationError, get_api_key
+    import json as jsonlib
+    
+    # Get API key from parameter, environment, or config
+    if not api_key:
+        api_key = get_api_key()
+    
+    if not api_key:
+        click.secho("ERROR: No API key provided. Use --api-key, set PIXELL_API_KEY environment variable, or configure in ~/.pixell/config.json", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    
+    # Create deployment client
+    try:
+        client = DeploymentClient(environment=env, api_key=api_key)
+        
+        if follow:
+            # Follow deployment progress
+            click.echo(f"Following deployment {deployment_id}...")
+            click.echo()
+            
+            last_step = None
+            while True:
+                try:
+                    response = client.get_deployment_status(deployment_id)
+                    deployment = response['deployment']
+                    
+                    # Check if deployment is complete
+                    if deployment['status'] in ['completed', 'failed']:
+                        # Show final status
+                        if deployment['status'] == 'completed':
+                            click.secho("✓ Deployment completed successfully!", fg='green', bold=True)
+                        else:
+                            click.secho("✗ Deployment failed!", fg='red', bold=True)
+                            if 'error' in deployment:
+                                click.echo(f"  Error: {deployment['error']}")
+                        
+                        if 'completed_at' in deployment:
+                            click.echo(f"  Completed at: {deployment['completed_at']}")
+                        if 'duration_seconds' in deployment:
+                            click.echo(f"  Duration: {deployment['duration_seconds']} seconds")
+                        
+                        break
+                    
+                    # Show progress
+                    if 'progress' in deployment:
+                        progress = deployment['progress']
+                        current_step = progress.get('current_step', '')
+                        
+                        if current_step != last_step:
+                            last_step = current_step
+                            click.echo(f"Current step: {current_step}")
+                            
+                            # Show step details
+                            for step in progress.get('steps', []):
+                                status_symbol = {
+                                    'completed': '✓',
+                                    'processing': '▶',
+                                    'pending': '○',
+                                    'failed': '✗'
+                                }.get(step['status'], '?')
+                                
+                                status_color = {
+                                    'completed': 'green',
+                                    'processing': 'yellow',
+                                    'failed': 'red'
+                                }.get(step['status'], None)
+                                
+                                step_text = f"  {status_symbol} {step['name']}"
+                                if status_color:
+                                    click.secho(step_text, fg=status_color)
+                                else:
+                                    click.echo(step_text)
+                    
+                    time.sleep(3)
+                    
+                except KeyboardInterrupt:
+                    click.echo("\nMonitoring cancelled.")
+                    break
+                    
+        else:
+            # Single status check
+            response = client.get_deployment_status(deployment_id)
+            
+            if json_output:
+                click.echo(jsonlib.dumps(response, indent=2))
+            else:
+                deployment = response['deployment']
+                
+                # Basic info
+                click.echo(f"Deployment ID: {deployment['id']}")
+                click.echo(f"Status: {deployment['status']}")
+                click.echo(f"Version: {deployment.get('version', 'N/A')}")
+                click.echo(f"Created: {deployment.get('created_at', 'N/A')}")
+                
+                if deployment.get('started_at'):
+                    click.echo(f"Started: {deployment['started_at']}")
+                if deployment.get('completed_at'):
+                    click.echo(f"Completed: {deployment['completed_at']}")
+                
+                # Progress information
+                if 'progress' in deployment:
+                    progress = deployment['progress']
+                    click.echo()
+                    click.echo(f"Current step: {progress.get('current_step', 'N/A')}")
+                    click.echo("Steps:")
+                    
+                    for step in progress.get('steps', []):
+                        status_symbol = {
+                            'completed': '✓',
+                            'processing': '▶',
+                            'pending': '○',
+                            'failed': '✗'
+                        }.get(step['status'], '?')
+                        
+                        click.echo(f"  {status_symbol} {step['name']} [{step['status']}]")
+                        
+                        if step.get('started_at'):
+                            click.echo(f"    Started: {step['started_at']}")
+                        if step.get('completed_at'):
+                            click.echo(f"    Completed: {step['completed_at']}")
+                
+                # Error information
+                if deployment['status'] == 'failed' and 'error' in deployment:
+                    click.echo()
+                    click.secho("Error:", fg='red', bold=True)
+                    click.echo(f"  {deployment['error']}")
+                    
+    except AuthenticationError as e:
+        click.secho(f"AUTHENTICATION ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except DeploymentError as e:
+        click.secho(f"DEPLOYMENT ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except Exception as e:
+        click.secho(f"UNEXPECTED ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+
+
+@cli.command()
 @click.option('--apkg-file', '-f', required=True, type=click.Path(exists=True, path_type=Path), 
               help='Path to the APKG file to deploy')
 @click.option('--env', '-e', type=click.Choice(['local', 'prod']), default='prod',
