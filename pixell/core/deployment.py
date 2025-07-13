@@ -139,20 +139,25 @@ class DeploymentClient:
         # Prepare the deployment request
         url = urljoin(self.base_url, f'/api/agent-apps/{app_id}/packages/deploy')
         
-        files = {
-            'file': ('agent.apkg', open(apkg_file, 'rb'), 'application/octet-stream')
-        }
+        # Prepare files for multipart upload
+        files = [
+            ('file', ('agent.apkg', open(apkg_file, 'rb'), 'application/octet-stream'))
+        ]
         
-        data = {
-            'version': version  # Version is now always required
-        }
+        # Prepare form data - using list of tuples to ensure proper ordering
+        data = [
+            ('version', version)  # Version is now always required
+        ]
+        
         if release_notes:
-            data['release_notes'] = release_notes
+            data.append(('release_notes', release_notes))
+        
         if force_overwrite:
-            data['force_overwrite'] = 'true'
+            # Send as form field with string value 'true'
+            data.append(('force_overwrite', 'true'))
             
         if signature_file and signature_file.exists():
-            files['signature'] = ('agent.apkg.sig', open(signature_file, 'rb'), 'application/octet-stream')
+            files.append(('signature', ('agent.apkg.sig', open(signature_file, 'rb'), 'application/octet-stream')))
         
         try:
             # Send deployment request
@@ -174,9 +179,16 @@ class DeploymentClient:
                 )
             elif response.status_code == 409:  # Conflict
                 error_data = response.json()
-                raise ValidationError(
-                    f"Version {version} already exists. Use --force to overwrite existing version."
-                )
+                if force_overwrite:
+                    # If force was specified but we still got 409, there's an issue
+                    raise ValidationError(
+                        f"Version {version} conflict occurred even with force overwrite enabled. "
+                        f"API response: {error_data.get('error', 'Unknown error')}"
+                    )
+                else:
+                    raise ValidationError(
+                        f"Version {version} already exists. Use --force to overwrite existing version."
+                    )
             else:
                 response.raise_for_status()
                 return response.json()  # type: ignore  # type: ignore
@@ -185,9 +197,11 @@ class DeploymentClient:
             raise DeploymentError(f"Deployment request failed: {str(e)}")
         finally:
             # Clean up file handles
-            for file_tuple in files.values():
-                if hasattr(file_tuple[1], 'close'):
-                    file_tuple[1].close()
+            for field_name, file_info in files:
+                if isinstance(file_info, tuple) and len(file_info) > 1:
+                    file_obj = file_info[1]
+                    if hasattr(file_obj, 'close'):
+                        file_obj.close()
     
     def get_deployment_status(self, deployment_id: str) -> Dict[str, Any]:
         """Get the status of a deployment.
