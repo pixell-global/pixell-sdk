@@ -73,18 +73,15 @@ author: "Your Name"
 license: "MIT"
 
 # Entry point for your agent
-entry_point: "src.main:main"
+entrypoint: "src.main:main"
 
 # Agent capabilities
 capabilities:
   - "text-generation"
   - "data-analysis"
 
-# Runtime requirements
-runtime:
-  python_version: ">=3.8"
-  memory: "512MB"
-  timeout: 300  # seconds
+# Runtime environment (python3.9, python3.11, node18, node20, go1.21)
+runtime: "python3.11"
 
 # Environment variables (optional)
 environment:
@@ -448,16 +445,13 @@ description: "Summarizes long text into concise summaries"
 author: "Example Corp"
 license: "MIT"
 
-entry_point: "src.main:main"
+entrypoint: "src.main:main"
 
 capabilities:
   - "text-summarization"
   - "natural-language-processing"
 
-runtime:
-  python_version: ">=3.8"
-  memory: "256MB"
-  timeout: 30
+runtime: "python3.11"
 
 metadata:
   version: "1.0.0"
@@ -731,16 +725,13 @@ metadata:
         pixell run doc-processor --action batch-ocr
 
 # Standard configuration continues...
-entry_point: "src.main:main"
+entrypoint: "src.main:main"
 capabilities:
   - "document-processing"
   - "format-conversion"
   - "text-extraction"
 
-runtime:
-  python_version: ">=3.8"
-  memory: "1GB"
-  timeout: 600
+runtime: "python3.11"
 
 dependencies:
   - pypdf2>=3.0

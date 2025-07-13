@@ -3,13 +3,6 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, validator
 
 
-class RuntimeConfig(BaseModel):
-    """Runtime configuration for the agent."""
-    python_version: str = Field(default=">=3.8", description="Required Python version")
-    memory: str = Field(default="256MB", description="Memory allocation")
-    timeout: int = Field(default=300, description="Execution timeout in seconds")
-
-
 class MCPConfig(BaseModel):
     """MCP (Model Context Protocol) configuration."""
     enabled: bool = Field(default=False)
@@ -34,11 +27,11 @@ class AgentManifest(BaseModel):
     description: str = Field(description="Agent description")
     author: str = Field(description="Agent author name")
     license: str = Field(description="License identifier (e.g., MIT, Apache-2.0)")
-    entry_point: str = Field(description="Python module:function entry point")
+    entrypoint: str = Field(description="Python module:function entry point")
     
     # Optional fields
     capabilities: List[str] = Field(default_factory=list, description="Agent capabilities")
-    runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
+    runtime: str = Field(default="python3.11", description="Runtime environment")
     environment: Dict[str, str] = Field(default_factory=dict, description="Environment variables")
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
@@ -52,11 +45,19 @@ class AgentManifest(BaseModel):
             raise ValueError("Name must be lowercase letters, numbers, and hyphens only")
         return v
     
-    @validator('entry_point')
-    def validate_entry_point(cls, v):
-        """Validate entry point format."""
+    @validator('entrypoint')
+    def validate_entrypoint(cls, v):
+        """Validate entrypoint format."""
         if ':' not in v:
-            raise ValueError("Entry point must be in format 'module:function'")
+            raise ValueError("Entrypoint must be in format 'module:function'")
+        return v
+    
+    @validator('runtime')
+    def validate_runtime(cls, v):
+        """Validate runtime format."""
+        valid_runtimes = ['node18', 'node20', 'python3.9', 'python3.11', 'go1.21']
+        if v not in valid_runtimes:
+            raise ValueError(f"Invalid runtime: {v}. Valid options: {', '.join(valid_runtimes)}")
         return v
     
     @validator('dependencies')

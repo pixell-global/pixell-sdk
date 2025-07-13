@@ -32,8 +32,8 @@ class AgentValidator:
         manifest = self._validate_manifest()
         
         if manifest:
-            # Validate entry point
-            self._validate_entry_point(manifest)
+            # Validate entrypoint
+            self._validate_entrypoint(manifest)
             
             # Validate dependencies
             self._validate_dependencies(manifest)
@@ -96,15 +96,15 @@ class AgentValidator:
             self.errors.append(f"Error reading agent.yaml: {e}")
             return None
     
-    def _validate_entry_point(self, manifest: AgentManifest):
-        """Validate the entry point exists and is callable."""
-        module_path, function_name = manifest.entry_point.split(':', 1)
+    def _validate_entrypoint(self, manifest: AgentManifest):
+        """Validate the entrypoint exists and is callable."""
+        module_path, function_name = manifest.entrypoint.split(':', 1)
         
         # Convert module path to file path
         file_path = self.project_dir / (module_path.replace('.', '/') + '.py')
         
         if not file_path.exists():
-            self.errors.append(f"Entry point module not found: {file_path}")
+            self.errors.append(f"Entrypoint module not found: {file_path}")
             return
         
         # Basic check: look for function definition

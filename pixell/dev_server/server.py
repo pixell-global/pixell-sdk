@@ -160,7 +160,7 @@ class DevServer:
         """Invoke the agent with the given request."""
         if not self.manifest:
             raise RuntimeError("No manifest loaded")
-        module_path, function_name = self.manifest.entry_point.split(':', 1)
+        module_path, function_name = self.manifest.entrypoint.split(':', 1)
         
         # Prepare the environment
         env = os.environ.copy()
