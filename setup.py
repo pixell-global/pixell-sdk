@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="pixell-kit",
-    version="0.2.2",
+    version="0.2.5",
     author="Pixell Core Team",
     author_email="dev@pixell.global",
     description="A lightweight developer kit for packaging AI agents into portable APKG files",
