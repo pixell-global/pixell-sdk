@@ -1,4 +1,6 @@
 import click
+import time
+from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
 
 try:
@@ -245,6 +247,143 @@ def list(format, search, show_sub_agents):
             if agent.package_size:
                 size_mb = agent.package_size / (1024 * 1024)
                 click.echo(f"  Size: {size_mb:.1f} MB")
+
+
+@cli.command()
+@click.option('--apkg-file', '-f', required=True, type=click.Path(exists=True, path_type=Path), 
+              help='Path to the APKG file to deploy')
+@click.option('--env', '-e', type=click.Choice(['local', 'prod']), default='prod',
+              help='Deployment environment (local or prod)')
+@click.option('--app-id', '-a', required=True, help='Agent app ID to deploy to')
+@click.option('--version', '-v', help='Version string (optional, will extract from package if not provided)')
+@click.option('--release-notes', '-r', help='Release notes for this deployment')
+@click.option('--signature', '-s', type=click.Path(exists=True, path_type=Path),
+              help='Path to signature file for signed packages')
+@click.option('--api-key', '-k', help='API key for authentication (can also use PIXELL_API_KEY env var)')
+@click.option('--wait', is_flag=True, help='Wait for deployment to complete')
+@click.option('--timeout', default=300, help='Timeout in seconds when waiting for deployment')
+def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, wait, timeout):
+    """Deploy an APKG file to Pixell Agent Cloud."""
+    from pixell.core.deployment import DeploymentClient, DeploymentError, AuthenticationError, InsufficientCreditsError, ValidationError, get_api_key
+    
+    # Get API key from parameter, environment, or config
+    if not api_key:
+        api_key = get_api_key()
+    
+    if not api_key:
+        click.secho("ERROR: No API key provided. Use --api-key, set PIXELL_API_KEY environment variable, or configure in ~/.pixell/config.json", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    
+    # Create deployment client
+    try:
+        client = DeploymentClient(environment=env, api_key=api_key)
+        
+        click.echo(f"Deploying {apkg_file.name} to {client.ENVIRONMENTS[env]['name']}...")
+        click.echo(f"Target: {client.base_url}")
+        click.echo(f"App ID: {app_id}")
+        
+        if version:
+            click.echo(f"Version: {version}")
+        if release_notes:
+            click.echo(f"Release notes: {release_notes}")
+        
+        # Start deployment
+        response = client.deploy(
+            app_id=app_id,
+            apkg_file=apkg_file,
+            version=version,
+            release_notes=release_notes,
+            signature_file=signature
+        )
+        
+        deployment = response['deployment']
+        package = response['package']
+        tracking = response['tracking']
+        
+        # Show deployment info
+        click.echo()
+        click.secho("✓ Deployment initiated successfully!", fg='green', bold=True)
+        click.echo(f"  Deployment ID: {deployment['id']}")
+        click.echo(f"  Package ID: {package['id']}")
+        click.echo(f"  Status: {deployment['status']}")
+        click.echo(f"  Version: {package['version']}")
+        click.echo(f"  Size: {package['size_bytes'] / (1024*1024):.1f} MB")
+        click.echo(f"  Queued at: {deployment['queued_at']}")
+        
+        if 'estimated_duration_seconds' in deployment:
+            click.echo(f"  Estimated duration: {deployment['estimated_duration_seconds']} seconds")
+        
+        click.echo()
+        click.echo(f"Track deployment status: {tracking['status_url']}")
+        
+        # Wait for completion if requested
+        if wait:
+            click.echo()
+            click.echo("Waiting for deployment to complete...")
+            
+            try:
+                with click.progressbar(length=timeout, label='Deploying') as bar:
+                    start_time = time.time()
+                    while time.time() - start_time < timeout:
+                        status = client.get_deployment_status(deployment['id'])
+                        deployment_status = status['deployment']['status']
+                        
+                        if deployment_status == 'completed':
+                            bar.update(timeout)  # Complete the progress bar
+                            click.echo()
+                            click.secho("✓ Deployment completed successfully!", fg='green', bold=True)
+                            
+                            # Show final status
+                            final_deployment = status['deployment']
+                            if 'completed_at' in final_deployment:
+                                click.echo(f"  Completed at: {final_deployment['completed_at']}")
+                            
+                            return
+                        elif deployment_status == 'failed':
+                            bar.update(timeout)  # Complete the progress bar
+                            click.echo()
+                            click.secho("✗ Deployment failed!", fg='red', bold=True)
+                            error_msg = status['deployment'].get('error', 'Unknown error')
+                            click.echo(f"  Error: {error_msg}")
+                            ctx = click.get_current_context()
+                            ctx.exit(1)
+                        
+                        # Update progress
+                        elapsed = int(time.time() - start_time)
+                        bar.update(min(elapsed, timeout))
+                        time.sleep(5)
+                
+                # Timeout reached
+                click.echo()
+                click.secho("⚠ Deployment timed out", fg='yellow', bold=True)
+                click.echo(f"  Check status manually: {tracking['status_url']}")
+                
+            except KeyboardInterrupt:
+                click.echo()
+                click.echo("Deployment monitoring cancelled. Check status manually:")
+                click.echo(f"  {tracking['status_url']}")
+        
+    except AuthenticationError as e:
+        click.secho(f"AUTHENTICATION ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except InsufficientCreditsError as e:
+        click.secho(f"INSUFFICIENT CREDITS: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except ValidationError as e:
+        click.secho(f"VALIDATION ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except DeploymentError as e:
+        click.secho(f"DEPLOYMENT ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except Exception as e:
+        click.secho(f"UNEXPECTED ERROR: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
 
 
 if __name__ == "__main__":

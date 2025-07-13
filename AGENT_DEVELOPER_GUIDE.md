@@ -209,28 +209,113 @@ python -m pytest tests/
 
 ## Deployment
 
-### 1. Sign Your Package (Optional)
+### Deploy to Pixell Agent Cloud
+
+Pixell Kit provides a built-in deployment command to deploy your agents to Pixell Agent Cloud:
+
+```bash
+# Deploy to production
+pixell deploy --apkg-file my-agent.apkg --app-id your-app-id
+
+# Deploy to local development environment  
+pixell deploy --apkg-file my-agent.apkg --app-id your-app-id --env local
+
+# Deploy with version and release notes
+pixell deploy --apkg-file my-agent.apkg --app-id your-app-id \
+  --version 1.2.0 --release-notes "Fixed bugs and improved performance"
+
+# Deploy with signature for signed packages
+pixell deploy --apkg-file my-agent.apkg --app-id your-app-id \
+  --signature my-agent.apkg.sig
+
+# Deploy and wait for completion
+pixell deploy --apkg-file my-agent.apkg --app-id your-app-id --wait
+```
+
+#### Environment Configuration
+
+The deploy command supports two environments:
+
+- **Production** (`--env prod`): `https://main.d2o02924ohm5pe.amplifyapp.com/` (default)
+- **Local Development** (`--env local`): `http://localhost:4000`
+
+#### Authentication
+
+You can provide your API key in several ways:
+
+1. **Command line parameter**:
+   ```bash
+   pixell deploy --apkg-file my-agent.apkg --app-id your-app-id --api-key your-api-key
+   ```
+
+2. **Environment variable**:
+   ```bash
+   export PIXELL_API_KEY=your-api-key
+   pixell deploy --apkg-file my-agent.apkg --app-id your-app-id
+   ```
+
+3. **Configuration file** (`~/.pixell/config.json`):
+   ```json
+   {
+     "api_key": "your-api-key"
+   }
+   ```
+
+#### Deployment Process
+
+The deployment process includes:
+
+1. **Package Upload**: Your APKG file is uploaded to the cloud
+2. **Validation**: Package format and manifest are validated
+3. **Credit Deduction**: Credits are deducted based on package size (1 credit per MB)
+4. **Runtime Deployment**: Agent is deployed to the runtime environment
+5. **Finalization**: Deployment is marked as complete
+
+You can track deployment progress with the `--wait` flag or use the tracking URL provided in the response.
+
+#### Error Handling
+
+The deploy command handles various error scenarios:
+
+- **Authentication Error**: Invalid API key or session
+- **Insufficient Credits**: Not enough credits for deployment  
+- **Validation Error**: Package format or content issues
+- **Network Errors**: Connection or timeout issues
+
+#### Complete Example
+
+```bash
+# Build your agent
+pixell build
+
+# Deploy to production with monitoring
+pixell deploy \
+  --apkg-file dist/my-agent-1.0.0.apkg \
+  --app-id app-uuid-here \
+  --version 1.0.0 \
+  --release-notes "Initial production release" \
+  --wait \
+  --timeout 600
+```
+
+### Alternative Deployment Methods
+
+#### 1. Manual API Deployment
+
+You can also deploy directly using the API:
+
+```bash
+curl -X POST https://main.d2o02924ohm5pe.amplifyapp.com/api/agent-apps/your-app-id/packages/deploy \
+  -H "Authorization: Bearer your-api-key" \
+  -F "file=@my-agent.apkg" \
+  -F "version=1.0.0" \
+  -F "release_notes=Initial release"
+```
+
+#### 2. Sign Your Package (Optional)
 
 ```bash
 pixell sign my-agent.apkg --key-file private-key.pem
-```
-
-### 2. Deploy to Registry
-
-```bash
-# Configure registry
-pixell config set registry.url s3://my-bucket/agents
-
-# Deploy
-pixell deploy my-agent.apkg
-```
-
-### 3. Install from Registry
-
-Users can install your agent:
-
-```bash
-pixell install my-agent
 ```
 
 ## Best Practices
