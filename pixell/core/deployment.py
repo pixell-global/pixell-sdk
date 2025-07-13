@@ -77,7 +77,7 @@ class DeploymentClient:
             'name': 'Local Development'
         },
         'prod': {
-            'base_url': 'https://main.d2o02924ohm5pe.amplifyapp.com',
+            'base_url': 'http://pac-alb-1704283860.us-east-1.elb.amazonaws.com',
             'name': 'Production'
         }
     }

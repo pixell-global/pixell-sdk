@@ -29,7 +29,7 @@ class TestDeploymentClient:
         
         client = DeploymentClient(environment='prod')
         assert client.environment == 'prod'
-        assert client.base_url == 'https://main.d2o02924ohm5pe.amplifyapp.com'
+        assert client.base_url == 'http://pac-alb-1704283860.us-east-1.elb.amazonaws.com'
     
     def test_init_invalid_environment(self):
         """Test initialization with invalid environment."""
