@@ -1,6 +1,6 @@
 import re
 import ast
-from typing import List, Set
+from typing import List
 import structlog
 
 logger = structlog.get_logger()
@@ -84,7 +84,7 @@ class CodePatternDetector:
                         for pattern_name, keywords in self.import_patterns.items():
                             if any(kw in node.module for kw in keywords):
                                 detected.append(pattern_name)
-        except:
+        except Exception:
             # Fallback to regex if AST parsing fails
             for pattern_name, keywords in self.import_patterns.items():
                 for kw in keywords:
@@ -127,7 +127,7 @@ class CodePatternDetector:
             func_count = sum(1 for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
             if func_count > 5:
                 indicators.append('many_functions')
-        except:
+        except Exception:
             pass
         
         return indicators
@@ -137,7 +137,7 @@ class CodePatternDetector:
         try:
             tree = ast.parse(code)
             return self._calculate_loop_depth(tree)
-        except:
+        except Exception:
             return 0
     
     def _calculate_loop_depth(self, node: ast.AST, current_depth: int = 0) -> int:

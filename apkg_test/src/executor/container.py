@@ -1,13 +1,12 @@
 import asyncio
-import json
 import time
 import os
 import tempfile
 import shutil
-from typing import Dict, Any, AsyncIterator, Optional
+from typing import Dict, Any, AsyncIterator
 import structlog
 import docker
-from docker.errors import ContainerError, ImageNotFound
+from docker.errors import ImageNotFound
 import aiofiles
 
 from ..engine.execution_engine import ExecutionResult, StreamChunk
@@ -254,7 +253,7 @@ CMD ["python"]
                 self.container_pool.append(container)
             else:
                 container.remove(force=True)
-        except:
+        except Exception:
             # Container might already be removed
             pass
     
@@ -414,7 +413,7 @@ except Exception as e:
         try:
             stats = container.stats(stream=False)
             return stats['memory_stats'].get('usage', 0)
-        except:
+        except Exception:
             return 0
     
     async def _get_cpu_usage(self, container) -> int:
@@ -431,5 +430,5 @@ except Exception as e:
                 cpu_percent = (cpu_delta / system_delta) * 100
                 return int(cpu_percent)
             return 0
-        except:
+        except Exception:
             return 0

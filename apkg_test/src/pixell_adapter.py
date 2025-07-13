@@ -7,7 +7,6 @@ while maintaining the A2A gRPC service as the primary interface.
 
 import json
 import sys
-import asyncio
 import os
 from typing import Dict, Any
 
@@ -82,7 +81,7 @@ class PixellAdapter:
                     for key, value in response.results.items():
                         try:
                             results[key] = msgpack.unpackb(value, raw=False)
-                        except:
+                        except Exception:
                             results[key] = value
                 
                 return {
