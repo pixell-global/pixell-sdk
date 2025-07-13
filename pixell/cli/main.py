@@ -413,7 +413,8 @@ def status(deployment_id, env, api_key, follow, json_output):
 @click.option('--api-key', '-k', help='API key for authentication (can also use PIXELL_API_KEY env var)')
 @click.option('--wait', is_flag=True, help='Wait for deployment to complete')
 @click.option('--timeout', default=300, help='Timeout in seconds when waiting for deployment')
-def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, wait, timeout):
+@click.option('--force', is_flag=True, help='Force overwrite existing version')
+def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, wait, timeout, force):
     """Deploy an APKG file to Pixell Agent Cloud."""
     from pixell.core.deployment import DeploymentClient, DeploymentError, AuthenticationError, InsufficientCreditsError, ValidationError, get_api_key
     
@@ -438,6 +439,8 @@ def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, w
             click.echo(f"Version: {version}")
         if release_notes:
             click.echo(f"Release notes: {release_notes}")
+        if force:
+            click.echo(click.style("Force overwrite: ENABLED", fg='yellow', bold=True))
         
         # Start deployment
         response = client.deploy(
@@ -445,7 +448,8 @@ def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, w
             apkg_file=apkg_file,
             version=version,
             release_notes=release_notes,
-            signature_file=signature
+            signature_file=signature,
+            force_overwrite=force
         )
         
         deployment = response['deployment']

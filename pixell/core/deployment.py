@@ -106,7 +106,8 @@ class DeploymentClient:
                apkg_file: Path, 
                version: Optional[str] = None,
                release_notes: Optional[str] = None,
-               signature_file: Optional[Path] = None) -> Dict[str, Any]:
+               signature_file: Optional[Path] = None,
+               force_overwrite: bool = False) -> Dict[str, Any]:
         """Deploy an APKG file to an agent app.
         
         Args:
@@ -115,6 +116,7 @@ class DeploymentClient:
             version: Version string (optional, will extract from package if not provided)
             release_notes: Release notes for this deployment
             signature_file: Path to signature file for signed packages
+            force_overwrite: Force overwrite existing version if it exists
             
         Returns:
             Deployment response with status and tracking information
@@ -146,6 +148,8 @@ class DeploymentClient:
         }
         if release_notes:
             data['release_notes'] = release_notes
+        if force_overwrite:
+            data['force_overwrite'] = 'true'
             
         if signature_file and signature_file.exists():
             files['signature'] = ('agent.apkg.sig', open(signature_file, 'rb'), 'application/octet-stream')
@@ -167,6 +171,11 @@ class DeploymentClient:
                 raise InsufficientCreditsError(
                     f"Insufficient credits. Required: {error_data.get('required')}, "
                     f"Available: {error_data.get('available')}"
+                )
+            elif response.status_code == 409:  # Conflict
+                error_data = response.json()
+                raise ValidationError(
+                    f"Version {version} already exists. Use --force to overwrite existing version."
                 )
             else:
                 response.raise_for_status()
