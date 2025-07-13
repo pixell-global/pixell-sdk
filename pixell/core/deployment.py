@@ -46,7 +46,8 @@ def extract_version_from_apkg(apkg_file: Path) -> Optional[str]:
             try:
                 with zf.open('.pixell/package.json') as f:
                     package_data = json.load(f)
-                    return package_data.get('manifest', {}).get('metadata', {}).get('version')
+                    version = package_data.get('manifest', {}).get('metadata', {}).get('version')
+                    return str(version) if version is not None else None
             except KeyError:
                 pass
             
@@ -54,7 +55,8 @@ def extract_version_from_apkg(apkg_file: Path) -> Optional[str]:
             try:
                 with zf.open('agent.yaml') as f:
                     manifest_data = yaml.safe_load(f)
-                    return manifest_data.get('metadata', {}).get('version')
+                    version = manifest_data.get('metadata', {}).get('version')
+                    return str(version) if version is not None else None
             except KeyError:
                 pass
                 
