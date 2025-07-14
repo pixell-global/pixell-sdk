@@ -77,7 +77,7 @@ class DeploymentClient:
             'name': 'Local Development'
         },
         'prod': {
-            'base_url': 'http://pac-alb-1704283860.us-east-1.elb.amazonaws.com',
+            'base_url': 'https://cloud.pixell.global',
             'name': 'Production'
         }
     }
