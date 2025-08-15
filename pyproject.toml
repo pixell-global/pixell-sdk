@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixell-kit"
-version = "0.3.0"
+version = "0.3.1"
 description = "A lightweight developer kit for packaging AI agents into portable APKG files"
 readme = "README.md"
 authors = [
@@ -61,11 +61,11 @@ signing = [
 pixell = "pixell.cli.main:cli"
 
 [tool.setuptools]
-packages = ["pixell", "pixell.cli", "pixell.core", "pixell.models", "pixell.utils", "pixell.dev_server"]
+packages = ["pixell", "pixell.cli", "pixell.core", "pixell.models", "pixell.utils", "pixell.dev_server", "pixell.ui", "pixell.intent", "pixell.protocol"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-pixell = ["templates/**/*"]
+pixell = ["templates/**/*", "protocol/schemas/*.json", "ui/schemas/*.json"]
 
 [tool.black]
 line-length = 100
