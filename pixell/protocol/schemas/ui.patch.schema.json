@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pixell.sh/schemas/protocol/ui.patch.schema.json",
+  "title": "UiPatch",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {"const": "ui.patch"},
+    "patch": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "op": {"type": "string"},
+          "path": {"type": "string"},
+          "value": {}
+        },
+        "required": ["op", "path"]
+      }
+    },
+    "patchId": {"type": ["string", "null"]},
+    "baseVersion": {"type": ["string", "null"]}
+  },
+  "required": ["type", "patch"]
+} 

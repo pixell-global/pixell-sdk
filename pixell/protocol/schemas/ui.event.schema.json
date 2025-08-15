@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pixell.sh/schemas/protocol/ui.event.schema.json",
+  "title": "UiEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {"const": "ui.event"},
+    "intent": {"type": "string", "minLength": 1},
+    "params": {"type": "object"},
+    "trace_id": {"type": ["string", "null"], "minLength": 1}
+  },
+  "required": ["type", "intent", "params"]
+} 
