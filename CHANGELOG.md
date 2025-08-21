@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2025-01-21
+
+### Added
+- New `pixell guide` command to display build documentation in terminal
+- Interactive guide accessible directly from CLI without needing external docs
+- Support for topic-specific guides with --topic option
+
+### Fixed
+- Removed all unused imports to pass ruff linting
+- Fixed mypy type errors for better type safety
+- Ensured CI/CD passes on all operating systems (Linux, macOS, Windows)
+
 ## [0.3.0] - 2025-01-21
 
 ### Added
