@@ -9,7 +9,8 @@ from jsonschema import Draft7Validator
 def _load_json(path: Path) -> Dict[str, Any]:
     import json
     with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        data: Dict[str, Any] = json.load(f)
+        return data
 
 
 def resolve_intent_schema_path(intent_name: str, schema_path: str | None = None) -> Path:

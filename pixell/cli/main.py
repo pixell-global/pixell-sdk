@@ -2,6 +2,7 @@ import click
 import time
 from pathlib import Path
 from importlib.metadata import version, PackageNotFoundError
+from typing import List, Dict, Any
 
 try:
     __version__ = version("pixell-kit")
@@ -597,8 +598,8 @@ def validate_intents(file, stdin, strict, intent_schema):
 	from pixell.protocol.validate import validate_envelope
 	from pixell.intent.validate import validate_intent_params
 
-	def _validate_payload(payload: dict) -> list[str]:
-		errs: list[str] = []
+	def _validate_payload(payload: Dict[str, Any]) -> List[str]:
+		errs: List[str] = []
 		try:
 			validate_envelope(payload)
 		except ValidationError as exc:
@@ -616,7 +617,7 @@ def validate_intents(file, stdin, strict, intent_schema):
 				errs.append(f"Intent params validation error: {exc.message}")
 		return errs
 
-	errors: list[str] = []
+	errors: List[str] = []
 
 	if stdin:
 		try:

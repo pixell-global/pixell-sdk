@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast, Literal
 from pydantic import BaseModel, Field
 from .spec import UISpec, Component, View
 
@@ -44,7 +44,7 @@ def adapt_view_for_capabilities(spec: UISpec, caps: ClientCapabilities) -> UISpe
                         )
                     )
                 else:
-                    new_children.append(Component(type=fallback, props=child.props))
+                    new_children.append(Component(type=cast(Any, fallback), props=child.props))
             else:
                 new_children.append(child)
         spec.view = View(type=view.type, title=view.title, children=new_children)

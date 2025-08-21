@@ -3,7 +3,7 @@ from .spec import Component, View
 
 
 def page(title: str, children: Optional[List[Component]] = None) -> View:
-    return View(type="page", title=title, children=children or [], props={})
+    return View(type="page", title=title, children=children or [])
 
 
 def table(data_path: str, columns: List[Dict[str, Any]], selection: Optional[Dict[str, Any]] = None) -> Component:
