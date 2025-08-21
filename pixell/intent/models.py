@@ -26,4 +26,4 @@ class ResultEvent(BaseModel):
     result: IntentResult
 
 
-IntentStreamEvent = Union[ProgressEvent, PatchEvent, ResultEvent] 
+IntentStreamEvent = Union[ProgressEvent, PatchEvent, ResultEvent]

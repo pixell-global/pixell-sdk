@@ -26,4 +26,4 @@ __all__ = [
     "validate_patch_scope",
     "ClientCapabilities",
     "adapt_view_for_capabilities",
-] 
+]

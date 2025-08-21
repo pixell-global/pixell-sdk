@@ -2,4 +2,4 @@
 
 from .models import IntentResult, IntentStreamEvent
 
-__all__ = ["IntentResult", "IntentStreamEvent"] 
+__all__ = ["IntentResult", "IntentStreamEvent"]

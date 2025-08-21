@@ -55,4 +55,4 @@ def http_method_allowed(method: str, caps: ClientCapabilities) -> bool:
     method = method.upper()
     if method in ("GET", "POST"):
         return True
-    return "http.extended" in set(caps.features) 
+    return "http.extended" in set(caps.features)

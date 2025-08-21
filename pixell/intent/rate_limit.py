@@ -18,4 +18,4 @@ class RateLimiter:
         if len(q) < self.max_calls:
             q.append(now)
             return True
-        return False 
+        return False

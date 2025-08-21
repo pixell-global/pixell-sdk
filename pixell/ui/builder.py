@@ -6,7 +6,9 @@ def page(title: str, children: Optional[List[Component]] = None) -> View:
     return View(type="page", title=title, children=children or [])
 
 
-def table(data_path: str, columns: List[Dict[str, Any]], selection: Optional[Dict[str, Any]] = None) -> Component:
+def table(
+    data_path: str, columns: List[Dict[str, Any]], selection: Optional[Dict[str, Any]] = None
+) -> Component:
     props: Dict[str, Any] = {"data": data_path, "columns": columns}
     if selection:
         props["selection"] = selection
@@ -18,4 +20,4 @@ def button(text: str, action: Optional[Dict[str, Any]] = None, **kwargs: Any) ->
     if action:
         props["onPress"] = action
     props.update(kwargs)
-    return Component(type="button", props=props) 
+    return Component(type="button", props=props)

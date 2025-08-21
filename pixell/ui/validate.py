@@ -13,4 +13,4 @@ def validate_spec(spec: UISpec | dict[str, Any]) -> None:
             # Pydantic validation on dump
             spec.model_dump()
     except ValidationError as exc:
-        raise AgentUIValidationError("Invalid UISpec", {"errors": exc.errors()}) from exc 
+        raise AgentUIValidationError("Invalid UISpec", {"errors": exc.errors()}) from exc

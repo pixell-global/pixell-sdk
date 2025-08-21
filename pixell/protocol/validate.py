@@ -40,5 +40,6 @@ def validate_envelope(envelope: Dict[str, Any]) -> None:
 def validate_outbound_if_dev(envelope: Dict[str, Any]) -> None:
     """Validate outbound envelopes in development mode (no-op in production)."""
     import os
+
     if os.getenv("PIXELL_ENV", "development").lower() in ("development", "dev", "local"):
-        validate_envelope(envelope) 
+        validate_envelope(envelope)

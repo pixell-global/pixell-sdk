@@ -45,4 +45,4 @@ class EmitAction(Action):
 ActionUnion = Annotated[
     Union[OpenUrlAction, HttpAction, StateSetAction, EmitAction],
     Field(discriminator="kind"),
-] 
+]

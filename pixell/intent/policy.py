@@ -6,4 +6,4 @@ class IntentPolicy:
         self.allowed: Set[str] = set(allowed or [])
 
     def is_allowed(self, intent: str) -> bool:
-        return not self.allowed or intent in self.allowed 
+        return not self.allowed or intent in self.allowed

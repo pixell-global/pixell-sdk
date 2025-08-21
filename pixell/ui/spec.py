@@ -14,9 +14,22 @@ class Manifest(BaseModel):
 
 class Component(BaseModel):
     type: Literal[
-        "page","container","text","image","link","button","switch",
-        "textarea","textfield","radio","checkbox","select","list","table",
-        "modal","form"
+        "page",
+        "container",
+        "text",
+        "image",
+        "link",
+        "button",
+        "switch",
+        "textarea",
+        "textfield",
+        "radio",
+        "checkbox",
+        "select",
+        "list",
+        "table",
+        "modal",
+        "form",
     ]
     props: Dict[str, Any] = Field(default_factory=dict)
     children: Optional[List["Component"]] = None
@@ -40,4 +53,4 @@ class UIPatch(BaseModel):
     type: Literal["ui.patch"] = "ui.patch"
     patch: List[Dict[str, Any]]
     patchId: Optional[str] = None
-    baseVersion: Optional[str] = None 
+    baseVersion: Optional[str] = None

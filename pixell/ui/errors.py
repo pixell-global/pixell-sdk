@@ -9,4 +9,4 @@ class AgentUIValidationError(AgentUISpecError):
 
 
 class AgentUICapabilityError(AgentUISpecError):
-    pass 
+    pass

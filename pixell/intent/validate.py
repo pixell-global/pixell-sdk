@@ -8,6 +8,7 @@ from jsonschema import Draft7Validator
 
 def _load_json(path: Path) -> Dict[str, Any]:
     import json
+
     with path.open("r", encoding="utf-8") as f:
         data: Dict[str, Any] = json.load(f)
         return data
@@ -32,10 +33,12 @@ def resolve_intent_schema_path(intent_name: str, schema_path: str | None = None)
     return default
 
 
-def validate_intent_params(intent_name: str, params: Dict[str, Any], schema_path: str | None = None) -> None:
+def validate_intent_params(
+    intent_name: str, params: Dict[str, Any], schema_path: str | None = None
+) -> None:
     """Validate per-intent params against JSON Schema for that intent.
     Raises jsonschema.ValidationError on failure.
     """
     schema_file = resolve_intent_schema_path(intent_name, schema_path)
     schema = _load_json(schema_file)
-    Draft7Validator(schema).validate(params) 
+    Draft7Validator(schema).validate(params)

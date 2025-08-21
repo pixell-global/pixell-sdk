@@ -20,4 +20,4 @@ def validate_patch_scope(ops: Iterable[Dict[str, Any]]) -> None:
 
 def make_patch(ops: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     validate_patch_scope(ops)
-    return ops 
+    return ops
