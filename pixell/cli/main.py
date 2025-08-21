@@ -541,5 +541,111 @@ def deploy(apkg_file, env, app_id, version, release_notes, signature, api_key, w
         ctx.exit(1)
 
 
+@cli.group()
+def ui():
+    """UI-related commands."""
+    pass
+
+
+@ui.command(name="validate")
+@click.option('--file', 'file_path', required=True, help='Path to UI spec JSON file')
+def ui_validate(file_path: str):
+    """Validate a UI spec JSON file against the current schema and Pydantic models."""
+    import json
+    from pixell.ui import validate_spec
+    with open(Path(file_path), 'r') as f:
+        data = json.load(f)
+    try:
+        validate_spec(data)
+        click.secho("UI spec is valid", fg='green')
+    except Exception as e:
+        click.secho(f"Invalid UI spec: {e}", fg='red')
+        ctx = click.get_current_context()
+        ctx.exit(1)
+
+
+@ui.command(name="schema")
+@click.option('--print', 'print_only', is_flag=True, help='Print current UI schema JSON to stdout')
+@click.option('--out', 'out_path', required=False, help='Write schema JSON to file')
+def ui_schema(print_only: bool, out_path: str | None):
+    """Print or write the current UISpec JSON Schema."""
+    import json
+    from pixell.ui.spec import UISpec
+    schema = UISpec.model_json_schema()
+    if print_only:
+        click.echo(json.dumps(schema, indent=2))
+    elif out_path:
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_path).write_text(json.dumps(schema, indent=2))
+        click.secho(f"Wrote schema to {out_path}", fg='green')
+    else:
+        click.echo("Use --print to print schema or --out to write to a file.")
+
+
+@cli.command(name="validate-intents")
+@click.option('--file', '-f', type=click.Path(exists=True), multiple=True, help='JSON file(s) containing protocol envelopes to validate')
+@click.option('--stdin', is_flag=True, help='Read a single JSON envelope from stdin')
+@click.option('--strict', is_flag=True, help='Fail on first error')
+@click.option('--intent-schema', type=click.Path(exists=True), help='Optional path to a per-intent params schema JSON file')
+def validate_intents(file, stdin, strict, intent_schema):
+	"""Validate protocol envelopes (ui.event, action.result, ui.patch) against JSON Schemas.
+	Also validates per-intent params for `ui.event` when schemas are available.
+	"""
+	import json
+	import sys
+	from jsonschema import ValidationError
+	from pixell.protocol.validate import validate_envelope
+	from pixell.intent.validate import validate_intent_params
+
+	def _validate_payload(payload: dict) -> list[str]:
+		errs: list[str] = []
+		try:
+			validate_envelope(payload)
+		except ValidationError as exc:
+			errs.append(f"Schema validation error: {exc.message}")
+		except Exception as exc:
+			errs.append(f"Validation error: {exc}")
+		# Per-intent params validation for ui.event
+		if payload.get("type") == "ui.event":
+			try:
+				validate_intent_params(payload.get("intent", ""), payload.get("params", {}), intent_schema)
+			except FileNotFoundError as exc:
+				# Only warn if schema not provided/found
+				errs.append(f"Intent params schema not found: {exc}")
+			except ValidationError as exc:
+				errs.append(f"Intent params validation error: {exc.message}")
+		return errs
+
+	errors: list[str] = []
+
+	if stdin:
+		try:
+			payload = json.load(sys.stdin)
+			errors.extend(_validate_payload(payload))
+		except Exception as exc:
+			errors.append(f"Failed to read stdin JSON: {exc}")
+
+	for path in file:
+		try:
+			with open(path, 'r', encoding='utf-8') as f:
+				payload = json.load(f)
+			errors.extend(_validate_payload(payload))
+		except Exception as exc:
+			errors.append(f"{path}: {exc}")
+			if strict:
+				break
+
+	if errors:
+		click.secho("FAILED:", fg='red', bold=True)
+		for e in errors:
+			click.echo(f"  - {e}")
+		ctx = click.get_current_context()
+		ctx.exit(1)
+	else:
+		click.secho("SUCCESS: All envelopes valid", fg='green', bold=True)
+		ctx = click.get_current_context()
+		ctx.exit(0)
+
+
 if __name__ == "__main__":
     cli()

@@ -198,6 +198,13 @@ print(json.dumps(result))
         
         try:
             result: Dict[str, Any] = json.loads(stdout.decode())
+            # Validate outbound in dev if envelope-like
+            try:
+                from pixell.protocol import validate_outbound_if_dev
+                if isinstance(result, dict) and "type" in result:
+                    validate_outbound_if_dev(result)
+            except Exception:
+                pass
             return result
         except json.JSONDecodeError:
             raise RuntimeError(f"Invalid JSON response from agent: {stdout.decode()}")

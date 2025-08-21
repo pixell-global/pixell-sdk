@@ -36,6 +36,9 @@ class AgentManifest(BaseModel):
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
     metadata: MetadataConfig = Field(..., description="Agent metadata")
+    # UI optional fields (per PRD)
+    ui_spec_version: Optional[str] = Field(default=None, description="UI spec version used by this agent")
+    required_ui_capabilities: Optional[List[str]] = Field(default=None, description="Capabilities this agent requires from the UI client")
     
     @validator('name')
     def validate_name(cls, v):
