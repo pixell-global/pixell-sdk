@@ -6,7 +6,7 @@ This guide explains how to build and deploy AI agents using Pixell Agent Kit.
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
-- [Agent Configuration](#agent-configuration)
+- [Agent Configuration (agent.yaml)](#agent-configuration-agentyaml)
 - [Building Your Agent](#building-your-agent)
 - [Testing Locally](#testing-locally)
 - [Deployment](#deployment)
@@ -25,91 +25,194 @@ This guide explains how to build and deploy AI agents using Pixell Agent Kit.
 
 ## Quick Start
 
-1. **Initialize a new agent project**:
-   ```bash
-   pixell init my-agent
-   cd my-agent
-   ```
+To build an agent package (.apkg file), you need:
+1. An `agent.yaml` manifest file
+2. Source code in a `src/` directory
+3. The `pixell build` command
 
-2. **Configure your agent** by editing `agent.yaml`
+```bash
+# Build your agent (outputs to current directory)
+pixell build
 
-3. **Build your agent**:
-   ```bash
-   pixell build
-   ```
+# Build with custom output directory
+pixell build --output ./dist
 
-4. **Test locally**:
-   ```bash
-   pixell run-dev
-   ```
+# Build from specific directory
+pixell build --path ./my-agent
+
+# Validate before building
+pixell validate
+```
 
 ## Project Structure
 
-A Pixell agent project should follow this structure:
+Your agent project MUST follow this structure:
 
 ```
 my-agent/
-├── agent.yaml           # Agent manifest (required)
-├── src/                 # Agent source code (required)
+├── agent.yaml          # REQUIRED: Agent manifest
+├── src/                # REQUIRED: Agent source code
 │   ├── __init__.py
-│   └── main.py         # Entry point
-├── requirements.txt     # Python dependencies
-├── tests/              # Test files (optional)
-├── README.md           # Documentation (optional)
-└── mcp.json            # MCP server config (optional)
+│   └── main.py         # Your agent implementation
+├── requirements.txt    # Optional: Python dependencies
+├── mcp.json           # Optional: MCP configuration
+├── README.md          # Optional: Documentation
+└── LICENSE            # Optional: License file
 ```
 
-## Agent Configuration
+## Agent Configuration (agent.yaml)
 
-The `agent.yaml` file is the heart of your agent configuration:
+The `agent.yaml` file defines your agent's metadata and configuration. This file is REQUIRED for building your agent.
+
+### Required Fields
+
+Every `agent.yaml` MUST include these fields:
 
 ```yaml
-# agent.yaml
+# Manifest version (always "1.0")
 version: "1.0"
-name: "my-agent"
-display_name: "My AI Agent"
-description: "A brief description of what your agent does"
+
+# Package name (lowercase, numbers, hyphens only)
+name: "my-agent-name"
+
+# Human-readable display name
+display_name: "My Agent"
+
+# Short description of what your agent does
+description: "An AI agent that helps with specific tasks"
+
+# Author name
 author: "Your Name"
+
+# License identifier (e.g., MIT, Apache-2.0, GPL-3.0)
 license: "MIT"
 
-# Entry point for your agent
-entrypoint: "src.main:main"
+# Python module:function entry point
+# Format: "module.path:function_name"
+entrypoint: "src.main:handler"
 
-# Agent capabilities
+# Required metadata section
+metadata:
+  # Semantic version of your agent
+  version: "1.0.0"
+```
+
+### Optional Fields
+
+You can include these optional fields for additional functionality:
+
+```yaml
+# Agent capabilities (what your agent can do)
 capabilities:
   - "text-generation"
-  - "data-analysis"
+  - "code-analysis"
+  - "data-processing"
 
-# Runtime environment (python3.9, python3.11, node18, node20, go1.21)
+# Runtime environment (default: python3.11)
+# Valid options: python3.9, python3.11, node18, node20, go1.21
 runtime: "python3.11"
 
-# Environment variables (optional)
+# Environment variables
 environment:
   API_KEY: "${API_KEY}"
   DEBUG: "false"
 
-# Dependencies that will be installed
+# Python dependencies (same format as requirements.txt)
+# These will be used if requirements.txt is not present
 dependencies:
-  - requests>=2.28.0
-  - pandas>=1.5.0
+  - "requests>=2.28.0"
+  - "numpy>=1.24.0"
+  - "pandas>=2.0.0"
 
-# MCP server configuration (optional)
+# MCP (Model Context Protocol) configuration
 mcp:
   enabled: true
   config_file: "mcp.json"
 
-# Metadata
+# Extended metadata
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
   homepage: "https://github.com/username/my-agent"
+  repository: "https://github.com/username/my-agent"
   tags:
     - "automation"
     - "productivity"
+    - "ai-assistant"
+
+# UI specification (for agents with custom UI)
+ui_spec_version: "1.0"
+required_ui_capabilities:
+  - "forms"
+  - "charts"
+```
+
+### Complete Example
+
+Here's a complete `agent.yaml` example:
+
+```yaml
+version: "1.0"
+name: "weather-assistant"
+display_name: "Weather Assistant"
+description: "AI agent that provides weather forecasts and alerts"
+author: "Jane Developer"
+license: "MIT"
+entrypoint: "src.weather_agent:main"
+
+capabilities:
+  - "weather-forecast"
+  - "alert-generation"
+  - "data-visualization"
+
+runtime: "python3.11"
+
+environment:
+  WEATHER_API_KEY: "${WEATHER_API_KEY}"
+  DEFAULT_LOCATION: "San Francisco"
+
+dependencies:
+  - "requests>=2.31.0"
+  - "python-dateutil>=2.8.0"
+  - "pytz>=2023.3"
+
+mcp:
+  enabled: false
+
+metadata:
+  version: "2.1.0"
+  homepage: "https://weatherassistant.ai"
+  repository: "https://github.com/janedev/weather-assistant"
+  tags:
+    - "weather"
+    - "forecast"
+    - "alerts"
+    - "api-integration"
 ```
 
 ## Building Your Agent
 
-### 1. Create Your Agent Code
+### 1. Entry Point Implementation
+
+Your entry point function (specified in `agent.yaml`) should follow this pattern:
+
+```python
+# src/main.py
+
+def handler(context):
+    """
+    Main entry point for the agent.
+    
+    Args:
+        context: Agent execution context with request data
+        
+    Returns:
+        Agent response
+    """
+    # Your agent logic here
+    return {"status": "success", "data": result}
+```
+
+Or for a more complete example:
 
 ```python
 # src/main.py
@@ -142,8 +245,11 @@ if __name__ == '__main__':
     main()
 ```
 
-### 2. Define Dependencies
+### 2. Dependencies
 
+You can specify dependencies in two ways:
+
+**Option 1: requirements.txt** (takes precedence)
 ```txt
 # requirements.txt
 requests>=2.28.0
@@ -151,29 +257,88 @@ pandas>=1.5.0
 numpy>=1.21.0
 ```
 
-### 3. Validate Your Configuration
+**Option 2: In agent.yaml** (used if requirements.txt doesn't exist)
+```yaml
+dependencies:
+  - "requests>=2.28.0"
+  - "pandas>=1.5.0"
+  - "numpy>=1.21.0"
+```
+
+### 3. Validation
+
+Before building, validate your agent:
 
 ```bash
 pixell validate
+
+# Validate specific directory
+pixell validate --path ./my-agent
 ```
 
-This checks:
-- `agent.yaml` syntax and required fields
-- Entry point accessibility
-- Dependency conflicts
-- File structure compliance
+The validation checks:
+- **Project Structure**: `agent.yaml` and `src/` directory exist
+- **Manifest Validation**: All required fields present and valid
+- **Name Format**: Lowercase letters, numbers, and hyphens only
+- **Entrypoint Format**: Must be in `module:function` format
+- **Entrypoint Exists**: The specified module and function exist
+- **Runtime**: Must be a supported runtime (python3.9, python3.11, node18, node20, go1.21)
+- **Dependencies**: Must follow pip requirement format (e.g., `package>=1.0.0`)
+- **MCP Config**: If MCP is enabled, config file must exist
 
-### 4. Build the Agent Package
+### 4. Build Process
+
+Run the build command:
 
 ```bash
+# Basic build (outputs to current directory)
 pixell build
+
+# Build from specific directory
+pixell build --path ./my-agent
+
+# Specify output directory
+pixell build --output ./dist
 ```
 
-This creates an `.apkg` file containing:
-- All source code
-- Configuration files
-- Dependencies list
-- Metadata
+The build process:
+1. **Validates** your project structure and manifest
+2. **Copies** files to build directory:
+   - `agent.yaml` (required)
+   - `src/` directory (required, excludes `__pycache__` and `.pyc`)
+   - `requirements.txt` (optional)
+   - `README.md` (optional)
+   - `LICENSE` (optional)
+   - MCP config file (if specified)
+3. **Creates** package metadata in `.pixell/package.json`
+4. **Generates** `requirements.txt` from manifest dependencies if not present
+5. **Packages** everything into a `.apkg` file (ZIP archive)
+
+Output filename: `{agent-name}-{version}.apkg`
+
+### Common Build Errors and Solutions
+
+**"Validation failed"**
+- Run `pixell validate` to see specific errors
+- Fix all validation errors before building
+
+**"Required file missing: agent.yaml"**
+- Ensure `agent.yaml` exists in your project root
+
+**"Source directory 'src/' not found"**
+- Create a `src/` directory with your agent code
+
+**"Entrypoint module not found"**
+- Check that your entrypoint path matches your file structure
+- Example: `src.main:handler` requires `src/main.py` with a `handler` function
+
+**"Invalid dependency format"**
+- Use pip requirement specifiers: `package>=1.0.0`, `package==2.1.3`, `package<3.0.0`
+
+**"Name must be lowercase letters, numbers, and hyphens only"**
+- Fix your agent name in `agent.yaml`
+- Valid: `my-agent`, `text-processor-2`
+- Invalid: `My_Agent`, `agent.v1`, `AGENT`
 
 ## Testing Locally
 
