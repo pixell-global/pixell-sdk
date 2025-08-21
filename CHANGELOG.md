@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.3] - 2025-01-21
+## [0.3.4] - 2025-08-21
+
+### Fixed
+- Updated PyPI trusted publisher configuration documentation
+- Version bump to resolve deployment issues
+
+## [0.3.3] - 2025-08-21
 
 ### Added
 - New `pixell guide` command to display build documentation in terminal
