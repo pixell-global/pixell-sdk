@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, cast, Literal
+from typing import Any, Dict, List, Optional, cast
 from pydantic import BaseModel, Field
 from .spec import UISpec, Component, View
 
