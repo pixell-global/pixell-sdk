@@ -2,7 +2,6 @@ from typing import Any
 from pydantic import ValidationError
 from .spec import UISpec
 from .errors import AgentUIValidationError
-from .patch import validate_patch_scope
 
 
 def validate_spec(spec: UISpec | dict[str, Any]) -> None:

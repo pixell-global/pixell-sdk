@@ -1,4 +1,3 @@
-import os
 import pytest
 
 from pixell.protocol import validate_outbound_if_dev

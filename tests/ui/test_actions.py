@@ -1,4 +1,3 @@
-import pytest
 from pixell.ui import UISpec, Manifest, View, Component
 
 

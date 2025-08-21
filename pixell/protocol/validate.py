@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict
 
-from jsonschema import Draft7Validator, validate
+from jsonschema import Draft7Validator
 
 
 _SCHEMAS: Dict[str, Dict[str, Any]] | None = None
