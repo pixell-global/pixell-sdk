@@ -17,7 +17,7 @@ setup(
         "Documentation": "https://docs.pixell.global/pixell",
         "Source Code": "https://github.com/pixell-global/pixell-kit",
     },
-    packages=find_packages(include=['pixell', 'pixell.*']),
+    packages=find_packages(include=["pixell", "pixell.*"]),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

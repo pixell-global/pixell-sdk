@@ -16,4 +16,4 @@ def test_stream_events_union():
     assert patch.type == "patch"
 
     rr = ResultEvent(result=IntentResult(status="ok", trace_id="t2"))
-    assert rr.type == "result" 
+    assert rr.type == "result"

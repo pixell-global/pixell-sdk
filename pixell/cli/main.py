@@ -185,7 +185,7 @@ def list(format, search, show_sub_agents):
                     )
                     public_tag = "[public]" if sub.public else "[private]"
                     click.echo(
-                        f"  └─ {sub.name:<{name_width-3}} {'':<{version_width}} {public_tag:<{author_width}} {sub_desc}"
+                        f"  └─ {sub.name:<{name_width - 3}} {'':<{version_width}} {public_tag:<{author_width}} {sub_desc}"
                     )
 
         click.echo()
@@ -448,7 +448,11 @@ def status(deployment_id, env, api_key, follow, json_output):
     default="prod",
     help="Deployment environment (local or prod)",
 )
-@click.option("--app-id", "-a", help="Agent app ID to deploy to (can also use PIXELL_APP_ID env var or config file)")
+@click.option(
+    "--app-id",
+    "-a",
+    help="Agent app ID to deploy to (can also use PIXELL_APP_ID env var or config file)",
+)
 @click.option(
     "--version", "-v", help="Version string (optional, will extract from package if not provided)"
 )
@@ -477,7 +481,6 @@ def deploy(
         ValidationError,
         get_api_key,
         get_app_id,
-        get_default_environment,
     )
 
     # Get API key from parameter, environment, or config
@@ -548,7 +551,7 @@ def deploy(
         click.echo(f"  Package ID: {package['id']}")
         click.echo(f"  Status: {deployment['status']}")
         click.echo(f"  Version: {package['version']}")
-        click.echo(f"  Size: {package['size_bytes'] / (1024*1024):.1f} MB")
+        click.echo(f"  Size: {package['size_bytes'] / (1024 * 1024):.1f} MB")
         click.echo(f"  Queued at: {deployment['queued_at']}")
 
         if "estimated_duration_seconds" in deployment:
@@ -894,12 +897,14 @@ def config():
 @click.option("--app-id", "-a", help="Set app ID")
 @click.option("--environment", "-e", help="Set default environment")
 @click.option("--env-app-id", help="Set app ID for specific environment (format: env:app-id)")
-@click.option("--global", "is_global", is_flag=True, help="Set global configuration (default: project-level)")
+@click.option(
+    "--global", "is_global", is_flag=True, help="Set global configuration (default: project-level)"
+)
 def config_set(api_key, app_id, environment, env_app_id, is_global):
     """Set configuration values."""
     import json
     from pathlib import Path
-    
+
     # Determine config file location
     if is_global:
         config_dir = Path.home() / ".pixell"
@@ -907,10 +912,10 @@ def config_set(api_key, app_id, environment, env_app_id, is_global):
     else:
         config_dir = Path(".pixell")
         config_file = config_dir / "config.json"
-    
+
     # Create config directory if it doesn't exist
     config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Load existing config
     config = {}
     if config_file.exists():
@@ -919,46 +924,48 @@ def config_set(api_key, app_id, environment, env_app_id, is_global):
                 config = json.load(f)
         except Exception:
             pass
-    
+
     # Update config values
     if api_key:
         config["api_key"] = api_key
         click.secho(f"✓ API key set in {config_file}", fg="green")
-    
+
     if app_id:
         config["app_id"] = app_id
         click.secho(f"✓ App ID set in {config_file}", fg="green")
-    
+
     if environment:
         config["default_environment"] = environment
         click.secho(f"✓ Default environment set to '{environment}' in {config_file}", fg="green")
-    
+
     if env_app_id:
         if ":" not in env_app_id:
             click.secho("ERROR: env-app-id must be in format 'environment:app-id'", fg="red")
             return
-        
+
         env_name, env_app_id_value = env_app_id.split(":", 1)
         if "environments" not in config:
             config["environments"] = {}
         config["environments"][env_name] = {"app_id": env_app_id_value}
         click.secho(f"✓ App ID for environment '{env_name}' set in {config_file}", fg="green")
-    
+
     # Save config
     with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
-    
+
     if not any([api_key, app_id, environment, env_app_id]):
         click.secho("No values provided. Use --help to see available options.", fg="yellow")
 
 
 @config.command("show")
-@click.option("--global", "is_global", is_flag=True, help="Show global configuration (default: project-level)")
+@click.option(
+    "--global", "is_global", is_flag=True, help="Show global configuration (default: project-level)"
+)
 def config_show(is_global):
     """Show current configuration."""
     import json
     from pathlib import Path
-    
+
     # Determine config file location
     if is_global:
         config_file = Path.home() / ".pixell" / "config.json"
@@ -966,15 +973,15 @@ def config_show(is_global):
     else:
         config_file = Path(".pixell") / "config.json"
         config_type = "Project"
-    
+
     if not config_file.exists():
         click.secho(f"No {config_type.lower()} configuration found at {config_file}", fg="yellow")
         return
-    
+
     try:
         with open(config_file) as f:
             config = json.load(f)
-        
+
         click.secho(f"{config_type} Configuration ({config_file}):", fg="cyan", bold=True)
         click.echo(json.dumps(config, indent=2))
     except Exception as e:
@@ -985,12 +992,17 @@ def config_show(is_global):
 @click.option("--api-key", "-k", prompt="API Key", help="Your Pixell API key")
 @click.option("--app-id", "-a", prompt="App ID", help="Your default app ID")
 @click.option("--environment", "-e", default="prod", help="Default environment")
-@click.option("--global", "is_global", is_flag=True, help="Initialize global configuration (default: project-level)")
+@click.option(
+    "--global",
+    "is_global",
+    is_flag=True,
+    help="Initialize global configuration (default: project-level)",
+)
 def config_init(api_key, app_id, environment, is_global):
     """Initialize configuration with interactive setup."""
     import json
     from pathlib import Path
-    
+
     # Determine config file location
     if is_global:
         config_dir = Path.home() / ".pixell"
@@ -998,23 +1010,21 @@ def config_init(api_key, app_id, environment, is_global):
     else:
         config_dir = Path(".pixell")
         config_file = config_dir / "config.json"
-    
+
     # Create config directory if it doesn't exist
     config_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Create initial config
-    config = {
-        "api_key": api_key,
-        "app_id": app_id,
-        "default_environment": environment
-    }
-    
+    config = {"api_key": api_key, "app_id": app_id, "default_environment": environment}
+
     # Save config
     with open(config_file, "w") as f:
         json.dump(config, f, indent=2)
-    
+
     click.secho(f"✓ Configuration initialized at {config_file}", fg="green")
-    click.secho("You can now deploy without specifying --api-key and --app-id every time!", fg="cyan")
+    click.secho(
+        "You can now deploy without specifying --api-key and --app-id every time!", fg="cyan"
+    )
 
 
 if __name__ == "__main__":

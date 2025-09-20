@@ -1,4 +1,11 @@
-from pixell.ui import UISpec, Manifest, View, Component, ClientCapabilities, adapt_view_for_capabilities
+from pixell.ui import (
+    UISpec,
+    Manifest,
+    View,
+    Component,
+    ClientCapabilities,
+    adapt_view_for_capabilities,
+)
 
 
 def build_table_spec() -> UISpec:
@@ -15,7 +22,10 @@ def build_table_spec() -> UISpec:
                     props={
                         "data": "@rows",
                         "columns": [
-                            {"header": "Title", "cell": {"type": "text", "props": {"text": "{{ title }}"}}}
+                            {
+                                "header": "Title",
+                                "cell": {"type": "text", "props": {"text": "{{ title }}"}},
+                            }
                         ],
                     },
                 )
@@ -35,4 +45,4 @@ def test_no_change_when_supported() -> None:
     spec = build_table_spec()
     caps = ClientCapabilities(components=["page", "table", "list"])  # has table
     adapted = adapt_view_for_capabilities(spec, caps)
-    assert adapted.view.children[0].type == "table" 
+    assert adapted.view.children[0].type == "table"

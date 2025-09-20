@@ -12,4 +12,4 @@ def test_make_patch_shape() -> None:
 
 def test_patch_scope_rejects_outside_paths() -> None:
     with pytest.raises(ValueError):
-        validate_patch_scope([{"op": "replace", "path": "/theme/tokens/x", "value": 1}]) 
+        validate_patch_scope([{"op": "replace", "path": "/theme/tokens/x", "value": 1}])

@@ -31,4 +31,4 @@ def test_validate_intent_params_fail(tmp_path):
     schema_path.write_text(json.dumps(schema))
 
     with pytest.raises(Exception):
-        validate_intent_params("post_comment", {"draftId": "abc"}, str(schema_path)) 
+        validate_intent_params("post_comment", {"draftId": "abc"}, str(schema_path))

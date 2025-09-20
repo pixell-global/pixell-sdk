@@ -4,12 +4,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pixell.ui import UISpec, Manifest, View, Component, ClientCapabilities, adapt_view_for_capabilities
+from pixell.ui import (
+    UISpec,
+    Manifest,
+    View,
+    Component,
+    ClientCapabilities,
+    adapt_view_for_capabilities,
+)
 
 
 def build_spec() -> UISpec:
     return UISpec(
-        manifest=Manifest(id="ex.v1", name="Ex", version="1.0.0", capabilities=["page","table","list"]),
+        manifest=Manifest(
+            id="ex.v1", name="Ex", version="1.0.0", capabilities=["page", "table", "list"]
+        ),
         data={"rows": [{"title": "A"}, {"title": "B"}]},
         actions={},
         view=View(
@@ -21,7 +30,10 @@ def build_spec() -> UISpec:
                     props={
                         "data": "@rows",
                         "columns": [
-                            {"header": "Title", "cell": {"type": "text", "props": {"text": "{{ title }}"}}}
+                            {
+                                "header": "Title",
+                                "cell": {"type": "text", "props": {"text": "{{ title }}"}},
+                            }
                         ],
                     },
                 )
@@ -38,4 +50,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()

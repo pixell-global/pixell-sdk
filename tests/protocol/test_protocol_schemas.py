@@ -63,4 +63,4 @@ def test_ui_patch_invalid_missing_op():
         ],
     }
     with pytest.raises(Exception):
-        validate_envelope(envelope) 
+        validate_envelope(envelope)

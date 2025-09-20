@@ -13,4 +13,4 @@ def test_rate_limiter_window():
     session = "s1"
     assert limiter.allow(session, "do")
     assert limiter.allow(session, "do")
-    assert not limiter.allow(session, "do") 
+    assert not limiter.allow(session, "do")

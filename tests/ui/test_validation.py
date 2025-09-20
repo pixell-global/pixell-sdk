@@ -24,4 +24,4 @@ def test_validate_spec_with_dict_passes() -> None:
 
 def test_validate_spec_invalid_raises() -> None:
     with pytest.raises(Exception):
-        validate_spec({"manifest": {}, "view": {"type": "page"}}) 
+        validate_spec({"manifest": {}, "view": {"type": "page"}})

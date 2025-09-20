@@ -35,4 +35,4 @@ def test_demo_rate_limit():
     for _ in range(6):
         last = handle_ui_event(event)
     assert last["status"] == "error"
-    assert last["message"] == "Rate limit exceeded" 
+    assert last["message"] == "Rate limit exceeded"

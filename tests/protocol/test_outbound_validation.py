@@ -13,4 +13,4 @@ def test_validate_outbound_dev_fail(monkeypatch):
     monkeypatch.setenv("PIXELL_ENV", "development")
     bad = {"type": "action.result", "status": "wat"}
     with pytest.raises(Exception):
-        validate_outbound_if_dev(bad) 
+        validate_outbound_if_dev(bad)

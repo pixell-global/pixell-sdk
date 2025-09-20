@@ -12,7 +12,7 @@ def build_spec() -> UISpec:
         id="reddit.commenter.v1",
         name="Reddit Commenter",
         version="1.0.0",
-        capabilities=["page","table","modal","form","button","link"],
+        capabilities=["page", "table", "modal", "form", "button", "link"],
     )
 
     data = {
@@ -31,10 +31,27 @@ def build_spec() -> UISpec:
     }
 
     actions = {
-        "openPost": {"kind": "open_url", "url": "https://www.reddit.com/comments/{{ row.id | strip_prefix:'t3_' }}/"},
-        "genComment": {"kind": "http", "method": "POST", "url": "http://localhost:18000/api/v1/reddit-commenter/gen-comment", "body": {"post_id": "{{ row.id }}"}},
-        "approve": {"kind": "http", "method": "POST", "url": "http://localhost:8000/api/chat/stream", "stream": True, "body": {"items": "{{ map @ui.selected to @posts }}"}},
-        "editComment": {"kind": "state.set", "operations": [{"path": "posts[{{ rowIndex }}].comment", "value": "{{ event.value }}"}]},
+        "openPost": {
+            "kind": "open_url",
+            "url": "https://www.reddit.com/comments/{{ row.id | strip_prefix:'t3_' }}/",
+        },
+        "genComment": {
+            "kind": "http",
+            "method": "POST",
+            "url": "http://localhost:18000/api/v1/reddit-commenter/gen-comment",
+            "body": {"post_id": "{{ row.id }}"},
+        },
+        "approve": {
+            "kind": "http",
+            "method": "POST",
+            "url": "http://localhost:8000/api/chat/stream",
+            "stream": True,
+            "body": {"items": "{{ map @ui.selected to @posts }}"},
+        },
+        "editComment": {
+            "kind": "state.set",
+            "operations": [{"path": "posts[{{ rowIndex }}].comment", "value": "{{ event.value }}"}],
+        },
     }
 
     view = View(
@@ -48,16 +65,59 @@ def build_spec() -> UISpec:
                     "data": "@posts",
                     "selection": {"mode": "multi", "bind": "@ui.selected"},
                     "columns": [
-                        {"header": "Title", "cell": {"type": "link", "props": {"text": "{{ title }}", "onPress": {"action": "openPost"}}}},
-                        {"header": "Content", "cell": {"type": "text", "props": {"text": "{{ content }}", "truncate": 50}}},
-                        {"header": "Comment", "cell": {"type": "textarea", "props": {"text": "{{ comment }}", "onChange": {"action": "editComment"}}}},
-                        {"header": "Subreddit", "cell": {"type": "link", "props": {"text": "r/{{ source }}", "url": "https://www.reddit.com/r/{{ source }}/"}}},
-                        {"header": "Upvotes", "cell": {"type": "text", "props": {"text": "{{ score }}"}}},
-                        {"header": "Comments", "cell": {"type": "text", "props": {"text": "{{ commentCount }}"}}},
+                        {
+                            "header": "Title",
+                            "cell": {
+                                "type": "link",
+                                "props": {"text": "{{ title }}", "onPress": {"action": "openPost"}},
+                            },
+                        },
+                        {
+                            "header": "Content",
+                            "cell": {
+                                "type": "text",
+                                "props": {"text": "{{ content }}", "truncate": 50},
+                            },
+                        },
+                        {
+                            "header": "Comment",
+                            "cell": {
+                                "type": "textarea",
+                                "props": {
+                                    "text": "{{ comment }}",
+                                    "onChange": {"action": "editComment"},
+                                },
+                            },
+                        },
+                        {
+                            "header": "Subreddit",
+                            "cell": {
+                                "type": "link",
+                                "props": {
+                                    "text": "r/{{ source }}",
+                                    "url": "https://www.reddit.com/r/{{ source }}/",
+                                },
+                            },
+                        },
+                        {
+                            "header": "Upvotes",
+                            "cell": {"type": "text", "props": {"text": "{{ score }}"}},
+                        },
+                        {
+                            "header": "Comments",
+                            "cell": {"type": "text", "props": {"text": "{{ commentCount }}"}},
+                        },
                     ],
                 },
             ),
-            Component(type="button", props={"text": "댓글 승인", "onPress": {"action": "approve"}, "disabled": "{{ length(@ui.selected) == 0 }}"}),
+            Component(
+                type="button",
+                props={
+                    "text": "댓글 승인",
+                    "onPress": {"action": "approve"},
+                    "disabled": "{{ length(@ui.selected) == 0 }}",
+                },
+            ),
         ],
     )
 
@@ -66,4 +126,4 @@ def build_spec() -> UISpec:
 
 if __name__ == "__main__":
     spec = build_spec()
-    print(json.dumps(spec.model_dump(mode="json"), indent=2)) 
+    print(json.dumps(spec.model_dump(mode="json"), indent=2))

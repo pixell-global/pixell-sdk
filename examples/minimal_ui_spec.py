@@ -26,7 +26,10 @@ def build_spec() -> UISpec:
             children=[
                 Component(
                     type="list",
-                    props={"data": "@items", "item": {"type": "text", "props": {"text": "{{ title }}"}}},
+                    props={
+                        "data": "@items",
+                        "item": {"type": "text", "props": {"text": "{{ title }}"}},
+                    },
                 ),
                 Component(
                     type="button",
@@ -39,4 +42,4 @@ def build_spec() -> UISpec:
 
 if __name__ == "__main__":
     spec = build_spec()
-    print(json.dumps(spec.model_dump(mode="json"), indent=2)) 
+    print(json.dumps(spec.model_dump(mode="json"), indent=2))

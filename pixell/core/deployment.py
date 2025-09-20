@@ -279,17 +279,17 @@ class DeploymentClient:
 
 def get_config() -> Dict[str, Any]:
     """Get configuration from environment variables and config files.
-    
+
     Configuration is loaded in the following order of precedence:
     1. Environment variables
     2. Project-level config file (.pixell/config.json)
     3. User-level config file (~/.pixell/config.json)
-    
+
     Returns:
         Configuration dictionary with api_key, app_id, and environment settings
     """
     config = {}
-    
+
     # Check environment variables first
     if os.environ.get("PIXELL_API_KEY"):
         config["api_key"] = os.environ.get("PIXELL_API_KEY")
@@ -297,24 +297,26 @@ def get_config() -> Dict[str, Any]:
         config["app_id"] = os.environ.get("PIXELL_APP_ID")
     if os.environ.get("PIXELL_ENVIRONMENT"):
         config["environment"] = os.environ.get("PIXELL_ENVIRONMENT")
-    
+
     # Check project-level config file
     project_config_file = Path(".pixell") / "config.json"
     if project_config_file.exists():
         try:
             import json
+
             with open(project_config_file) as f:
                 project_config = json.load(f)
                 # Project config takes precedence over environment variables
                 config.update(project_config)
         except Exception:
             pass
-    
+
     # Check user-level config file
     user_config_file = Path.home() / ".pixell" / "config.json"
     if user_config_file.exists():
         try:
             import json
+
             with open(user_config_file) as f:
                 user_config = json.load(f)
                 # User config is used as fallback for missing values
@@ -323,7 +325,7 @@ def get_config() -> Dict[str, Any]:
                         config[key] = value
         except Exception:
             pass
-    
+
     return config
 
 
@@ -339,31 +341,31 @@ def get_api_key() -> Optional[str]:
 
 def get_app_id(environment: str = "prod") -> Optional[str]:
     """Get app ID for the specified environment.
-    
+
     Args:
         environment: Environment name (prod, staging, local, etc.)
-        
+
     Returns:
         App ID if found, None otherwise
     """
     config = get_config()
-    
+
     # Check for environment-specific app_id
     if "environments" in config and environment in config["environments"]:
         env_config = config["environments"][environment]
         if "app_id" in env_config:
             return env_config["app_id"]
-    
+
     # Check for global app_id
     if "app_id" in config:
         return config["app_id"]
-    
+
     return None
 
 
 def get_default_environment() -> str:
     """Get the default environment from config.
-    
+
     Returns:
         Default environment name, defaults to 'prod'
     """

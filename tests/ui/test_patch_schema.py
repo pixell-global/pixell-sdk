@@ -17,4 +17,4 @@ def test_patch_schema_valid():
 def test_patch_schema_invalid_missing_path():
     env = {"type": "ui.patch", "patch": [{"op": "add", "value": 1}]}
     with pytest.raises(Exception):
-        validate_envelope(env) 
+        validate_envelope(env)

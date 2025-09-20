@@ -12,13 +12,13 @@ from pathlib import Path
 
 class TestListCommand:
     """Test the list command functionality."""
-    
+
     @pytest.fixture
     def temp_registry(self):
         """Create a temporary registry for testing."""
         temp_dir = tempfile.mkdtemp()
         registry = Registry(registry_path=Path(temp_dir))
-        
+
         # Add test agents
         test_agents = [
             AgentInfo(
@@ -36,9 +36,9 @@ class TestListCommand:
                         description="Test sub-agent",
                         endpoint="/test",
                         capabilities=["testing"],
-                        public=True
+                        public=True,
                     )
-                ]
+                ],
             ),
             AgentInfo(
                 name="test-agent-2",
@@ -48,135 +48,144 @@ class TestListCommand:
                 author="Test Corp",
                 license="Apache-2.0",
                 extensive_description="This is a longer description for testing.",
-                tags=["test", "example", "nlp"]
-            )
+                tags=["test", "example", "nlp"],
+            ),
         ]
-        
+
         for agent in test_agents:
             registry.register_agent(agent)
-        
+
         yield registry
-        
+
         # Cleanup
         shutil.rmtree(temp_dir)
-    
+
     def test_list_command_exists(self):
         """Test that the list command exists and has help."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list', '--help'])
-        
+        result = runner.invoke(cli, ["list", "--help"])
+
         assert result.exit_code == 0
-        assert 'List installed agents' in result.output
-        assert '--format' in result.output
-        assert '--search' in result.output
-        assert '--show-sub-agents' in result.output
-        assert '--help' in result.output
-    
+        assert "List installed agents" in result.output
+        assert "--format" in result.output
+        assert "--search" in result.output
+        assert "--show-sub-agents" in result.output
+        assert "--help" in result.output
+
     def test_list_table_format(self):
         """Test list command with table format."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list'])
-        
+        result = runner.invoke(cli, ["list"])
+
         assert result.exit_code == 0
         # With no agents installed, should show empty message
-        assert ('No agents installed' in result.output or 
-                'Name' in result.output and 'Version' in result.output)
-    
+        assert (
+            "No agents installed" in result.output
+            or "Name" in result.output
+            and "Version" in result.output
+        )
+
     def test_list_json_format(self):
         """Test list command with JSON format."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list', '--format', 'json'])
-        
+        result = runner.invoke(cli, ["list", "--format", "json"])
+
         assert result.exit_code == 0
-        
+
         # Extract JSON from output
-        lines = result.output.strip().split('\n')
+        lines = result.output.strip().split("\n")
         # Find where JSON starts (after any messages)
         json_start = -1
         for i, line in enumerate(lines):
-            if line.strip().startswith('[') or line.strip().startswith('{'):
+            if line.strip().startswith("[") or line.strip().startswith("{"):
                 json_start = i
                 break
-        
+
         if json_start >= 0:
-            json_output = '\n'.join(lines[json_start:])
-            
+            json_output = "\n".join(lines[json_start:])
+
             # Verify it's valid JSON
             try:
                 data = json.loads(json_output)
                 assert isinstance(data, list)  # Should be a list of agents
-                
+
                 # If agents are loaded, verify structure
                 if data:
                     agent = data[0]
-                    assert 'name' in agent
-                    assert 'version' in agent
-                    assert 'description' in agent
-                    assert 'author' in agent
+                    assert "name" in agent
+                    assert "version" in agent
+                    assert "description" in agent
+                    assert "author" in agent
             except json.JSONDecodeError as e:
                 pytest.fail(f"Output is not valid JSON: {e}")
-    
+
     def test_list_detailed_format(self):
         """Test list command with detailed format."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list', '--format', 'detailed'])
-        
+        result = runner.invoke(cli, ["list", "--format", "detailed"])
+
         assert result.exit_code == 0
-        
+
         # Detailed format with no agents shows nothing (empty output)
         # or if there are agents, shows detailed sections
         if result.output.strip():  # If there's any output
             # Check for detailed sections
-            assert any(keyword in result.output for keyword in [
-                'Package name:', 'Author:', 'License:', 
-                'Capabilities:', 'Technical Details:'
-            ])
-    
+            assert any(
+                keyword in result.output
+                for keyword in [
+                    "Package name:",
+                    "Author:",
+                    "License:",
+                    "Capabilities:",
+                    "Technical Details:",
+                ]
+            )
+
     def test_list_with_search(self):
         """Test list command with search functionality."""
         runner = CliRunner()
-        
+
         # Search for something that likely exists in sample data
-        result = runner.invoke(cli, ['list', '--search', 'text'])
+        result = runner.invoke(cli, ["list", "--search", "text"])
         assert result.exit_code == 0
-        
+
         # Search for something that likely doesn't exist
-        result = runner.invoke(cli, ['list', '--search', 'nonexistentxyz123'])
+        result = runner.invoke(cli, ["list", "--search", "nonexistentxyz123"])
         assert result.exit_code == 0
-        assert 'No agents found matching' in result.output
-    
+        assert "No agents found matching" in result.output
+
     def test_list_show_sub_agents(self):
         """Test list command with sub-agents flag."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list', '--show-sub-agents'])
-        
+        result = runner.invoke(cli, ["list", "--show-sub-agents"])
+
         assert result.exit_code == 0
-        
+
         # If agents with sub-agents are shown, check for indication
-        if 'No agents installed' not in result.output and 'Total:' in result.output:
+        if "No agents installed" not in result.output and "Total:" in result.output:
             # Sub-agents would be shown with indentation
-            assert ('└─' in result.output or 'No agents' in result.output)
-    
+            assert "└─" in result.output or "No agents" in result.output
+
     def test_list_invalid_format(self):
         """Test list command with invalid format."""
         runner = CliRunner()
-        result = runner.invoke(cli, ['list', '--format', 'invalid'])
-        
+        result = runner.invoke(cli, ["list", "--format", "invalid"])
+
         assert result.exit_code != 0
-        assert 'Invalid value for' in result.output
-    
+        assert "Invalid value for" in result.output
+
     def test_list_combined_options(self):
         """Test list command with multiple options."""
         runner = CliRunner()
-        
+
         # Test search with JSON format
-        result = runner.invoke(cli, ['list', '--search', 'test', '--format', 'json'])
+        result = runner.invoke(cli, ["list", "--search", "test", "--format", "json"])
         assert result.exit_code == 0
-        
+
         # Test search with detailed format
-        result = runner.invoke(cli, ['list', '--search', 'test', '--format', 'detailed'])
+        result = runner.invoke(cli, ["list", "--search", "test", "--format", "detailed"])
         assert result.exit_code == 0
-    
+
     def test_registry_integration(self, temp_registry):
         """Test that the registry module works correctly."""
         # Test listing agents
@@ -184,23 +193,23 @@ class TestListCommand:
         assert len(agents) == 2
         assert agents[0].name == "test-agent-1"
         assert agents[1].name == "test-agent-2"
-        
+
         # Test searching
         results = temp_registry.search_agents("nlp")
         assert len(results) == 1
         assert results[0].name == "test-agent-2"
-        
+
         # Test getting specific agent
         agent = temp_registry.get_agent("test-agent-1")
         assert agent is not None
         assert agent.display_name == "Test Agent One"
         assert len(agent.sub_agents) == 1
-        
+
         # Test JSON serialization
         agent_dict = agent.to_dict()
-        assert agent_dict['name'] == "test-agent-1"
-        assert 'install_date' in agent_dict
-        
+        assert agent_dict["name"] == "test-agent-1"
+        assert "install_date" in agent_dict
+
         # Test removing agent
         assert temp_registry.unregister_agent("test-agent-1") is True
         assert temp_registry.get_agent("test-agent-1") is None

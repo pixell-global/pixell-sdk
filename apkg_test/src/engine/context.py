@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 @dataclass
 class ExecutionContext:
     """Context for code execution including variables and metadata."""
+
     code: str
     patterns: List[str]
     full_context: Dict[str, Any]

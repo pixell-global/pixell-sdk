@@ -74,7 +74,9 @@ def handle_ui_event(event_dict: dict) -> dict:
     url = event.params.get("url") or "https://httpbin.org/status/200"
     http_details = perform_http_get(url)
 
-    status = "ok" if http_details.get("status_code") and http_details["status_code"] < 400 else "error"
+    status = (
+        "ok" if http_details.get("status_code") and http_details["status_code"] < 400 else "error"
+    )
 
     # 6) Build normalized result envelope
     result = IntentResult(
@@ -113,4 +115,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()

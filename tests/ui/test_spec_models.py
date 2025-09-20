@@ -20,7 +20,13 @@ def test_minimal_valid_uispec() -> None:
             type="page",
             title="Items",
             children=[
-                Component(type="list", props={"data": "@items", "item": {"type": "text", "props": {"text": "{{ title }}"}}}),
+                Component(
+                    type="list",
+                    props={
+                        "data": "@items",
+                        "item": {"type": "text", "props": {"text": "{{ title }}"}},
+                    },
+                ),
                 Component(type="button", props={"text": "Open", "onPress": {"action": "open"}}),
             ],
         ),
@@ -35,8 +41,16 @@ def test_table_view_example_like_prd() -> None:
         manifest=Manifest(id="reddit.commenter.v1", name="Reddit Commenter", version="1.0.0"),
         data={"posts": [{"title": "A"}], "ui": {"selected": []}},
         actions={
-            "openPost": {"kind": "open_url", "url": "https://www.reddit.com/comments/{{ row.id }}/"},
-            "approve": {"kind": "http", "method": "POST", "url": "http://localhost:8000/api/chat/stream", "stream": True},
+            "openPost": {
+                "kind": "open_url",
+                "url": "https://www.reddit.com/comments/{{ row.id }}/",
+            },
+            "approve": {
+                "kind": "http",
+                "method": "POST",
+                "url": "http://localhost:8000/api/chat/stream",
+                "stream": True,
+            },
         },
         view=View(
             type="page",
@@ -48,11 +62,16 @@ def test_table_view_example_like_prd() -> None:
                         "data": "@posts",
                         "selection": {"mode": "multi", "bind": "@ui.selected"},
                         "columns": [
-                            {"header": "Title", "cell": {"type": "text", "props": {"text": "{{ title }}"}}},
+                            {
+                                "header": "Title",
+                                "cell": {"type": "text", "props": {"text": "{{ title }}"}},
+                            },
                         ],
                     },
                 ),
-                Component(type="button", props={"text": "Approve", "onPress": {"action": "approve"}}),
+                Component(
+                    type="button", props={"text": "Approve", "onPress": {"action": "approve"}}
+                ),
             ],
         ),
     )
@@ -61,4 +80,4 @@ def test_table_view_example_like_prd() -> None:
 
 def test_invalid_component_type_raises() -> None:
     with pytest.raises(ValidationError):
-        Component(type="unknown", props={}) 
+        Component(type="unknown", props={})
