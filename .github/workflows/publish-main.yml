@@ -3,11 +3,6 @@ name: Publish to PyPI on Main Push
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'pixell/**'
-      - 'pyproject.toml'
-      - 'setup.py'
-      - 'pixell/__init__.py'
 
 jobs:
   test:
