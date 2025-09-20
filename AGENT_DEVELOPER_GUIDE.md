@@ -401,27 +401,81 @@ The deploy command supports two environments:
 - **Production** (`--env prod`): `https://main.d2o02924ohm5pe.amplifyapp.com/` (default)
 - **Local Development** (`--env local`): `http://localhost:4000`
 
-#### Authentication
+#### Authentication & Configuration
 
-You can provide your API key in several ways:
+You can provide your API key and app ID in several ways, with the following order of precedence:
 
-1. **Command line parameter**:
+1. **Command line parameters** (highest priority):
    ```bash
    pixell deploy --apkg-file my-agent.apkg --app-id your-app-id --api-key your-api-key
    ```
 
-2. **Environment variable**:
+2. **Environment variables**:
    ```bash
    export PIXELL_API_KEY=your-api-key
-   pixell deploy --apkg-file my-agent.apkg --app-id your-app-id
+   export PIXELL_APP_ID=your-app-id
+   export PIXELL_ENVIRONMENT=prod
+   pixell deploy --apkg-file my-agent.apkg
    ```
 
-3. **Configuration file** (`~/.pixell/config.json`):
+3. **Project-level configuration** (`.pixell/config.json`):
    ```json
    {
-     "api_key": "your-api-key"
+     "api_key": "your-api-key",
+     "app_id": "your-default-app-id",
+     "default_environment": "prod",
+     "environments": {
+       "prod": {"app_id": "your-prod-app-id"},
+       "staging": {"app_id": "your-staging-app-id"},
+       "local": {"app_id": "your-local-app-id"}
+     }
    }
    ```
+
+4. **Global configuration** (`~/.pixell/config.json`):
+   ```json
+   {
+     "api_key": "your-api-key",
+     "app_id": "your-default-app-id"
+   }
+   ```
+
+#### Configuration Management
+
+Use the built-in configuration commands to manage your credentials:
+
+```bash
+# Initialize configuration interactively
+pixell config init
+
+# Set individual values
+pixell config set --api-key your-api-key
+pixell config set --app-id your-app-id
+pixell config set --env-app-id prod:your-prod-app-id
+pixell config set --env-app-id staging:your-staging-app-id
+
+# Set global configuration (affects all projects)
+pixell config set --global --api-key your-api-key
+
+# View current configuration
+pixell config show
+pixell config show --global
+```
+
+#### Simplified Deployment
+
+Once configured, you can deploy without specifying credentials every time:
+
+```bash
+# Deploy to production (uses stored credentials)
+pixell deploy --apkg-file my-agent.apkg
+
+# Deploy to staging (uses environment-specific app ID)
+pixell deploy --apkg-file my-agent.apkg --env staging
+
+# Deploy to local development
+pixell deploy --apkg-file my-agent.apkg --env local
+```
 
 #### Deployment Process
 

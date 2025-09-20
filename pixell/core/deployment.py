@@ -277,27 +277,95 @@ class DeploymentClient:
             raise DeploymentError(f"Failed to get queue stats: {str(e)}")
 
 
+def get_config() -> Dict[str, Any]:
+    """Get configuration from environment variables and config files.
+    
+    Configuration is loaded in the following order of precedence:
+    1. Environment variables
+    2. Project-level config file (.pixell/config.json)
+    3. User-level config file (~/.pixell/config.json)
+    
+    Returns:
+        Configuration dictionary with api_key, app_id, and environment settings
+    """
+    config = {}
+    
+    # Check environment variables first
+    if os.environ.get("PIXELL_API_KEY"):
+        config["api_key"] = os.environ.get("PIXELL_API_KEY")
+    if os.environ.get("PIXELL_APP_ID"):
+        config["app_id"] = os.environ.get("PIXELL_APP_ID")
+    if os.environ.get("PIXELL_ENVIRONMENT"):
+        config["environment"] = os.environ.get("PIXELL_ENVIRONMENT")
+    
+    # Check project-level config file
+    project_config_file = Path(".pixell") / "config.json"
+    if project_config_file.exists():
+        try:
+            import json
+            with open(project_config_file) as f:
+                project_config = json.load(f)
+                # Project config takes precedence over environment variables
+                config.update(project_config)
+        except Exception:
+            pass
+    
+    # Check user-level config file
+    user_config_file = Path.home() / ".pixell" / "config.json"
+    if user_config_file.exists():
+        try:
+            import json
+            with open(user_config_file) as f:
+                user_config = json.load(f)
+                # User config is used as fallback for missing values
+                for key, value in user_config.items():
+                    if key not in config:
+                        config[key] = value
+        except Exception:
+            pass
+    
+    return config
+
+
 def get_api_key() -> Optional[str]:
     """Get API key from environment or config file.
 
     Returns:
         API key if found, None otherwise
     """
-    # First check environment variable
-    api_key = os.environ.get("PIXELL_API_KEY")
-    if api_key:
-        return api_key
+    config = get_config()
+    return config.get("api_key")
 
-    # Check config file
-    config_file = Path.home() / ".pixell" / "config.json"
-    if config_file.exists():
-        import json
 
-        try:
-            with open(config_file) as f:
-                config = json.load(f)
-                return config.get("api_key")  # type: ignore
-        except Exception:
-            pass
-
+def get_app_id(environment: str = "prod") -> Optional[str]:
+    """Get app ID for the specified environment.
+    
+    Args:
+        environment: Environment name (prod, staging, local, etc.)
+        
+    Returns:
+        App ID if found, None otherwise
+    """
+    config = get_config()
+    
+    # Check for environment-specific app_id
+    if "environments" in config and environment in config["environments"]:
+        env_config = config["environments"][environment]
+        if "app_id" in env_config:
+            return env_config["app_id"]
+    
+    # Check for global app_id
+    if "app_id" in config:
+        return config["app_id"]
+    
     return None
+
+
+def get_default_environment() -> str:
+    """Get the default environment from config.
+    
+    Returns:
+        Default environment name, defaults to 'prod'
+    """
+    config = get_config()
+    return config.get("default_environment", "prod")

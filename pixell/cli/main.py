@@ -448,7 +448,7 @@ def status(deployment_id, env, api_key, follow, json_output):
     default="prod",
     help="Deployment environment (local or prod)",
 )
-@click.option("--app-id", "-a", required=True, help="Agent app ID to deploy to")
+@click.option("--app-id", "-a", help="Agent app ID to deploy to (can also use PIXELL_APP_ID env var or config file)")
 @click.option(
     "--version", "-v", help="Version string (optional, will extract from package if not provided)"
 )
@@ -476,6 +476,8 @@ def deploy(
         InsufficientCreditsError,
         ValidationError,
         get_api_key,
+        get_app_id,
+        get_default_environment,
     )
 
     # Get API key from parameter, environment, or config
@@ -486,6 +488,26 @@ def deploy(
         click.secho(
             "ERROR: No API key provided. Use --api-key, set PIXELL_API_KEY environment variable, or configure in ~/.pixell/config.json",
             fg="red",
+        )
+        ctx = click.get_current_context()
+        ctx.exit(1)
+
+    # Get app ID from parameter, environment, or config
+    if not app_id:
+        app_id = get_app_id(env)
+
+    if not app_id:
+        click.secho(
+            f"ERROR: No app ID provided for environment '{env}'. Use --app-id, set PIXELL_APP_ID environment variable, or configure in ~/.pixell/config.json",
+            fg="red",
+        )
+        click.secho(
+            "Example config file structure:",
+            fg="yellow",
+        )
+        click.secho(
+            '{\n  "api_key": "your-api-key",\n  "environments": {\n    "prod": {"app_id": "your-prod-app-id"},\n    "local": {"app_id": "your-local-app-id"}\n  }\n}',
+            fg="yellow",
         )
         ctx = click.get_current_context()
         ctx.exit(1)
@@ -859,6 +881,140 @@ For more information, visit: https://github.com/pixell-global/pixell-kit
     if topic == "all":
         click.echo("\n" + "=" * 80 + "\n")
         click.echo("For specific topics, use: pixell guide --topic build")
+
+
+@cli.group()
+def config():
+    """Manage Pixell configuration."""
+    pass
+
+
+@config.command("set")
+@click.option("--api-key", "-k", help="Set API key")
+@click.option("--app-id", "-a", help="Set app ID")
+@click.option("--environment", "-e", help="Set default environment")
+@click.option("--env-app-id", help="Set app ID for specific environment (format: env:app-id)")
+@click.option("--global", "is_global", is_flag=True, help="Set global configuration (default: project-level)")
+def config_set(api_key, app_id, environment, env_app_id, is_global):
+    """Set configuration values."""
+    import json
+    from pathlib import Path
+    
+    # Determine config file location
+    if is_global:
+        config_dir = Path.home() / ".pixell"
+        config_file = config_dir / "config.json"
+    else:
+        config_dir = Path(".pixell")
+        config_file = config_dir / "config.json"
+    
+    # Create config directory if it doesn't exist
+    config_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Load existing config
+    config = {}
+    if config_file.exists():
+        try:
+            with open(config_file) as f:
+                config = json.load(f)
+        except Exception:
+            pass
+    
+    # Update config values
+    if api_key:
+        config["api_key"] = api_key
+        click.secho(f"✓ API key set in {config_file}", fg="green")
+    
+    if app_id:
+        config["app_id"] = app_id
+        click.secho(f"✓ App ID set in {config_file}", fg="green")
+    
+    if environment:
+        config["default_environment"] = environment
+        click.secho(f"✓ Default environment set to '{environment}' in {config_file}", fg="green")
+    
+    if env_app_id:
+        if ":" not in env_app_id:
+            click.secho("ERROR: env-app-id must be in format 'environment:app-id'", fg="red")
+            return
+        
+        env_name, env_app_id_value = env_app_id.split(":", 1)
+        if "environments" not in config:
+            config["environments"] = {}
+        config["environments"][env_name] = {"app_id": env_app_id_value}
+        click.secho(f"✓ App ID for environment '{env_name}' set in {config_file}", fg="green")
+    
+    # Save config
+    with open(config_file, "w") as f:
+        json.dump(config, f, indent=2)
+    
+    if not any([api_key, app_id, environment, env_app_id]):
+        click.secho("No values provided. Use --help to see available options.", fg="yellow")
+
+
+@config.command("show")
+@click.option("--global", "is_global", is_flag=True, help="Show global configuration (default: project-level)")
+def config_show(is_global):
+    """Show current configuration."""
+    import json
+    from pathlib import Path
+    
+    # Determine config file location
+    if is_global:
+        config_file = Path.home() / ".pixell" / "config.json"
+        config_type = "Global"
+    else:
+        config_file = Path(".pixell") / "config.json"
+        config_type = "Project"
+    
+    if not config_file.exists():
+        click.secho(f"No {config_type.lower()} configuration found at {config_file}", fg="yellow")
+        return
+    
+    try:
+        with open(config_file) as f:
+            config = json.load(f)
+        
+        click.secho(f"{config_type} Configuration ({config_file}):", fg="cyan", bold=True)
+        click.echo(json.dumps(config, indent=2))
+    except Exception as e:
+        click.secho(f"Error reading config file: {e}", fg="red")
+
+
+@config.command("init")
+@click.option("--api-key", "-k", prompt="API Key", help="Your Pixell API key")
+@click.option("--app-id", "-a", prompt="App ID", help="Your default app ID")
+@click.option("--environment", "-e", default="prod", help="Default environment")
+@click.option("--global", "is_global", is_flag=True, help="Initialize global configuration (default: project-level)")
+def config_init(api_key, app_id, environment, is_global):
+    """Initialize configuration with interactive setup."""
+    import json
+    from pathlib import Path
+    
+    # Determine config file location
+    if is_global:
+        config_dir = Path.home() / ".pixell"
+        config_file = config_dir / "config.json"
+    else:
+        config_dir = Path(".pixell")
+        config_file = config_dir / "config.json"
+    
+    # Create config directory if it doesn't exist
+    config_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create initial config
+    config = {
+        "api_key": api_key,
+        "app_id": app_id,
+        "default_environment": environment
+    }
+    
+    # Save config
+    with open(config_file, "w") as f:
+        json.dump(config, f, indent=2)
+    
+    click.secho(f"✓ Configuration initialized at {config_file}", fg="green")
+    click.secho("You can now deploy without specifying --api-key and --app-id every time!", fg="cyan")
 
 
 if __name__ == "__main__":

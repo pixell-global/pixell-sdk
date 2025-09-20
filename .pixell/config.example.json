@@ -1,0 +1,16 @@
+{
+  "api_key": "your-api-key-here",
+  "app_id": "your-default-app-id",
+  "default_environment": "prod",
+  "environments": {
+    "prod": {
+      "app_id": "your-production-app-id"
+    },
+    "staging": {
+      "app_id": "your-staging-app-id"
+    },
+    "local": {
+      "app_id": "your-local-app-id"
+    }
+  }
+}
