@@ -354,11 +354,11 @@ def get_app_id(environment: str = "prod") -> Optional[str]:
     if "environments" in config and environment in config["environments"]:
         env_config = config["environments"][environment]
         if "app_id" in env_config:
-            return env_config["app_id"]
+            return str(env_config["app_id"])
 
     # Check for global app_id
     if "app_id" in config:
-        return config["app_id"]
+        return str(config["app_id"])
 
     return None
 
@@ -370,4 +370,4 @@ def get_default_environment() -> str:
         Default environment name, defaults to 'prod'
     """
     config = get_config()
-    return config.get("default_environment", "prod")
+    return str(config.get("default_environment", "prod"))
