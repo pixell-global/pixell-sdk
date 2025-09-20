@@ -124,3 +124,4 @@ This project is licensed under the [GNU Affero General Public License v3.0](LICE
 
 For organizations that do not wish to comply with AGPL-3.0 requirements,
 commercial licensing options are available. Contact us at engineering@pixell.global .
+# Trigger publish workflow
