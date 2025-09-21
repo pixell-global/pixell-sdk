@@ -30,7 +30,7 @@ class AgentManifest(BaseModel):
     description: str = Field(description="Agent description")
     author: str = Field(description="Agent author name")
     license: str = Field(description="License identifier (e.g., MIT, Apache-2.0)")
-    entrypoint: str = Field(description="Python module:function entry point")
+    entrypoint: Optional[str] = Field(default=None, description="Python module:function entry point (optional if REST or A2A configured)")
 
     # Optional fields
     capabilities: List[str] = Field(default_factory=list, description="Agent capabilities")
@@ -39,6 +39,31 @@ class AgentManifest(BaseModel):
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
     metadata: MetadataConfig = Field(..., description="Agent metadata")
+    # Surfaces (optional)
+    class A2AConfig(BaseModel):
+        service: str = Field(description="Module:function for A2A gRPC server entry")
+
+        @validator("service")
+        def validate_service(cls, v):  # type: ignore[no-redef]
+            if ":" not in v:
+                raise ValueError("A2A service must be in format 'module:function'")
+            return v
+
+    class RestConfig(BaseModel):
+        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app")
+
+        @validator("entry")
+        def validate_entry(cls, v):  # type: ignore[no-redef]
+            if ":" not in v:
+                raise ValueError("REST entry must be in format 'module:function'")
+            return v
+
+    class UIConfig(BaseModel):
+        path: str = Field(description="Path to built/static UI assets directory")
+
+    a2a: Optional[A2AConfig] = Field(default=None)
+    rest: Optional[RestConfig] = Field(default=None)
+    ui: Optional[UIConfig] = Field(default=None)
     # UI optional fields (per PRD)
     ui_spec_version: Optional[str] = Field(
         default=None, description="UI spec version used by this agent"
@@ -56,12 +81,7 @@ class AgentManifest(BaseModel):
             raise ValueError("Name must be lowercase letters, numbers, and hyphens only")
         return v
 
-    @validator("entrypoint")
-    def validate_entrypoint(cls, v):
-        """Validate entrypoint format."""
-        if ":" not in v:
-            raise ValueError("Entrypoint must be in format 'module:function'")
-        return v
+    # Removed strict entrypoint enforcement here; see below validator
 
     @validator("runtime")
     def validate_runtime(cls, v):
@@ -80,6 +100,16 @@ class AgentManifest(BaseModel):
         for dep in v:
             if not re.match(pattern, dep):
                 raise ValueError(f"Invalid dependency format: {dep}")
+        return v
+
+    @validator("entrypoint")
+    def validate_entrypoint_optional_when_surfaces(cls, v, values):  # type: ignore[no-redef]
+        # Allow omission when REST or A2A is configured; if provided, enforce format
+        if v is None:
+            # values may not include nested models until after validation; skip strict cross-field here
+            return v
+        if ":" not in v:
+            raise ValueError("Entrypoint must be in format 'module:function'")
         return v
 
     class Config:

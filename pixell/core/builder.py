@@ -73,6 +73,12 @@ class AgentBuilder:
             # Create requirements.txt if needed
             self._create_requirements(temp_path)
 
+            # Create dist/ layout for surfaces
+            self._create_dist_layout(temp_path)
+
+            # Create deploy.json hand-off metadata
+            self._create_deploy_metadata(temp_path)
+
             # Create the APKG archive
             self._create_apkg(temp_path, output_path)
 
@@ -156,6 +162,68 @@ class AgentBuilder:
             with open(req_path, "w") as f:
                 for dep in self.manifest.dependencies:
                     f.write(f"{dep}\n")
+
+    def _create_dist_layout(self, build_dir: Path):
+        """Create /dist directory with surfaces assets according to PRD."""
+        if not self.manifest:
+            raise BuildError("Manifest not loaded")
+
+        dist_dir = build_dir / "dist"
+        dist_dir.mkdir(exist_ok=True)
+
+        # A2A: copy server implementation into dist/a2a/
+        if getattr(self.manifest, "a2a", None) and self.manifest.a2a:
+            module_path, _func = self.manifest.a2a.service.split(":", 1)
+            src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
+            a2a_dir = dist_dir / "a2a"
+            a2a_dir.mkdir(exist_ok=True)
+            if src_file.exists():
+                shutil.copy2(src_file, a2a_dir / src_file.name)
+
+        # REST: copy entry module into dist/rest/
+        if getattr(self.manifest, "rest", None) and self.manifest.rest:
+            module_path, _func = self.manifest.rest.entry.split(":", 1)
+            src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
+            rest_dir = dist_dir / "rest"
+            rest_dir.mkdir(exist_ok=True)
+            if src_file.exists():
+                shutil.copy2(src_file, rest_dir / src_file.name)
+
+        # UI: copy static directory to dist/ui/
+        if getattr(self.manifest, "ui", None) and self.manifest.ui and self.manifest.ui.path:
+            ui_src = self.project_dir / self.manifest.ui.path
+            ui_dest = dist_dir / "ui"
+            if ui_src.exists() and ui_src.is_dir():
+                if ui_dest.exists():
+                    shutil.rmtree(ui_dest)
+                shutil.copytree(ui_src, ui_dest)
+
+    def _create_deploy_metadata(self, build_dir: Path):
+        """Emit deploy.json with exposed surfaces and ports."""
+        if not self.manifest:
+            raise BuildError("Manifest not loaded")
+
+        expose = []
+        ports = {}
+
+        if getattr(self.manifest, "rest", None) and self.manifest.rest:
+            expose.append("rest")
+            ports["rest"] = 8080
+        if getattr(self.manifest, "a2a", None) and self.manifest.a2a:
+            expose.append("a2a")
+            ports["a2a"] = 50051
+        if getattr(self.manifest, "ui", None) and self.manifest.ui:
+            expose.append("ui")
+            ports["ui"] = 3000
+
+        deploy = {
+            "expose": expose,
+            "ports": ports,
+            "multiplex": True,
+        }
+
+        with open(build_dir / "deploy.json", "w") as f:
+            json.dump(deploy, f, indent=2)
 
     def _create_apkg(self, source_dir: Path, output_path: Path):
         """Create the APKG ZIP archive."""

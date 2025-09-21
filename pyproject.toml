@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixell-kit"
-version = "0.3.5"
+version = "0.4.1"
 description = "A lightweight developer kit for packaging AI agents into portable APKG files"
 readme = "README.md"
 authors = [
     {name = "Pixell Core Team", email = "dev@pixell.global"}
 ]
-license = "Apache-2.0"
+license = {text = "Apache-2.0"}
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

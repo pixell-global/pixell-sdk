@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 from watchdog.observers import Observer
@@ -78,6 +79,11 @@ class DevServer:
             """Load agent on startup."""
             self._load_agent()
             self._start_file_watcher()
+            # Mount optional REST and UI surfaces
+            try:
+                self._mount_optional_surfaces()
+            except Exception as exc:
+                print(f"[WARN] Failed to mount optional surfaces: {exc}")
 
         @self.app.on_event("shutdown")
         async def shutdown():
@@ -156,6 +162,10 @@ class DevServer:
             print("[RELOAD] Detected changes, reloading agent...")
             try:
                 self._load_agent()
+                try:
+                    self._mount_optional_surfaces()
+                except Exception as exc:
+                    print(f"[WARN] Failed to remount optional surfaces: {exc}")
                 print("[SUCCESS] Agent reloaded successfully")
             except Exception as e:
                 print(f"[ERROR] Reload failed: {e}")
@@ -233,3 +243,37 @@ print(json.dumps(result))
             log_level="info",
             reload=False,  # We handle reloading ourselves
         )
+
+    def _mount_optional_surfaces(self):
+        """Mount REST routes and UI static assets when configured."""
+        if not self.manifest:
+            return
+
+        # Mount REST routes if specified
+        try:
+            if getattr(self.manifest, "rest", None) and self.manifest.rest:
+                entry = self.manifest.rest.entry
+                module_path, func_name = entry.split(":", 1)
+                import importlib
+
+                module = importlib.import_module(module_path)
+                mount_func = getattr(module, func_name)
+                # Expecting mount_func(FastAPI) -> None
+                mount_func(self.app)
+                print(f"[REST] Mounted routes from {entry}")
+        except Exception as exc:
+            print(f"[WARN] REST mount failed: {exc}")
+
+        # Serve UI static assets if specified
+        try:
+            if getattr(self.manifest, "ui", None) and self.manifest.ui and self.manifest.ui.path:
+                ui_dir = Path(self.project_dir) / self.manifest.ui.path
+                if ui_dir.exists() and ui_dir.is_dir():
+                    # Mount at /ui to avoid clobbering root
+                    # If already mounted, first unmounting isn't straightforward; rely on reload process restart in dev
+                    self.app.mount("/ui", StaticFiles(directory=str(ui_dir), html=True), name="ui")
+                    print(f"[UI] Serving static assets from {ui_dir} at /ui")
+                else:
+                    print(f"[WARN] UI path not found or not a directory: {ui_dir}")
+        except Exception as exc:
+            print(f"[WARN] UI mount failed: {exc}")

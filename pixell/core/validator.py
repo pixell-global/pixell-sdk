@@ -43,6 +43,9 @@ class AgentValidator:
             if manifest.mcp and manifest.mcp.enabled:
                 self._validate_mcp_config(manifest)
 
+            # Validate optional surfaces
+            self._validate_surfaces(manifest)
+
         return len(self.errors) == 0, self.errors, self.warnings
 
     def _validate_project_structure(self):
@@ -101,6 +104,11 @@ class AgentValidator:
 
     def _validate_entrypoint(self, manifest: AgentManifest):
         """Validate the entrypoint exists and is callable."""
+        # Entrypoint can be optional when any surface is configured
+        if not manifest.entrypoint:
+            if not (manifest.rest or manifest.a2a or manifest.ui):
+                self.errors.append("Entrypoint is required when no surfaces are configured")
+            return
         module_path, function_name = manifest.entrypoint.split(":", 1)
 
         # Convert module path to file path
@@ -118,6 +126,56 @@ class AgentValidator:
                     self.warnings.append(f"Function '{function_name}' not found in {file_path}")
         except Exception as e:
             self.errors.append(f"Error reading entry point file: {e}")
+
+    def _validate_surfaces(self, manifest: AgentManifest):
+        """Validate A2A, REST, and UI configuration."""
+        # REST
+        if manifest.rest:
+            try:
+                rest_module, rest_func = manifest.rest.entry.split(":", 1)
+                rest_file = self.project_dir / (rest_module.replace(".", "/") + ".py")
+                if not rest_file.exists():
+                    self.errors.append(f"REST entry module not found: {rest_file}")
+                else:
+                    try:
+                        with open(rest_file, "r") as f:
+                            content = f.read()
+                            if f"def {rest_func}" not in content:
+                                self.warnings.append(
+                                    f"REST entry function '{rest_func}' not found in {rest_file}"
+                                )
+                    except Exception as exc:
+                        self.warnings.append(f"Could not read REST entry file: {exc}")
+            except ValueError:
+                self.errors.append("REST entry must be in 'module:function' format")
+
+        # A2A
+        if manifest.a2a:
+            try:
+                a2a_module, a2a_func = manifest.a2a.service.split(":", 1)
+                a2a_file = self.project_dir / (a2a_module.replace(".", "/") + ".py")
+                if not a2a_file.exists():
+                    self.errors.append(f"A2A service module not found: {a2a_file}")
+                else:
+                    try:
+                        with open(a2a_file, "r") as f:
+                            content = f.read()
+                            if f"def {a2a_func}" not in content:
+                                self.warnings.append(
+                                    f"A2A service function '{a2a_func}' not found in {a2a_file}"
+                                )
+                    except Exception as exc:
+                        self.warnings.append(f"Could not read A2A service file: {exc}")
+            except ValueError:
+                self.errors.append("A2A service must be in 'module:function' format")
+
+        # UI
+        if manifest.ui and manifest.ui.path:
+            ui_path = self.project_dir / manifest.ui.path
+            if not ui_path.exists():
+                self.errors.append(f"UI path not found: {manifest.ui.path}")
+            elif not ui_path.is_dir():
+                self.errors.append(f"UI path is not a directory: {manifest.ui.path}")
 
     def _validate_dependencies(self, manifest: AgentManifest):
         """Validate dependencies format."""

@@ -19,10 +19,138 @@ def cli():
 
 @cli.command()
 @click.argument("name")
-def init(name):
-    """Initialize a new agent project."""
-    click.echo(f"Initializing agent project: {name}")
-    click.echo("Not implemented yet")
+@click.option(
+    "--surface",
+    "surfaces",
+    type=click.Choice(["a2a", "rest", "ui"], case_sensitive=False),
+    multiple=True,
+    help="Which surfaces to include (repeatable). Defaults to all.",
+)
+def init(name, surfaces):
+    """Initialize a new agent project (Python) with optional A2A/REST/UI surfaces."""
+    project_dir = Path(name).resolve()
+
+    if project_dir.exists():
+        click.secho(f"Directory already exists: {project_dir}", fg="red")
+        ctx = click.get_current_context()
+        ctx.exit(1)
+
+    if not surfaces:
+        surfaces = ("a2a", "rest", "ui")
+
+    # Create directories
+    (project_dir / "src").mkdir(parents=True)
+    if "rest" in surfaces:
+        (project_dir / "src" / "rest").mkdir(parents=True)
+    if "a2a" in surfaces:
+        (project_dir / "src" / "a2a").mkdir(parents=True)
+    if "ui" in surfaces:
+        (project_dir / "ui").mkdir(parents=True)
+
+    # agent.yaml
+    agent_yaml = {
+        "version": "1.0",
+        "name": name.replace("_", "-").lower(),
+        "display_name": name.replace("-", " ").title(),
+        "description": "A Pixell agent",
+        "author": "Your Name",
+        "license": "MIT",
+        # Entrypoint optional when REST or A2A present, include a default sample
+        "entrypoint": "src.main:handler",
+        "runtime": "python3.11",
+        "environment": {},
+        "dependencies": [
+            "fastapi>=0.112.0",
+            "uvicorn>=0.30.0",
+            "watchdog>=4.0.0",
+        ],
+        "metadata": {"version": "0.1.0"},
+    }
+
+    if "a2a" in surfaces:
+        agent_yaml["a2a"] = {"service": "src.a2a.server:serve"}
+    if "rest" in surfaces:
+        agent_yaml["rest"] = {"entry": "src.rest.index:mount"}
+    if "ui" in surfaces:
+        agent_yaml["ui"] = {"path": "ui"}
+
+    import yaml as _yaml
+    (project_dir / "agent.yaml").write_text(_yaml.safe_dump(agent_yaml, sort_keys=False))
+
+    # src/main.py
+    (project_dir / "src" / "main.py").write_text(
+        '''def handler(context):
+    """Example entrypoint."""
+    return {"message": "Hello from handler", "received": context}
+'''
+    )
+
+    # REST scaffold
+    if "rest" in surfaces:
+        (project_dir / "src" / "rest" / "index.py").write_text(
+            '''from fastapi import FastAPI
+
+
+def mount(app: FastAPI) -> None:
+    @app.get("/api/hello")
+    async def hello():
+        return {"message": "Hello from REST"}
+'''
+        )
+
+    # A2A scaffold (stub)
+    if "a2a" in surfaces:
+        (project_dir / "src" / "a2a" / "server.py").write_text(
+            '''def serve() -> None:
+    # TODO: Implement gRPC server per A2A protocol
+    print("A2A server stub - implement gRPC service here")
+'''
+        )
+
+    # UI scaffold
+    if "ui" in surfaces:
+        (project_dir / "ui" / "index.html").write_text(
+            '''<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixell Agent UI</title>
+    <style>body{font-family:system-ui, sans-serif; margin:40px}</style>
+  </head>
+  <body>
+    <h1>Pixell Agent UI</h1>
+    <p>Open <code>/api/hello</code> to test REST.</p>
+  </body>
+  </html>
+'''
+        )
+
+    # requirements.txt
+    (project_dir / "requirements.txt").write_text(
+        "\n".join(
+            [
+                "fastapi>=0.112.0",
+                "uvicorn>=0.30.0",
+                "watchdog>=4.0.0",
+            ]
+        )
+        + "\n"
+    )
+
+    # README
+    (project_dir / "README.md").write_text(
+        f"""# {agent_yaml['display_name']}
+
+Local dev:
+
+- Install deps: `pip install -r requirements.txt`
+- Run dev: `pixell dev -p . --port 8080` then open http://localhost:8080/ui/
+- Try REST: http://localhost:8080/api/hello
+"""
+    )
+
+    click.secho(f"✓ Initialized project at {project_dir}", fg="green")
 
 
 @cli.command()
@@ -77,6 +205,14 @@ def run_dev(path, port):
         click.secho(f"ERROR: Server error: {e}", fg="red")
         ctx = click.get_current_context()
         ctx.exit(1)
+
+
+@cli.command(name="dev")
+@click.option("--path", "-p", default=".", help="Path to agent project directory")
+@click.option("--port", default=8080, help="Port to run the server on")
+def dev(path, port):
+    """Alias for run-dev."""
+    return run_dev.callback(path, port)  # type: ignore[attr-defined]
 
 
 @cli.command()
@@ -185,7 +321,7 @@ def list(format, search, show_sub_agents):
                     )
                     public_tag = "[public]" if sub.public else "[private]"
                     click.echo(
-                        f"  └─ {sub.name:<{name_width - 3}} {'':<{version_width}} {public_tag:<{author_width}} {sub_desc}"
+                        f"  |-- {sub.name:<{name_width - 3}} {'':<{version_width}} {public_tag:<{author_width}} {sub_desc}"
                     )
 
         click.echo()
@@ -232,7 +368,7 @@ def list(format, search, show_sub_agents):
                 click.echo("\nSub-agents:")
                 for sub in agent.sub_agents:
                     status = "PUBLIC" if sub.public else "PRIVATE"
-                    click.echo(f"  • {sub.name} [{status}]")
+                    click.echo(f"  - {sub.name} [{status}]")
                     click.echo(f"    Description: {sub.description}")
                     click.echo(f"    Endpoint: {sub.endpoint}")
                     click.echo(f"    Capabilities: {', '.join(sub.capabilities)}")
@@ -782,14 +918,14 @@ To build an agent package (.apkg file), you need:
 ## Project Structure (Required)
 
   my-agent/
-  ├── agent.yaml          # REQUIRED: Agent manifest
-  ├── src/                # REQUIRED: Agent source code
-  │   ├── __init__.py
-  │   └── main.py         # Your agent implementation
-  ├── requirements.txt    # Optional: Python dependencies
-  ├── mcp.json           # Optional: MCP configuration
-  ├── README.md          # Optional: Documentation
-  └── LICENSE            # Optional: License file
+  |-- agent.yaml          # REQUIRED: Agent manifest
+  |-- src/                # REQUIRED: Agent source code
+  |   |-- __init__.py
+  |   |-- main.py         # Your agent implementation
+  |-- requirements.txt    # Optional: Python dependencies
+  |-- mcp.json           # Optional: MCP configuration
+  |-- README.md          # Optional: Documentation
+  |-- LICENSE            # Optional: License file
 
 ## agent.yaml - Required Fields
 
@@ -833,47 +969,47 @@ To build an agent package (.apkg file), you need:
 
 ## Validation Rules
 
-  • Name: lowercase letters, numbers, hyphens only
-  • Entrypoint: must be in module:function format
-  • Runtime: must be a supported runtime
-  • Dependencies: must follow pip format (package>=1.0.0)
-  • Structure: agent.yaml and src/ directory must exist
+  - Name: lowercase letters, numbers, hyphens only
+  - Entrypoint: must be in module:function format
+  - Runtime: must be a supported runtime
+  - Dependencies: must follow pip format (package>=1.0.0)
+  - Structure: agent.yaml and src/ directory must exist
 
 ## Common Errors
 
   "Required file missing: agent.yaml"
-  → Ensure agent.yaml exists in project root
+  -> Ensure agent.yaml exists in project root
 
   "Source directory 'src/' not found"
-  → Create a src/ directory with your code
+  -> Create a src/ directory with your code
 
   "Entrypoint module not found"
-  → Check that entrypoint path matches your file structure
-  → Example: src.main:handler needs src/main.py with handler function
+  -> Check that entrypoint path matches your file structure
+  -> Example: src.main:handler needs src/main.py with handler function
 
   "Invalid dependency format"
-  → Use pip format: package>=1.0.0, package==2.1.3
+  -> Use pip format: package>=1.0.0, package==2.1.3
 
   "Name must be lowercase letters, numbers, and hyphens only"
-  → Valid: my-agent, text-processor-2
-  → Invalid: My_Agent, agent.v1, AGENT
+  -> Valid: my-agent, text-processor-2
+  -> Invalid: My_Agent, agent.v1, AGENT
 
 ## Build Output
 
 The build creates: {agent-name}-{version}.apkg
 
 This ZIP archive contains:
-  • agent.yaml
-  • src/ directory (excluding __pycache__ and .pyc)
-  • Optional files (requirements.txt, README.md, LICENSE)
-  • Package metadata (.pixell/package.json)
+  - agent.yaml
+  - src/ directory (excluding __pycache__ and .pyc)
+  - Optional files (requirements.txt, README.md, LICENSE)
+  - Package metadata (.pixell/package.json)
 
 ## Next Steps
 
 After building your .apkg file:
-  • Test locally: pixell run-dev --path .
-  • Deploy: pixell deploy -f my-agent-1.0.0.apkg -a <app-id>
-  • Install: pixell install my-agent-1.0.0.apkg
+  - Test locally: pixell run-dev --path .
+  - Deploy: pixell deploy -f my-agent-1.0.0.apkg -a <app-id>
+  - Install: pixell install my-agent-1.0.0.apkg
 
 For more information, visit: https://github.com/pixell-global/pixell-kit
 """
