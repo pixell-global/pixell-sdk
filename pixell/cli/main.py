@@ -75,6 +75,7 @@ def init(name, surfaces):
         agent_yaml["ui"] = {"path": "ui"}
 
     import yaml as _yaml
+
     (project_dir / "agent.yaml").write_text(_yaml.safe_dump(agent_yaml, sort_keys=False))
 
     # src/main.py
@@ -88,29 +89,29 @@ def init(name, surfaces):
     # REST scaffold
     if "rest" in surfaces:
         (project_dir / "src" / "rest" / "index.py").write_text(
-            '''from fastapi import FastAPI
+            """from fastapi import FastAPI
 
 
 def mount(app: FastAPI) -> None:
     @app.get("/api/hello")
     async def hello():
         return {"message": "Hello from REST"}
-'''
+"""
         )
 
     # A2A scaffold (stub)
     if "a2a" in surfaces:
         (project_dir / "src" / "a2a" / "server.py").write_text(
-            '''def serve() -> None:
+            """def serve() -> None:
     # TODO: Implement gRPC server per A2A protocol
     print("A2A server stub - implement gRPC service here")
-'''
+"""
         )
 
     # UI scaffold
     if "ui" in surfaces:
         (project_dir / "ui" / "index.html").write_text(
-            '''<!doctype html>
+            """<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -123,7 +124,7 @@ def mount(app: FastAPI) -> None:
     <p>Open <code>/api/hello</code> to test REST.</p>
   </body>
   </html>
-'''
+"""
         )
 
     # requirements.txt
@@ -140,7 +141,7 @@ def mount(app: FastAPI) -> None:
 
     # README
     (project_dir / "README.md").write_text(
-        f"""# {agent_yaml['display_name']}
+        f"""# {agent_yaml["display_name"]}
 
 Local dev:
 

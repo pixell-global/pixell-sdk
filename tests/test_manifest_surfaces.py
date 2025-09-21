@@ -1,9 +1,6 @@
 """Tests for A2A/REST/UI surface support in agent manifests."""
 
 import pytest
-import tempfile
-import yaml
-from pathlib import Path
 
 from pixell.models.agent_manifest import AgentManifest
 
@@ -26,9 +23,9 @@ class TestAgentManifestSurfaces:
             "rest": {"entry": "src.rest.index:mount"},
             "ui": {"path": "ui"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
-        
+
         assert manifest.a2a is not None
         assert manifest.a2a.service == "src.a2a.server:serve"
         assert manifest.rest is not None
@@ -49,7 +46,7 @@ class TestAgentManifestSurfaces:
             "metadata": {"version": "1.0.0"},
             "rest": {"entry": "src.rest.index:mount"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.entrypoint is None
         assert manifest.rest is not None
@@ -68,7 +65,7 @@ class TestAgentManifestSurfaces:
             "metadata": {"version": "1.0.0"},
             "rest": {"entry": "src.rest.index:mount"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.entrypoint == "src.main:handler"
         assert manifest.rest is not None
@@ -87,16 +84,13 @@ class TestAgentManifestSurfaces:
             "metadata": {"version": "1.0.0"},
             "a2a": {"service": "src.a2a.server:serve"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.a2a.service == "src.a2a.server:serve"
 
         # Invalid format - missing colon
         with pytest.raises(ValueError, match="A2A service must be in format 'module:function'"):
-            AgentManifest(**{
-                **manifest_data,
-                "a2a": {"service": "src.a2a.server.serve"}
-            })
+            AgentManifest(**{**manifest_data, "a2a": {"service": "src.a2a.server.serve"}})
 
     def test_rest_entry_validation(self):
         """Test REST entry field validation."""
@@ -112,16 +106,13 @@ class TestAgentManifestSurfaces:
             "metadata": {"version": "1.0.0"},
             "rest": {"entry": "src.rest.index:mount"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.rest.entry == "src.rest.index:mount"
 
         # Invalid format - missing colon
         with pytest.raises(ValueError, match="REST entry must be in format 'module:function'"):
-            AgentManifest(**{
-                **manifest_data,
-                "rest": {"entry": "src.rest.index.mount"}
-            })
+            AgentManifest(**{**manifest_data, "rest": {"entry": "src.rest.index.mount"}})
 
     def test_ui_path_validation(self):
         """Test UI path field."""
@@ -136,7 +127,7 @@ class TestAgentManifestSurfaces:
             "metadata": {"version": "1.0.0"},
             "ui": {"path": "ui"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.ui.path == "ui"
 
@@ -153,7 +144,7 @@ class TestAgentManifestSurfaces:
             "runtime": "python3.11",
             "metadata": {"version": "1.0.0"},
         }
-        
+
         manifest = AgentManifest(**manifest_data)
         assert manifest.entrypoint == "src.main:handler"
         assert manifest.a2a is None

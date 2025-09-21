@@ -30,7 +30,10 @@ class AgentManifest(BaseModel):
     description: str = Field(description="Agent description")
     author: str = Field(description="Agent author name")
     license: str = Field(description="License identifier (e.g., MIT, Apache-2.0)")
-    entrypoint: Optional[str] = Field(default=None, description="Python module:function entry point (optional if REST or A2A configured)")
+    entrypoint: Optional[str] = Field(
+        default=None,
+        description="Python module:function entry point (optional if REST or A2A configured)",
+    )
 
     # Optional fields
     capabilities: List[str] = Field(default_factory=list, description="Agent capabilities")
@@ -39,6 +42,7 @@ class AgentManifest(BaseModel):
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
     metadata: MetadataConfig = Field(..., description="Agent metadata")
+
     # Surfaces (optional)
     class A2AConfig(BaseModel):
         service: str = Field(description="Module:function for A2A gRPC server entry")
@@ -115,15 +119,17 @@ class AgentManifest(BaseModel):
             raise ValueError("Entrypoint must be in format 'module:function'")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_entrypoint_optional_when_surfaces(self):  # type: ignore[no-redef]
         # Allow omission when REST or A2A is configured
         if self.entrypoint is None:
-            has_surfaces = any([
-                getattr(self, 'a2a', None) is not None,
-                getattr(self, 'rest', None) is not None,
-                getattr(self, 'ui', None) is not None
-            ])
+            has_surfaces = any(
+                [
+                    getattr(self, "a2a", None) is not None,
+                    getattr(self, "rest", None) is not None,
+                    getattr(self, "ui", None) is not None,
+                ]
+            )
             if not has_surfaces:
                 raise ValueError("Entrypoint is required when no surfaces are configured")
         return self
