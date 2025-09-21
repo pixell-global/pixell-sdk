@@ -18,48 +18,50 @@ class TestCLIInit:
         
         with tempfile.TemporaryDirectory() as temp_dir:
             project_name = "test-agent"
-            project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "a2a",
-                "--surface", "rest", 
-                "--surface", "ui"
-            ], input="\n")  # Accept default values
-            
-            assert result.exit_code == 0
-            assert project_path.exists()
-            assert project_path.is_dir()
-            
-            # Check agent.yaml
-            agent_yaml_path = project_path / "agent.yaml"
-            assert agent_yaml_path.exists()
-            
-            with open(agent_yaml_path) as f:
-                manifest_data = yaml.safe_load(f)
-            
-            assert manifest_data["name"] == "test-agent"
-            assert manifest_data["display_name"] == "Test Agent"
-            assert "a2a" in manifest_data
-            assert "rest" in manifest_data
-            assert "ui" in manifest_data
-            assert manifest_data["a2a"]["service"] == "src.a2a.server:serve"
-            assert manifest_data["rest"]["entry"] == "src.rest.index:mount"
-            assert manifest_data["ui"]["path"] == "ui"
-            
-            # Check directory structure
-            assert (project_path / "src").exists()
-            assert (project_path / "src" / "a2a").exists()
-            assert (project_path / "src" / "rest").exists()
-            assert (project_path / "ui").exists()
-            
-            # Check generated files
-            assert (project_path / "src" / "main.py").exists()
-            assert (project_path / "src" / "a2a" / "server.py").exists()
-            assert (project_path / "src" / "rest" / "index.py").exists()
-            assert (project_path / "ui" / "index.html").exists()
-            assert (project_path / "requirements.txt").exists()
-            assert (project_path / "README.md").exists()
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "a2a",
+                    "--surface", "rest", 
+                    "--surface", "ui"
+                ], input="\n")  # Accept default values
+                
+                # Check that the project was created in the isolated filesystem
+                project_path = Path.cwd() / project_name
+                assert result.exit_code == 0
+                assert project_path.exists()
+                assert project_path.is_dir()
+                
+                # Check agent.yaml
+                agent_yaml_path = project_path / "agent.yaml"
+                assert agent_yaml_path.exists()
+                
+                with open(agent_yaml_path) as f:
+                    manifest_data = yaml.safe_load(f)
+                
+                assert manifest_data["name"] == "test-agent"
+                assert manifest_data["display_name"] == "Test Agent"
+                assert "a2a" in manifest_data
+                assert "rest" in manifest_data
+                assert "ui" in manifest_data
+                assert manifest_data["a2a"]["service"] == "src.a2a.server:serve"
+                assert manifest_data["rest"]["entry"] == "src.rest.index:mount"
+                assert manifest_data["ui"]["path"] == "ui"
+                
+                # Check directory structure
+                assert (project_path / "src").exists()
+                assert (project_path / "src" / "a2a").exists()
+                assert (project_path / "src" / "rest").exists()
+                assert (project_path / "ui").exists()
+                
+                # Check generated files
+                assert (project_path / "src" / "main.py").exists()
+                assert (project_path / "src" / "a2a" / "server.py").exists()
+                assert (project_path / "src" / "rest" / "index.py").exists()
+                assert (project_path / "ui" / "index.html").exists()
+                assert (project_path / "requirements.txt").exists()
+                assert (project_path / "README.md").exists()
 
     def test_init_with_default_surfaces(self):
         """Test init command with default surfaces (all)."""
@@ -69,7 +71,8 @@ class TestCLIInit:
             project_name = "test-agent"
             project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, ["init", project_name])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, ["init", project_name])
             
             assert result.exit_code == 0
             assert project_path.exists()
@@ -91,10 +94,11 @@ class TestCLIInit:
             project_name = "rest-only-agent"
             project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "rest"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "rest"
+                ])
             
             assert result.exit_code == 0
             assert project_path.exists()
@@ -121,10 +125,11 @@ class TestCLIInit:
             project_name = "ui-only-agent"
             project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "ui"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "ui"
+                ])
             
             assert result.exit_code == 0
             assert project_path.exists()
@@ -152,7 +157,8 @@ class TestCLIInit:
             project_path = Path(temp_dir) / project_name
             project_path.mkdir()  # Create directory first
             
-            result = runner.invoke(cli, ["init", project_name])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, ["init", project_name])
             
             assert result.exit_code == 1
             assert "Directory already exists" in result.output
@@ -165,10 +171,11 @@ class TestCLIInit:
             project_name = "content-test-agent"
             project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "rest"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "rest"
+                ])
             
             assert result.exit_code == 0
             
@@ -209,7 +216,8 @@ class TestCLIInit:
             project_name = "Test_Agent_With_Underscores"
             project_path = Path(temp_dir) / project_name
             
-            result = runner.invoke(cli, ["init", project_name])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, ["init", project_name])
             
             assert result.exit_code == 0
             

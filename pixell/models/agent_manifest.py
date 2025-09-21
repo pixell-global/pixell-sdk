@@ -1,7 +1,7 @@
 """Agent manifest (agent.yaml) data models."""
 
 from typing import Dict, List, Optional
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class MCPConfig(BaseModel):
@@ -43,7 +43,8 @@ class AgentManifest(BaseModel):
     class A2AConfig(BaseModel):
         service: str = Field(description="Module:function for A2A gRPC server entry")
 
-        @validator("service")
+        @field_validator("service")
+        @classmethod
         def validate_service(cls, v):  # type: ignore[no-redef]
             if ":" not in v:
                 raise ValueError("A2A service must be in format 'module:function'")
@@ -52,7 +53,8 @@ class AgentManifest(BaseModel):
     class RestConfig(BaseModel):
         entry: str = Field(description="Module:function that mounts REST routes on FastAPI app")
 
-        @validator("entry")
+        @field_validator("entry")
+        @classmethod
         def validate_entry(cls, v):  # type: ignore[no-redef]
             if ":" not in v:
                 raise ValueError("REST entry must be in format 'module:function'")
@@ -72,7 +74,8 @@ class AgentManifest(BaseModel):
         default=None, description="Capabilities this agent requires from the UI client"
     )
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Validate agent name format."""
         import re
@@ -83,7 +86,8 @@ class AgentManifest(BaseModel):
 
     # Removed strict entrypoint enforcement here; see below validator
 
-    @validator("runtime")
+    @field_validator("runtime")
+    @classmethod
     def validate_runtime(cls, v):
         """Validate runtime format."""
         valid_runtimes = ["node18", "node20", "python3.9", "python3.11", "go1.21"]
@@ -91,7 +95,8 @@ class AgentManifest(BaseModel):
             raise ValueError(f"Invalid runtime: {v}. Valid options: {', '.join(valid_runtimes)}")
         return v
 
-    @validator("dependencies")
+    @field_validator("dependencies")
+    @classmethod
     def validate_dependencies(cls, v):
         """Validate dependency format."""
         import re
@@ -102,15 +107,25 @@ class AgentManifest(BaseModel):
                 raise ValueError(f"Invalid dependency format: {dep}")
         return v
 
-    @validator("entrypoint")
-    def validate_entrypoint_optional_when_surfaces(cls, v, values):  # type: ignore[no-redef]
-        # Allow omission when REST or A2A is configured; if provided, enforce format
-        if v is None:
-            # values may not include nested models until after validation; skip strict cross-field here
-            return v
-        if ":" not in v:
+    @field_validator("entrypoint")
+    @classmethod
+    def validate_entrypoint_format(cls, v):  # type: ignore[no-redef]
+        # Basic format validation - cross-field validation handled in model_validator
+        if v is not None and ":" not in v:
             raise ValueError("Entrypoint must be in format 'module:function'")
         return v
 
-    class Config:
-        extra = "forbid"  # Don't allow extra fields
+    @model_validator(mode='after')
+    def validate_entrypoint_optional_when_surfaces(self):  # type: ignore[no-redef]
+        # Allow omission when REST or A2A is configured
+        if self.entrypoint is None:
+            has_surfaces = any([
+                getattr(self, 'a2a', None) is not None,
+                getattr(self, 'rest', None) is not None,
+                getattr(self, 'ui', None) is not None
+            ])
+            if not has_surfaces:
+                raise ValueError("Entrypoint is required when no surfaces are configured")
+        return self
+
+    model_config = {"extra": "forbid"}  # Don't allow extra fields

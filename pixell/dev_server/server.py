@@ -255,6 +255,11 @@ print(json.dumps(result))
                 entry = self.manifest.rest.entry
                 module_path, func_name = entry.split(":", 1)
                 import importlib
+                import sys
+
+                # Add project directory to Python path for imports
+                if str(self.project_dir) not in sys.path:
+                    sys.path.insert(0, str(self.project_dir))
 
                 module = importlib.import_module(module_path)
                 mount_func = getattr(module, func_name)

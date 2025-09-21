@@ -28,12 +28,13 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Step 1: Initialize project with all surfaces
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "a2a",
-                "--surface", "rest",
-                "--surface", "ui"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "a2a",
+                    "--surface", "rest",
+                    "--surface", "ui"
+                ])
             
             assert result.exit_code == 0
             assert project_path.exists()
@@ -70,10 +71,11 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize REST-only project
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "rest"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "rest"
+                ])
             
             assert result.exit_code == 0
             
@@ -112,10 +114,11 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize UI-only project
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "ui"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "ui"
+                ])
             
             assert result.exit_code == 0
             
@@ -154,12 +157,13 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize project with all surfaces
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "a2a",
-                "--surface", "rest",
-                "--surface", "ui"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "a2a",
+                    "--surface", "rest",
+                    "--surface", "ui"
+                ])
             
             assert result.exit_code == 0
             
@@ -184,7 +188,7 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize project
-            result = runner.invoke(cli, ["init", project_name])
+            result = runner.invoke(cli, ["init", project_name], cwd=temp_dir)
             assert result.exit_code == 0
             
             # Break the agent.yaml
@@ -211,7 +215,7 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize project
-            result = runner.invoke(cli, ["init", project_name])
+            result = runner.invoke(cli, ["init", project_name], cwd=temp_dir)
             assert result.exit_code == 0
             
             # Test that dev command exists and accepts same options as run-dev
@@ -235,11 +239,12 @@ class TestIntegrationSurfaces:
             project_path = Path(temp_dir) / project_name
             
             # Initialize project
-            result = runner.invoke(cli, [
-                "init", project_name,
-                "--surface", "rest",
-                "--surface", "ui"
-            ])
+            with runner.isolated_filesystem(temp_dir=temp_dir):
+                result = runner.invoke(cli, [
+                    "init", project_name,
+                    "--surface", "rest",
+                    "--surface", "ui"
+                ])
             
             assert result.exit_code == 0
             
@@ -294,7 +299,8 @@ class TestIntegrationSurfaces:
                 
                 # Initialize with specific surfaces
                 cmd = ["init", project_name] + [arg for surface in surfaces for arg in ["--surface", surface]]
-                result = runner.invoke(cli, cmd)
+                with runner.isolated_filesystem(temp_dir=temp_dir):
+                    result = runner.invoke(cli, cmd)
                 
                 assert result.exit_code == 0, f"Failed for surfaces: {surfaces}"
                 

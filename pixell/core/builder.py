@@ -148,7 +148,7 @@ class AgentBuilder:
             "format_version": "1.0",
             "created_by": "pixell-kit",
             "created_at": self._get_timestamp(),
-            "manifest": self.manifest.dict(),
+            "manifest": self.manifest.model_dump(),
         }
 
         with open(metadata_dir / "package.json", "w") as f:
@@ -231,6 +231,13 @@ class AgentBuilder:
             for root, dirs, files in os.walk(source_dir):
                 # Skip __pycache__ directories
                 dirs[:] = [d for d in dirs if d != "__pycache__"]
+
+                # Add empty directories
+                for dir_name in dirs:
+                    dir_path = Path(root) / dir_name
+                    arcname = dir_path.relative_to(source_dir)
+                    # Create empty directory entry
+                    zf.writestr(str(arcname) + "/", "")
 
                 for file in files:
                     # Skip .pyc files
