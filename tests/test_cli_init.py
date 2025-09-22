@@ -79,7 +79,7 @@ class TestCLIInit:
 
             with runner.isolated_filesystem(temp_dir=temp_dir):
                 result = runner.invoke(cli, ["init", project_name])
-                
+
                 # Check that the project was created in the isolated filesystem
                 project_path = Path.cwd() / project_name
                 assert result.exit_code == 0
@@ -103,7 +103,7 @@ class TestCLIInit:
 
             with runner.isolated_filesystem(temp_dir=temp_dir):
                 result = runner.invoke(cli, ["init", project_name, "--surface", "rest"])
-                
+
                 # Check that the project was created in the isolated filesystem
                 project_path = Path.cwd() / project_name
                 assert result.exit_code == 0
@@ -153,7 +153,6 @@ class TestCLIInit:
                 assert not (project_path / "src" / "a2a").exists()
                 assert not (project_path / "src" / "rest").exists()
 
-
     def test_init_existing_directory_error(self):
         """Test init command fails when directory already exists."""
         runner = CliRunner()
@@ -168,7 +167,6 @@ class TestCLIInit:
 
                 assert result.exit_code == 1
                 assert "Directory already exists" in result.output
-
 
     def test_init_generated_files_content(self):
         """Test that generated files have correct content."""

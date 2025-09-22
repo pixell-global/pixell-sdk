@@ -216,7 +216,8 @@ class TestIntegrationSurfaces:
 
                 # Build should fail
                 result = runner.invoke(
-                    cli, ["build", "--path", str(project_path), "--output", str(project_path.parent)]
+                    cli,
+                    ["build", "--path", str(project_path), "--output", str(project_path.parent)],
                 )
 
                 assert result.exit_code == 1
