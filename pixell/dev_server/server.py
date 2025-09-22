@@ -179,7 +179,13 @@ class DevServer:
         """Invoke the agent with the given request."""
         if not self.manifest:
             raise RuntimeError("No manifest loaded")
-        module_path, function_name = self.manifest.entrypoint.split(":", 1)
+        entrypoint = self.manifest.entrypoint
+        if not entrypoint:
+            raise RuntimeError(
+                "Agent entrypoint is not configured. Define an entrypoint in agent.yaml or "
+                "configure an appropriate surface."
+            )
+        module_path, function_name = entrypoint.split(":", 1)
 
         # Prepare the environment
         env = os.environ.copy()
