@@ -267,6 +267,11 @@ print(json.dumps(result))
                 if str(self.project_dir) not in sys.path:
                     sys.path.insert(0, str(self.project_dir))
 
+                # Clear any cached modules with same path so missing files raise correctly
+                module_parts = module_path.split(".")
+                for i in range(len(module_parts), 0, -1):
+                    sys.modules.pop(".".join(module_parts[:i]), None)
+
                 module = importlib.import_module(module_path)
                 mount_func = getattr(module, func_name)
                 # Expecting mount_func(FastAPI) -> None

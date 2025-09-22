@@ -153,7 +153,9 @@ def mount(app: FastAPI) -> None:
                 # Should have printed a warning about REST mount failure
                 mock_print.assert_called()
                 warning_calls = [
-                    call for call in mock_print.call_args_list if "REST mount failed" in str(call)
+                    call
+                    for call in mock_print.call_args_list
+                    if call.args and "REST mount failed" in call.args[0]
                 ]
                 assert len(warning_calls) > 0
 

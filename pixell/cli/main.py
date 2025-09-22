@@ -48,10 +48,13 @@ def init(name, surfaces):
         (project_dir / "ui").mkdir(parents=True)
 
     # agent.yaml
+    normalized_name = name.replace("_", "-").lower()
+    display_name = name.replace("-", " ").replace("_", " ").title()
+
     agent_yaml = {
         "version": "1.0",
-        "name": name.replace("_", "-").lower(),
-        "display_name": name.replace("-", " ").title(),
+        "name": normalized_name,
+        "display_name": display_name,
         "description": "A Pixell agent",
         "author": "Your Name",
         "license": "MIT",
