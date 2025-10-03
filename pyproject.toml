@@ -61,7 +61,18 @@ signing = [
 pixell = "pixell.cli.main:cli"
 
 [tool.setuptools]
-packages = ["pixell", "pixell.cli", "pixell.core", "pixell.models", "pixell.utils", "pixell.dev_server", "pixell.ui", "pixell.intent", "pixell.protocol"]
+packages = [
+  "pixell",
+  "pixell.cli",
+  "pixell.core",
+  "pixell.models",
+  "pixell.utils",
+  "pixell.dev_server",
+  "pixell.ui",
+  "pixell.intent",
+  "pixell.protocol",
+  "pixell.test",
+]
 include-package-data = true
 
 [tool.setuptools.package-data]
