@@ -117,7 +117,7 @@ class TestEnvRequirements:
             assert merged["X"] == "x"
 
     def test_secrets_provider_selection_and_merge(self, monkeypatch):
-        from pixell.secrets import get_provider_from_env, StaticSecretsProvider
+        from pixell.secrets import get_provider_from_env
         from pixell.utils import merge_envs
 
         # Static provider via JSON
