@@ -13,6 +13,7 @@ import io
 import subprocess
 import tempfile
 import zipfile
+from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -41,7 +42,9 @@ class TestResult:
 class AgentTester:
     """Comprehensive agent testing runner."""
 
-    def __init__(self, project_dir: Path, level: TestLevel = TestLevel.INTEGRATION, silent: bool = False):
+    def __init__(
+        self, project_dir: Path, level: TestLevel = TestLevel.INTEGRATION, silent: bool = False
+    ):
         self.project_dir = Path(project_dir).resolve()
         self.level = level
         self.result = TestResult()
@@ -56,7 +59,7 @@ class AgentTester:
 
     async def run_all_tests(self) -> TestResult:
         """Run all test levels up to the configured level (fail-fast)."""
-        sequence: List[Tuple[TestLevel, callable]] = [
+        sequence: List[Tuple[TestLevel, Callable]] = [
             (TestLevel.STATIC, self._test_static),
             (TestLevel.BUILD, self._test_build),
             (TestLevel.INSTALL, self._test_install),
@@ -297,6 +300,9 @@ class AgentTester:
 
     async def _test_grpc_server(self) -> None:
         # Basic stub: check config presence; user projects may not include gRPC
+        if self.extract_dir is None:
+            self.result.warnings.append("⚠ Extract dir not set for gRPC test")
+            return
         try:
             import yaml  # type: ignore
 
@@ -316,6 +322,8 @@ class AgentTester:
 
     async def _test_rest_server(self) -> None:
         # Attempt to launch a minimal FastAPI app using mounted entry if present
+        if self.extract_dir is None:
+            return
         try:
             import yaml  # type: ignore
 
@@ -342,6 +350,8 @@ class AgentTester:
 
     async def _test_ui_assets(self) -> None:
         # Verify UI assets presence if configured
+        if self.extract_dir is None:
+            return
         try:
             import yaml  # type: ignore
 
@@ -378,6 +388,9 @@ class AgentTester:
 
     async def _test_agent_invocation(self) -> None:
         # Minimal validation: if entrypoint exists, ensure callable can be located in installed tree
+        if self.extract_dir is None:
+            self.result.warnings.append("⚠ Extract dir not set for integration test")
+            return
         try:
             import yaml  # type: ignore
 
@@ -397,5 +410,3 @@ class AgentTester:
             self.result.passed.append("✓ Entrypoint source present for integration checks")
         else:
             self.result.warnings.append("⚠ Entrypoint source not present in extracted package")
-
-

@@ -234,7 +234,9 @@ class AgentValidator:
             content = env_path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             # If we cannot read, do not block build; warn instead
-            self.warnings.append("Could not read .env file for validation; proceeding without checks")
+            self.warnings.append(
+                "Could not read .env file for validation; proceeding without checks"
+            )
             return
 
         entries = self._parse_env_content(content)

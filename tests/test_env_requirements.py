@@ -87,9 +87,7 @@ class TestEnvRequirements:
             project_dir = Path(tmp) / "env-path-agent"
             _write_minimal_project(project_dir)
 
-            (project_dir / ".env").write_text(
-                "MODEL_PATH=/Users/alice/models/model.bin\n"
-            )
+            (project_dir / ".env").write_text("MODEL_PATH=/Users/alice/models/model.bin\n")
 
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
@@ -144,5 +142,3 @@ class TestEnvRequirements:
         merged = merge_envs(base, dotenv)
         merged = merge_envs(merged, provider_map)
         assert merged == {"A": "base", "B": "env", "C": "prov", "D": "prov"}
-
-

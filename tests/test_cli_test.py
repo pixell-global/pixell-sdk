@@ -57,7 +57,10 @@ class TestCLITestCommand:
                 assert payload["success"] is True
                 assert isinstance(payload["passed"], list)
                 # Expect that structure check or manifest validation appears
-                assert any("agent.yaml" in msg or "Manifest" in msg for msg in payload["passed"]) or not payload["failed"]
+                assert (
+                    any("agent.yaml" in msg or "Manifest" in msg for msg in payload["passed"])
+                    or not payload["failed"]
+                )
 
     def test_test_build_level_on_scaffold(self):
         runner = CliRunner()
@@ -91,6 +94,7 @@ class TestCLITestCommand:
                 payload = json.loads(test_res.output)
                 assert payload["success"] is True
                 # Should include a message indicating APKG build success
-                assert any("APKG built successfully" in msg for msg in payload["passed"]) or not payload["failed"]
-
-
+                assert (
+                    any("APKG built successfully" in msg for msg in payload["passed"])
+                    or not payload["failed"]
+                )

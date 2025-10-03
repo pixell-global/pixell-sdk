@@ -127,8 +127,8 @@ def get_provider_from_env() -> Optional[SecretsProvider]:
         if not secret_ids:
             raise RuntimeError("PIXELL_AWS_SECRETS is required when provider=aws")
         region = os.getenv("PIXELL_AWS_REGION") or None
-        return AWSSecretsManagerProvider(AWSSecretsConfig(secret_ids=secret_ids, region_name=region))
+        return AWSSecretsManagerProvider(
+            AWSSecretsConfig(secret_ids=secret_ids, region_name=region)
+        )
 
     raise RuntimeError(f"Unknown PIXELL_SECRETS_PROVIDER: {provider}")
-
-

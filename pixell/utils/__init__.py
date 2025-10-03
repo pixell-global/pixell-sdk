@@ -38,7 +38,9 @@ def parse_dotenv(dotenv_path: Path) -> Dict[str, str]:
     return env
 
 
-def merge_envs(base: Dict[str, str], *overrides: Iterable[Tuple[str, str]] | Dict[str, str]) -> Dict[str, str]:
+def merge_envs(
+    base: Dict[str, str], *overrides: Iterable[Tuple[str, str]] | Dict[str, str]
+) -> Dict[str, str]:
     """Merge multiple environment dictionaries in order.
 
     Later dictionaries override earlier ones. Accepts dicts or iterables of (k, v).
@@ -53,5 +55,3 @@ def merge_envs(base: Dict[str, str], *overrides: Iterable[Tuple[str, str]] | Dic
             for k, v in layer:  # type: ignore[assignment]
                 merged[str(k)] = str(v)
     return merged
-
-
