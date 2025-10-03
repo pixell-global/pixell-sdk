@@ -69,6 +69,7 @@ class TestCLIInit:
                 assert (project_path / "ui" / "index.html").exists()
                 assert (project_path / "requirements.txt").exists()
                 assert (project_path / "README.md").exists()
+                assert (project_path / ".env.example").exists()
 
     def test_init_with_default_surfaces(self):
         """Test init command with default surfaces (all)."""

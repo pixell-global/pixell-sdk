@@ -38,6 +38,8 @@ def mount(app):
     pass
 """)
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -68,6 +70,8 @@ def mount(app):
             # Create src directory but no REST module
             (project_dir / "src").mkdir()
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -102,6 +106,8 @@ def other_function():
     pass
 """)
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -136,6 +142,8 @@ def serve():
     pass
 """)
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -166,6 +174,8 @@ def serve():
             # Create src directory but no A2A module
             (project_dir / "src").mkdir()
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -198,6 +208,8 @@ def serve():
             (project_dir / "ui").mkdir()
             (project_dir / "ui" / "index.html").write_text("<html></html>")
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -228,6 +240,8 @@ def serve():
             # Create src directory but no UI directory
             (project_dir / "src").mkdir()
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 
@@ -293,6 +307,8 @@ def mount(app):
     pass
 """)
 
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             validator = AgentValidator(project_dir)
             is_valid, errors, warnings = validator.validate()
 

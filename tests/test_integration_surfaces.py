@@ -38,6 +38,9 @@ class TestIntegrationSurfaces:
                 assert result.exit_code == 0
                 assert project_path.exists()
 
+                # Ensure .env exists before validate/build
+                (project_path / ".env").write_text("API_HOST=0.0.0.0\n")
+
                 # Step 2: Validate the project
                 result = runner.invoke(cli, ["validate", "--path", str(project_path)])
 
@@ -78,6 +81,9 @@ class TestIntegrationSurfaces:
                 project_path = Path.cwd() / project_name
 
                 assert result.exit_code == 0
+
+                # Ensure .env exists before validate/build
+                (project_path / ".env").write_text("API_HOST=0.0.0.0\n")
 
                 # Validate
                 result = runner.invoke(cli, ["validate", "--path", str(project_path)])
@@ -123,6 +129,9 @@ class TestIntegrationSurfaces:
                 project_path = Path.cwd() / project_name
 
                 assert result.exit_code == 0
+
+                # Ensure .env exists before validate/build
+                (project_path / ".env").write_text("API_HOST=0.0.0.0\n")
 
                 # Validate
                 result = runner.invoke(cli, ["validate", "--path", str(project_path)])
@@ -265,6 +274,9 @@ class TestIntegrationSurfaces:
                 with open(project_path / "agent.yaml") as f:
                     original_manifest = yaml.safe_load(f)
 
+                # Ensure .env exists before validate/build
+                (project_path / ".env").write_text("API_HOST=0.0.0.0\n")
+
                 # Validate
                 result = runner.invoke(cli, ["validate", "--path", str(project_path)])
                 assert result.exit_code == 0
@@ -324,6 +336,9 @@ class TestIntegrationSurfaces:
                     project_path = Path.cwd() / project_name
 
                     assert result.exit_code == 0, f"Failed for surfaces: {surfaces}"
+
+                    # Ensure .env exists before build
+                    (project_path / ".env").write_text("API_HOST=0.0.0.0\n")
 
                     # Build
                     result = runner.invoke(

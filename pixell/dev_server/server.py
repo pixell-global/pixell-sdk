@@ -19,6 +19,8 @@ from watchdog.events import FileSystemEventHandler
 
 from pixell.models.agent_manifest import AgentManifest
 from pixell.core.validator import AgentValidator
+from pixell.utils import parse_dotenv, merge_envs
+from pixell.secrets import get_provider_from_env
 
 
 class AgentRequest(BaseModel):
@@ -146,6 +148,35 @@ class DevServer:
             data = yaml.safe_load(f)
 
         self.manifest = AgentManifest(**data)
+
+        # Load secrets via provider (service-bound) then .env for local parity
+        base_env = os.environ.copy()
+        provider = get_provider_from_env()
+        provider_vars: Dict[str, str] = {}
+        if provider:
+            try:
+                provider_vars = provider.fetch_secrets()
+                if provider_vars:
+                    keys_preview = ", ".join(sorted(provider_vars.keys()))
+                    print(
+                        f"[INFO] Secrets provider loaded ({len(provider_vars)} vars): {keys_preview}"
+                    )
+            except Exception as exc:
+                print(f"[WARN] Secrets provider error: {exc}")
+
+        env_file = self.project_dir / ".env"
+        dotenv_vars = parse_dotenv(env_file)
+        if dotenv_vars:
+            keys_preview = ", ".join(sorted(dotenv_vars.keys()))
+            print(f"[INFO] .env loaded ({len(dotenv_vars)} vars): {keys_preview}")
+
+        # Precedence (Phase 3 dev approximation): provider > .env > base env
+        merged = merge_envs(base_env, dotenv_vars)
+        merged = merge_envs(merged, provider_vars)
+        # Apply only overrides to process env
+        for k, v in merged.items():
+            if os.environ.get(k) != v:
+                os.environ[k] = v
 
         # Add project directory to Python path
         if str(self.project_dir) not in sys.path:

@@ -143,6 +143,27 @@ def mount(app: FastAPI) -> None:
         + "\n"
     )
 
+    # .env.example
+    (project_dir / ".env.example").write_text(
+        """# Environment Variables Template
+# Copy this file to `.env` and set values.
+
+# SECURITY: The `.env` file is included in your APKG package.
+# Use safe defaults or placeholders if you do not want to embed real secrets.
+
+# Example: OpenAI API Key
+# OPENAI_API_KEY=your-api-key-here
+
+# Example: Network bindings (use 0.0.0.0 in containers)
+# API_HOST=0.0.0.0
+# API_PORT=8080
+
+# Example: Database connection (prefer service names in Docker)
+# DB_HOST=database
+# DB_PORT=5432
+"""
+    )
+
     # README
     (project_dir / "README.md").write_text(
         f"""# {agent_yaml["display_name"]}
@@ -253,7 +274,7 @@ def test(path_: str, level: str, category: str, json_output: bool, verbose: bool
     # Currently category filtering is not implemented in runner; accept for future use
     _ = category  # placeholder to avoid linter warnings
 
-    tester = AgentTester(project_dir, TestLevel(level))
+    tester = AgentTester(project_dir, TestLevel(level), silent=json_output)
     result = asyncio.run(tester.run_all_tests())
 
     if json_output:
@@ -998,6 +1019,7 @@ To build an agent package (.apkg file), you need:
   |-- src/                # REQUIRED: Agent source code
   |   |-- __init__.py
   |   |-- main.py         # Your agent implementation
+  |-- .env                # REQUIRED: Environment variables (included in APKG)
   |-- requirements.txt    # Optional: Python dependencies
   |-- mcp.json           # Optional: MCP configuration
   |-- README.md          # Optional: Documentation

@@ -96,7 +96,7 @@ class AgentBuilder:
     def _copy_agent_files(self, dest_dir: Path):
         """Copy agent files to the build directory."""
         # Files and directories to include
-        include_items = ["src", "agent.yaml"]
+        include_items = ["src", "agent.yaml", ".env"]
 
         # Optional files
         optional_items = ["requirements.txt", "README.md", "LICENSE"]

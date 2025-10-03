@@ -60,6 +60,8 @@ def mount(app):
             (project_dir / "ui" / "style.css").write_text("body { margin: 0; }")
 
             # Build the package
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             builder = AgentBuilder(project_dir)
             output_path = builder.build()
 
@@ -142,6 +144,8 @@ def mount(app):
 """)
 
             # Build the package
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             builder = AgentBuilder(project_dir)
             output_path = builder.build()
 
@@ -199,6 +203,8 @@ def mount(app):
             (project_dir / "ui" / "app.js").write_text("console.log('hello');")
 
             # Build the package
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             builder = AgentBuilder(project_dir)
             output_path = builder.build()
 
@@ -259,6 +265,8 @@ def handler(context):
 """)
 
             # Build the package
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             builder = AgentBuilder(project_dir)
             output_path = builder.build()
 
@@ -315,6 +323,8 @@ def handler(context):
             (project_dir / "src").mkdir()
 
             # Build should fail validation
+            # Required .env (even though build will fail for other reasons)
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
             builder = AgentBuilder(project_dir)
             with pytest.raises(BuildError, match="Validation failed"):
                 builder.build()

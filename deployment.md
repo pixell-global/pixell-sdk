@@ -245,3 +245,60 @@ curl http://localhost:4000/api/deployments/queue/stats
 - `healthy` - Queue operating normally
 - `warning` - High queue depth or failure rate
 - `critical` - Too many jobs stuck in processing
+
+## Environment Variables & Secrets
+
+### Packaging Requirements
+- `.env` at project root is REQUIRED. Build fails without it.
+- `.env` is included in APKG; treat it as sensitive. Use placeholders for shared packages.
+
+### Validation
+- Presence check for `.env`.
+- Warnings for secret-like values (e.g., `sk-`, `AWS_SECRET_ACCESS_KEY`, `-----BEGIN`).
+- Warnings for absolute paths that harm portability.
+
+### Runtime Injection (PAR guidance)
+Recommended precedence when starting the agent subprocess:
+1. Runtime deployment environment (from deployment request) [highest]
+2. `.env` from APKG
+3. Base runtime environment [lowest]
+
+This lets you override packaged placeholders at deploy time.
+
+### Service-Bound Secrets (optional)
+If your runtime supports secret providers, inject secrets without storing them in the package.
+
+- Static JSON provider:
+  - `PIXELL_SECRETS_PROVIDER=static`
+  - `PIXELL_SECRETS_JSON` set to a JSON object mapping env keys to values
+- AWS Secrets Manager provider:
+  - `PIXELL_SECRETS_PROVIDER=aws`
+  - `PIXELL_AWS_SECRETS` = comma-separated secret names/ARNs
+  - `PIXELL_AWS_REGION` = region (optional)
+
+Precedence recommendation: provider > `.env` > base env.
+
+### Dev Server Parity
+The dev server mirrors the behavior for local runs:
+- Loads `.env` automatically.
+- Optionally loads secrets via provider (static/env/aws) using the same environment variables.
+- Logs show counts and keys, never values.
+
+### Examples
+Static JSON override:
+```bash
+export PIXELL_SECRETS_PROVIDER=static
+export PIXELL_SECRETS_JSON='{"OPENAI_API_KEY":"runtime","DB_HOST":"database"}'
+```
+
+AWS Secrets Manager:
+```bash
+export PIXELL_SECRETS_PROVIDER=aws
+export PIXELL_AWS_SECRETS=my/app/secrets,another/secret
+export PIXELL_AWS_REGION=us-east-1
+```
+
+Network and Path Hygiene:
+- Use `0.0.0.0` for bind addresses in containers.
+- Prefer service DNS names over IPs.
+- Avoid absolute local filesystem paths in env vars; use relative paths or `/tmp`.

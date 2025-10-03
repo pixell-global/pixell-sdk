@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import List, Tuple, Optional
+import re
 import yaml
 from pydantic import ValidationError
 
@@ -46,6 +47,9 @@ class AgentValidator:
             # Validate optional surfaces
             self._validate_surfaces(manifest)
 
+        # Validate .env presence and contents
+        self._validate_env_file()
+
         return len(self.errors) == 0, self.errors, self.warnings
 
     def _validate_project_structure(self):
@@ -56,6 +60,13 @@ class AgentValidator:
             file_path = self.project_dir / file
             if not file_path.exists():
                 self.errors.append(f"Required file missing: {file}")
+
+        # Require .env at project root
+        env_path = self.project_dir / ".env"
+        if not env_path.exists():
+            self.errors.append(
+                "Missing required .env file at project root. Create a `.env` with placeholders or real values. See `.env.example`."
+            )
 
         # Check for source directory
         src_dir = self.project_dir / "src"
@@ -206,3 +217,98 @@ class AgentValidator:
             else:
                 # Could add JSON validation here
                 pass
+
+    def _validate_env_file(self) -> None:
+        """Validate presence and content hygiene of the .env file without exposing secrets.
+
+        Warnings:
+          - Potential real secrets detected (by common patterns)
+          - Suspicious absolute paths that may harm portability
+        """
+        env_path = self.project_dir / ".env"
+        if not env_path.exists():
+            # Presence is handled in structure validation; nothing else to do
+            return
+
+        try:
+            content = env_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            # If we cannot read, do not block build; warn instead
+            self.warnings.append("Could not read .env file for validation; proceeding without checks")
+            return
+
+        entries = self._parse_env_content(content)
+
+        # Secret detection patterns (keys and values)
+        secret_like_keys = {"AWS_SECRET_ACCESS_KEY", "PRIVATE_KEY"}
+        secret_value_patterns = [
+            re.compile(r"sk-[A-Za-z0-9]{3,}"),  # OpenAI style keys
+            re.compile(r"-----BEGIN[ \t]+[A-Z ]+-----"),  # PEM headers
+        ]
+
+        keys_with_secrets: List[str] = []
+        for key, value in entries.items():
+            upper_key = key.upper()
+            if upper_key in secret_like_keys:
+                keys_with_secrets.append(key)
+                continue
+            # Value-based checks
+            for pat in secret_value_patterns:
+                if value and pat.search(value):
+                    keys_with_secrets.append(key)
+                    break
+
+        if keys_with_secrets:
+            unique_keys = sorted(set(keys_with_secrets))
+            self.warnings.append(
+                ".env appears to contain real secrets for keys: "
+                + ", ".join(unique_keys)
+                + ". Use placeholders in packages and override at deploy time."
+            )
+
+        # Path hygiene checks for portability
+        pathy_keys: List[str] = []
+        for key, value in entries.items():
+            if not value:
+                continue
+            v = value.strip().strip('"').strip("'")
+            if v.startswith("/") and ("/Users/" in v or "/home/" in v):
+                pathy_keys.append(key)
+            # Windows absolute paths
+            if re.match(r"^[A-Za-z]:\\\\", v) or re.match(r"^[A-Za-z]:/", v):
+                pathy_keys.append(key)
+
+        if pathy_keys:
+            unique_path_keys = sorted(set(pathy_keys))
+            self.warnings.append(
+                ".env contains absolute path values that may harm portability for keys: "
+                + ", ".join(unique_path_keys)
+                + ". Prefer relative paths or standard locations (e.g., /tmp) or service names in containers."
+            )
+
+    def _parse_env_content(self, content: str) -> dict:
+        """Parse simple KEY=VALUE lines from .env content.
+
+        - Ignores blank lines and comments starting with '#'
+        - Trims whitespace around keys/values
+        - Strips matching single or double quotes around values
+        - Does not support multi-line values
+        """
+        entries: dict = {}
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key = key.strip()
+            val = val.strip()
+            # Strip matching quotes
+            if (val.startswith("'") and val.endswith("'")) or (
+                val.startswith('"') and val.endswith('"')
+            ):
+                if len(val) >= 2:
+                    val = val[1:-1]
+            entries[key] = val
+        return entries

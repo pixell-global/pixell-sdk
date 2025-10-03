@@ -1,4 +1,4 @@
-# Pixell Kit
+# Pixell Agent Kit
 
 A lightweight developer kit for packaging AI agents into portable, standardized APKG files.
 
@@ -105,6 +105,60 @@ pixell deploy --apkg-file my_agent-0.1.0.apkg --env staging
 # Deploy to local development
 pixell deploy --apkg-file my_agent-0.1.0.apkg --env local
 ```
+
+## Environment and Secrets
+
+### Phase 1: Required .env in APKG
+- Every agent package must include a `.env` at the project root.
+- Builds fail if `.env` is missing.
+- The builder always includes `.env` in the APKG.
+- The validator warns on potential secrets and non-portable absolute paths.
+
+Scaffold:
+- `pixell init` generates a `.env.example`. Copy to `.env` and fill values.
+
+Notes:
+- Treat `.env` as sensitive; it is packaged. Use placeholders for shared artifacts.
+
+### Phase 2: Runtime Environment Injection (Dev parity)
+- The dev server automatically loads `.env` and applies variables to the process environment.
+- Precedence (dev): `.env` > base environment.
+- Logs show variable keys only, never values.
+
+### Phase 3: Service-Bound Secrets (Dev parity)
+- Optional secrets providers can inject runtime secrets without baking them into `.env`.
+- Provider selection is controlled by environment variables:
+  - `PIXELL_SECRETS_PROVIDER=static` with `PIXELL_SECRETS_JSON` (JSON object)
+  - `PIXELL_SECRETS_PROVIDER=env` to pass-through current process env
+  - `PIXELL_SECRETS_PROVIDER=aws` to use AWS Secrets Manager with:
+    - `PIXELL_AWS_SECRETS` (comma-separated secret names/ARNs)
+    - optional `PIXELL_AWS_REGION`
+- Precedence (dev): provider > `.env` > base env.
+
+Example (static):
+```bash
+export PIXELL_SECRETS_PROVIDER=static
+export PIXELL_SECRETS_JSON='{"OPENAI_API_KEY":"runtime","DB_HOST":"database"}'
+```
+
+Example (AWS):
+```bash
+export PIXELL_SECRETS_PROVIDER=aws
+export PIXELL_AWS_SECRETS=my/app/secrets,another/secret
+export PIXELL_AWS_REGION=us-east-1
+```
+
+### Best Practices
+- Use `0.0.0.0` for bind addresses inside containers (not `localhost`).
+- Avoid absolute, machine-specific paths in `.env`.
+- Never log secret values; only keys. The kit adheres to this.
+
+### PAR Guidance (separate runtime)
+- Apply precedence in the agent subprocess:
+  1) Runtime deployment env (highest)
+  2) `.env` from APKG
+  3) Base runtime environment (lowest)
+- Optionally add service-bound providers per deployment context.
 
 ## Features
 

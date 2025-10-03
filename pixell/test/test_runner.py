@@ -16,6 +16,8 @@ import tempfile
 import time
 import zipfile
 from enum import Enum
+import contextlib
+import io
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -43,13 +45,18 @@ class TestResult:
 class AgentTester:
     """Comprehensive agent testing runner."""
 
-    def __init__(self, project_dir: Path, level: TestLevel = TestLevel.INTEGRATION):
+    def __init__(self, project_dir: Path, level: TestLevel = TestLevel.INTEGRATION, silent: bool = False):
         self.project_dir = Path(project_dir).resolve()
         self.level = level
         self.result = TestResult()
         self.test_venv: Optional[Path] = None
         self.apkg_path: Optional[Path] = None
         self.extract_dir: Optional[Path] = None
+        self.silent = silent
+
+    def _log(self, message: str) -> None:
+        if not self.silent:
+            print(message)
 
     async def run_all_tests(self) -> TestResult:
         """Run all test levels up to the configured level (fail-fast)."""
@@ -76,8 +83,8 @@ class AgentTester:
     # Level 1: Static Validation
     # =============================
     async def _test_static(self) -> None:
-        print("\n📋 Level 1: Static Validation")
-        print("=" * 50)
+        self._log("\n📋 Level 1: Static Validation")
+        self._log("=" * 50)
         await self._test_project_structure()
         await self._test_manifest_valid()
         await self._test_security_checks()
@@ -163,14 +170,19 @@ class AgentTester:
     # Level 2: Build Validation
     # =============================
     async def _test_build(self) -> None:
-        print("\n📦 Level 2: Build Validation")
-        print("=" * 50)
+        self._log("\n📦 Level 2: Build Validation")
+        self._log("=" * 50)
         try:
             from pixell.core.builder import AgentBuilder
 
             with tempfile.TemporaryDirectory() as tmp:
                 builder = AgentBuilder(self.project_dir)
-                self.apkg_path = builder.build(output_dir=Path(tmp))
+                if self.silent:
+                    sink = io.StringIO()
+                    with contextlib.redirect_stdout(sink), contextlib.redirect_stderr(sink):
+                        self.apkg_path = builder.build(output_dir=Path(tmp))
+                else:
+                    self.apkg_path = builder.build(output_dir=Path(tmp))
                 self.result.passed.append(f"✓ APKG built successfully: {self.apkg_path.name}")
 
                 size_mb = self.apkg_path.stat().st_size / (1024 * 1024)
@@ -203,8 +215,8 @@ class AgentTester:
     # Level 3: Installation Testing
     # =============================
     async def _test_install(self) -> None:
-        print("\n🔧 Level 3: Installation Testing")
-        print("=" * 50)
+        self._log("\n🔧 Level 3: Installation Testing")
+        self._log("=" * 50)
         if not self.apkg_path:
             self.result.failed.append("✗ No APKG available to install")
             return
@@ -278,8 +290,8 @@ class AgentTester:
     # Level 4: Runtime Testing
     # =============================
     async def _test_runtime(self) -> None:
-        print("\n🚀 Level 4: Runtime Testing")
-        print("=" * 50)
+        self._log("\n🚀 Level 4: Runtime Testing")
+        self._log("=" * 50)
         if not self.test_venv or not self.extract_dir:
             self.result.failed.append("✗ Runtime tests require successful install phase")
             return
@@ -360,8 +372,8 @@ class AgentTester:
     # Level 5: Integration Testing
     # =============================
     async def _test_integration(self) -> None:
-        print("\n🔗 Level 5: Integration Testing")
-        print("=" * 50)
+        self._log("\n🔗 Level 5: Integration Testing")
+        self._log("=" * 50)
         # Placeholder for project-specific E2E invocation; mark skipped if no entrypoint
         if not self.extract_dir:
             self.result.skipped.append("⊘ Integration skipped (no installed package context)")
