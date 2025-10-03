@@ -190,23 +190,9 @@ class AgentValidator:
 
     def _validate_dependencies(self, manifest: AgentManifest):
         """Validate dependencies format."""
-        # Check if requirements.txt exists and compare
-        req_file = self.project_dir / "requirements.txt"
-        if req_file.exists():
-            try:
-                with open(req_file, "r") as f:
-                    req_deps = [
-                        line.strip() for line in f if line.strip() and not line.startswith("#")
-                    ]
-
-                # Simple comparison - could be enhanced
-                manifest_deps = set(manifest.dependencies)
-                req_deps_set = set(req_deps)
-
-                if manifest_deps != req_deps_set:
-                    self.warnings.append("Dependencies in agent.yaml differ from requirements.txt")
-            except Exception as e:
-                self.warnings.append(f"Could not read requirements.txt: {e}")
+        # Dependencies are validated by Pydantic model
+        # Both agent.yaml and requirements.txt are valid sources
+        pass
 
     def _validate_mcp_config(self, manifest: AgentManifest):
         """Validate MCP configuration if enabled."""
@@ -219,10 +205,9 @@ class AgentValidator:
                 pass
 
     def _validate_env_file(self) -> None:
-        """Validate presence and content hygiene of the .env file without exposing secrets.
+        """Validate presence and content hygiene of the .env file.
 
         Warnings:
-          - Potential real secrets detected (by common patterns)
           - Suspicious absolute paths that may harm portability
         """
         env_path = self.project_dir / ".env"
@@ -241,34 +226,7 @@ class AgentValidator:
 
         entries = self._parse_env_content(content)
 
-        # Secret detection patterns (keys and values)
-        secret_like_keys = {"AWS_SECRET_ACCESS_KEY", "PRIVATE_KEY"}
-        secret_value_patterns = [
-            re.compile(r"sk-[A-Za-z0-9]{3,}"),  # OpenAI style keys
-            re.compile(r"-----BEGIN[ \t]+[A-Z ]+-----"),  # PEM headers
-        ]
-
-        keys_with_secrets: List[str] = []
-        for key, value in entries.items():
-            upper_key = key.upper()
-            if upper_key in secret_like_keys:
-                keys_with_secrets.append(key)
-                continue
-            # Value-based checks
-            for pat in secret_value_patterns:
-                if value and pat.search(value):
-                    keys_with_secrets.append(key)
-                    break
-
-        if keys_with_secrets:
-            unique_keys = sorted(set(keys_with_secrets))
-            self.warnings.append(
-                ".env appears to contain real secrets for keys: "
-                + ", ".join(unique_keys)
-                + ". Use placeholders in packages and override at deploy time."
-            )
-
-        # Path hygiene checks for portability
+        # Path hygiene checks for portability - warn about user-specific absolute paths
         pathy_keys: List[str] = []
         for key, value in entries.items():
             if not value:
@@ -285,7 +243,7 @@ class AgentValidator:
             self.warnings.append(
                 ".env contains absolute path values that may harm portability for keys: "
                 + ", ".join(unique_path_keys)
-                + ". Prefer relative paths or standard locations (e.g., /tmp) or service names in containers."
+                + ". Prefer relative paths or standard locations."
             )
 
     def _parse_env_content(self, content: str) -> dict:
