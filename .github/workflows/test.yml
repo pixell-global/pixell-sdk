@@ -60,7 +60,8 @@ jobs:
         echo '  version: "0.1.0"' >> test-agent/agent.yaml
         echo 'def main(): pass' > test-agent/src/main.py
         echo '' > test-agent/src/__init__.py
-        
+        echo 'API_KEY=test-key' > test-agent/.env
+
         # Test commands
         pixell validate -p test-agent
         pixell build -p test-agent
