@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 import yaml
 import json
 
@@ -102,7 +102,14 @@ class AgentBuilder:
         include_items = ["src", "agent.yaml", ".env"]
 
         # Optional files and directories (common Python project structures)
-        optional_items = ["requirements.txt", "README.md", "LICENSE", "core", "app"]
+        optional_items = [
+            "requirements.txt",
+            "README.md",
+            "LICENSE",
+            "core",
+            "app",
+            "setup.py",
+        ]
 
         # MCP config if specified
         if self.manifest and self.manifest.mcp and self.manifest.mcp.config_file:
@@ -166,18 +173,23 @@ class AgentBuilder:
                 for dep in self.manifest.dependencies:
                     f.write(f"{dep}\n")
 
-    def _discover_packages(self, build_dir: Path) -> list:
+    def _discover_packages(self, build_dir: Path) -> List[str]:
         """Discover all Python packages in the build directory.
 
         Returns:
             List of package names (e.g., ['src', 'core', 'app', 'app.v1'])
         """
-        packages = []
+        packages: List[str] = []
+
+        # Directories to skip entirely during discovery
+        skip_dir_names = {"__pycache__", "dist", ".pixell", ".git", ".hg", ".svn"}
 
         # Walk through build directory
         for root, dirs, files in os.walk(build_dir):
-            # Skip hidden directories and __pycache__
-            dirs[:] = [d for d in dirs if not d.startswith('.') and d != '__pycache__']
+            # Skip hidden directories, __pycache__, dist, and internal metadata dirs
+            dirs[:] = [
+                d for d in dirs if d not in skip_dir_names and not d.startswith('.')
+            ]
 
             # Check if this directory contains Python files
             has_python = any(f.endswith('.py') for f in files)
@@ -244,7 +256,7 @@ setup(
         # Check if setup.py already exists
         setup_file = build_dir / "setup.py"
         if setup_file.exists():
-            print(f"Agent already has setup.py, skipping generation")
+            print("Agent already has setup.py, skipping generation")
             return
 
         # Discover packages
@@ -261,7 +273,7 @@ setup(
 
         # Write setup.py
         setup_file.write_text(setup_content)
-        print(f"Generated setup.py for package installation")
+        print("Generated setup.py for package installation")
 
     def _create_dist_layout(self, build_dir: Path):
         """Create /dist directory with surfaces assets according to PRD."""
