@@ -98,8 +98,8 @@ class AgentBuilder:
         # Files and directories to include
         include_items = ["src", "agent.yaml", ".env"]
 
-        # Optional files
-        optional_items = ["requirements.txt", "README.md", "LICENSE"]
+        # Optional files and directories (common Python project structures)
+        optional_items = ["requirements.txt", "README.md", "LICENSE", "core", "app"]
 
         # MCP config if specified
         if self.manifest and self.manifest.mcp and self.manifest.mcp.config_file:
