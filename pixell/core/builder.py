@@ -254,13 +254,8 @@ setup(
 
     def _create_package_metadata(self, build_dir: Path):
         """Generate setup.py for agent package installation."""
-        # Check if setup.py already exists
+        # Discover packages (always) and ensure package structure
         setup_file = build_dir / "setup.py"
-        if setup_file.exists():
-            print("Agent already has setup.py, skipping generation")
-            return
-
-        # Discover packages
         packages = self._discover_packages(build_dir)
 
         if not packages:
@@ -282,6 +277,11 @@ setup(
                 "\u26a0\ufe0f  Created missing __init__.py files for: " + ", ".join(created_inits)
             )
             print("   Consider adding these files to your repository for proper packaging.")
+
+        # If user provided setup.py, skip generation but we already ensured structure
+        if setup_file.exists():
+            print("Agent already has setup.py, skipping generation")
+            return
 
         # Generate setup.py content
         setup_content = self._generate_setup_py(packages)
