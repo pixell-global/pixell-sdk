@@ -64,7 +64,8 @@ class TestEnvRequirements:
                 assert ".env" in names
                 with zf.open(".env") as f:
                     packaged = f.read().decode("utf-8")
-                    assert packaged == env_content
+                    # Normalize line endings for cross-platform compatibility
+                    assert packaged.replace("\r\n", "\n") == env_content
 
     def test_env_security_validation(self):
         with tempfile.TemporaryDirectory() as tmp:
