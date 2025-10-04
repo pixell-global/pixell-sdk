@@ -187,20 +187,18 @@ class AgentBuilder:
         # Walk through build directory
         for root, dirs, files in os.walk(build_dir):
             # Skip hidden directories, __pycache__, dist, and internal metadata dirs
-            dirs[:] = [
-                d for d in dirs if d not in skip_dir_names and not d.startswith('.')
-            ]
+            dirs[:] = [d for d in dirs if d not in skip_dir_names and not d.startswith(".")]
 
             # Check if this directory contains Python files
-            has_python = any(f.endswith('.py') for f in files)
+            has_python = any(f.endswith(".py") for f in files)
 
             if has_python:
                 # Calculate package name relative to build_dir
                 rel_path = Path(root).relative_to(build_dir)
-                package_name = str(rel_path).replace(os.sep, '.')
+                package_name = str(rel_path).replace(os.sep, ".")
 
                 # Skip if it's just build_dir itself
-                if package_name != '.':
+                if package_name != ".":
                     packages.append(package_name)
 
         # Sort for consistency
@@ -221,7 +219,7 @@ class AgentBuilder:
 
         # Ensure we have at least 'src' package
         if not packages:
-            packages = ['src']
+            packages = ["src"]
 
         # Format packages list as Python list literal
         packages_str = "[\n"
@@ -241,7 +239,7 @@ from setuptools import setup
 setup(
     name="{self.manifest.name}",
     version="{self.manifest.metadata.version}",
-    description="{self.manifest.description or 'Agent package'}",
+    description="{self.manifest.description or "Agent package"}",
     packages={packages_str},
     package_dir={{"": "."}},
     install_requires=[],  # Dependencies handled by requirements.txt
@@ -263,7 +261,7 @@ setup(
         packages = self._discover_packages(build_dir)
 
         if not packages:
-            packages = ['src']  # Fallback to src directory
+            packages = ["src"]  # Fallback to src directory
             print("Warning: No packages discovered, defaulting to 'src'")
 
         print(f"Discovered packages: {', '.join(packages)}")

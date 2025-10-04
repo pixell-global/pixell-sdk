@@ -74,8 +74,8 @@ class TestSetupPyGeneration:
         packages = ["src", "core", "app.v1"]
         content = builder._generate_setup_py(packages)
 
-        assert "name=\"vivid-commenter\"" in content
-        assert "version=\"0.1.0\"" in content
+        assert 'name="vivid-commenter"' in content
+        assert 'version="0.1.0"' in content
         assert "packages=[" in content
         assert "'src'" in content and "'core'" in content and "'app.v1'" in content
 
@@ -98,7 +98,7 @@ class TestSetupPyGeneration:
             setup_path = build_path / "setup.py"
             assert setup_path.exists()
             content = setup_path.read_text()
-            assert "name=\"meta-agent\"" in content
+            assert 'name="meta-agent"' in content
             assert "'src'" in content
 
     def test_skip_existing_setup_py(self, tmp_path: Path):
@@ -146,4 +146,3 @@ class TestBuildIntegrationSetup:
                 content = f.read().decode("utf-8")
                 assert "'src'" in content
                 assert "'core'" in content
-
