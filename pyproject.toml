@@ -10,7 +10,8 @@ readme = "README.md"
 authors = [
     {name = "Pixell Core Team", email = "dev@pixell.global"}
 ]
-license = {text = "Apache-2.0"}
+license = "AGPL-3.0-only"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

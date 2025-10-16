@@ -869,7 +869,7 @@ name: "doc-processor"
 display_name: "Document Processor Suite"
 description: "All-in-one document processing and analysis"
 author: "DocTools Inc."
-license: "Apache-2.0"
+license: "AGPL-3.0-only"
 
 # Extended metadata for registry
 metadata:
