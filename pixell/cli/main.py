@@ -702,8 +702,23 @@ def status(deployment_id, env, api_key, follow, json_output):
 @click.option("--wait", is_flag=True, help="Wait for deployment to complete")
 @click.option("--timeout", default=300, help="Timeout in seconds when waiting for deployment")
 @click.option("--force", is_flag=True, help="Force overwrite existing version")
+@click.option(
+    "--runtime-env",
+    multiple=True,
+    help="Runtime environment variables in KEY=VALUE format (can specify multiple times)",
+)
 def deploy(
-    apkg_file, env, app_id, version, release_notes, signature, api_key, wait, timeout, force
+    apkg_file,
+    env,
+    app_id,
+    version,
+    release_notes,
+    signature,
+    api_key,
+    wait,
+    timeout,
+    force,
+    runtime_env,
 ):
     """Deploy an APKG file to Pixell Agent Cloud."""
     from pixell.core.deployment import (
@@ -748,6 +763,20 @@ def deploy(
         ctx = click.get_current_context()
         ctx.exit(1)
 
+    # Parse runtime environment variables
+    runtime_env_dict = {}
+    if runtime_env:
+        for env_var in runtime_env:
+            if "=" not in env_var:
+                click.secho(
+                    f"ERROR: Invalid runtime environment variable format: '{env_var}'. Use KEY=VALUE format.",
+                    fg="red",
+                )
+                ctx = click.get_current_context()
+                ctx.exit(1)
+            key, value = env_var.split("=", 1)
+            runtime_env_dict[key] = value
+
     # Create deployment client
     try:
         client = DeploymentClient(environment=env, api_key=api_key)
@@ -762,6 +791,8 @@ def deploy(
             click.echo(f"Release notes: {release_notes}")
         if force:
             click.echo(click.style("Force overwrite: ENABLED", fg="yellow", bold=True))
+        if runtime_env_dict:
+            click.echo(f"Runtime environment variables: {len(runtime_env_dict)} variable(s)")
 
         # Start deployment
         response = client.deploy(
@@ -771,6 +802,7 @@ def deploy(
             release_notes=release_notes,
             signature_file=signature,
             force_overwrite=force,
+            runtime_env=runtime_env_dict if runtime_env_dict else None,
         )
 
         deployment = response["deployment"]
