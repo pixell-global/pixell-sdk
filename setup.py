@@ -26,8 +26,9 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Operating System :: OS Independent",
+        "License :: OSI Approved :: GNU Affero General Public License v3",
     ],
-    license="Apache-2.0",
+    license="AGPL-3.0-only",
     python_requires=">=3.11",
     install_requires=[
         "click>=8.0",
