@@ -35,6 +35,33 @@ class ValidationError(DeploymentError):
     pass
 
 
+def extract_environment_from_apkg(apkg_file: Path) -> Dict[str, str]:
+    """Extract environment variables from APKG file's manifest.
+
+    Args:
+        apkg_file: Path to the APKG file
+
+    Returns:
+        Dictionary of environment variables from manifest, empty dict if not found
+    """
+    try:
+        with zipfile.ZipFile(apkg_file, "r") as zf:
+            # Try to read from .pixell/package.json (contains manifest)
+            try:
+                package_json = json.loads(zf.read(".pixell/package.json"))
+                manifest = package_json.get("manifest", {})
+                return manifest.get("environment", {})
+            except KeyError:
+                # Fall back to reading agent.yaml directly
+                try:
+                    agent_yaml = yaml.safe_load(zf.read("agent.yaml"))
+                    return agent_yaml.get("environment", {})
+                except KeyError:
+                    return {}
+    except Exception:
+        return {}
+
+
 def extract_version_from_apkg(apkg_file: Path) -> Optional[str]:
     """Extract version from APKG file.
 
@@ -109,6 +136,7 @@ class DeploymentClient:
         release_notes: Optional[str] = None,
         signature_file: Optional[Path] = None,
         force_overwrite: bool = False,
+        runtime_env: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Deploy an APKG file to an agent app.
 
@@ -119,6 +147,7 @@ class DeploymentClient:
             release_notes: Release notes for this deployment
             signature_file: Path to signature file for signed packages
             force_overwrite: Force overwrite existing version if it exists
+            runtime_env: Runtime environment variables to inject (overrides manifest environment)
 
         Returns:
             Deployment response with status and tracking information
@@ -140,6 +169,11 @@ class DeploymentClient:
                     "Version not provided and could not be extracted from APKG file"
                 )
 
+        # Extract environment variables from manifest and merge with runtime overrides
+        env_vars = extract_environment_from_apkg(apkg_file)
+        if runtime_env:
+            env_vars.update(runtime_env)
+
         # Prepare the deployment request
         url = urljoin(self.base_url, f"/api/agent-apps/{app_id}/packages/deploy")
 
@@ -155,6 +189,10 @@ class DeploymentClient:
         if force_overwrite:
             # Send as form field with string value 'true'
             data.append(("force_overwrite", "true"))
+
+        # Add environment variables as JSON if present
+        if env_vars:
+            data.append(("environment", json.dumps(env_vars)))
 
         if signature_file and signature_file.exists():
             files.append(

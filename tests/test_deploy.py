@@ -15,6 +15,7 @@ from pixell.core.deployment import (
     ValidationError,
     get_api_key,
     extract_version_from_apkg,
+    extract_environment_from_apkg,
 )
 
 
@@ -249,6 +250,167 @@ class TestVersionExtraction:
             apkg_path.unlink()
 
 
+class TestEnvironmentExtraction:
+    """Test the extract_environment_from_apkg function."""
+
+    def test_extract_environment_from_valid_apkg(self):
+        """Test extracting environment variables from a valid APKG file."""
+        import zipfile
+        import json
+        import yaml
+
+        # Create a temporary APKG file with environment variables
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            apkg_path = Path(f.name)
+
+        try:
+            # Create a simple APKG structure with environment variables
+            with zipfile.ZipFile(apkg_path, "w") as zf:
+                # Add agent.yaml with environment
+                agent_manifest = {
+                    "name": "test-agent",
+                    "version": "1.0",
+                    "metadata": {"version": "2.1.0"},
+                    "environment": {
+                        "A2A_AGENT_APPS": "agent1,agent2,agent3",
+                        "CUSTOM_VAR": "static_value",
+                        "A2A_PORT": "${A2A_PORT:-50051}",
+                    },
+                }
+                zf.writestr("agent.yaml", yaml.dump(agent_manifest))
+
+                # Add package.json with environment (more reliable)
+                package_meta = {
+                    "format_version": "1.0",
+                    "manifest": {
+                        "metadata": {"version": "2.1.0"},
+                        "environment": {
+                            "A2A_AGENT_APPS": "agent1,agent2,agent3",
+                            "CUSTOM_VAR": "static_value",
+                            "A2A_PORT": "${A2A_PORT:-50051}",
+                        },
+                    },
+                }
+                zf.writestr(".pixell/package.json", json.dumps(package_meta))
+
+            # Test environment extraction
+            env_vars = extract_environment_from_apkg(apkg_path)
+            assert env_vars["A2A_AGENT_APPS"] == "agent1,agent2,agent3"
+            assert env_vars["CUSTOM_VAR"] == "static_value"
+            assert env_vars["A2A_PORT"] == "${A2A_PORT:-50051}"
+
+        finally:
+            apkg_path.unlink()
+
+    def test_extract_environment_from_apkg_without_env(self):
+        """Test extracting environment from APKG without environment section."""
+        import zipfile
+        import json
+
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            apkg_path = Path(f.name)
+
+        try:
+            # Create APKG without environment section
+            with zipfile.ZipFile(apkg_path, "w") as zf:
+                package_meta = {
+                    "format_version": "1.0",
+                    "manifest": {"metadata": {"version": "1.0.0"}},
+                }
+                zf.writestr(".pixell/package.json", json.dumps(package_meta))
+
+            env_vars = extract_environment_from_apkg(apkg_path)
+            assert env_vars == {}
+
+        finally:
+            apkg_path.unlink()
+
+    def test_extract_environment_from_invalid_apkg(self):
+        """Test environment extraction from invalid APKG file."""
+        # Create a temporary file that's not a valid ZIP
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            f.write(b"not a zip file")
+            apkg_path = Path(f.name)
+
+        try:
+            env_vars = extract_environment_from_apkg(apkg_path)
+            assert env_vars == {}
+        finally:
+            apkg_path.unlink()
+
+    @patch("pixell.core.deployment.requests.Session.post")
+    def test_deploy_with_runtime_env_override(self, mock_post):
+        """Test deployment with runtime environment variable overrides."""
+        import zipfile
+        import json
+        import yaml
+
+        # Mock successful response
+        mock_response = Mock()
+        mock_response.status_code = 202
+        mock_response.json.return_value = {
+            "deployment": {"id": "deploy-123", "status": "queued"},
+            "package": {"id": "pkg-123", "version": "1.0.0"},
+        }
+        mock_post.return_value = mock_response
+
+        # Create APKG with environment variables
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            apkg_path = Path(f.name)
+
+        try:
+            with zipfile.ZipFile(apkg_path, "w") as zf:
+                agent_manifest = {
+                    "name": "test-agent",
+                    "version": "1.0",
+                    "metadata": {"version": "1.0.0"},
+                    "environment": {
+                        "VAR1": "original_value",
+                        "VAR2": "keep_this",
+                    },
+                }
+                zf.writestr("agent.yaml", yaml.dump(agent_manifest))
+
+                package_meta = {
+                    "format_version": "1.0",
+                    "manifest": {
+                        "metadata": {"version": "1.0.0"},
+                        "environment": {
+                            "VAR1": "original_value",
+                            "VAR2": "keep_this",
+                        },
+                    },
+                }
+                zf.writestr(".pixell/package.json", json.dumps(package_meta))
+
+            # Deploy with runtime override
+            client = DeploymentClient(environment="prod", api_key="test-key")
+            runtime_env = {"VAR1": "overridden_value", "VAR3": "new_value"}
+            client.deploy("app-123", apkg_path, version="1.0.0", runtime_env=runtime_env)
+
+            # Verify the API call includes merged environment
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            data = dict(call_args[1]["data"])
+
+            # Parse the environment JSON from the data
+            import json as json_module
+
+            env_json = data.get("environment")
+            assert env_json is not None
+            merged_env = json_module.loads(env_json)
+
+            # Check that runtime override took precedence
+            assert merged_env["VAR1"] == "overridden_value"
+            # Check that original value was kept
+            assert merged_env["VAR2"] == "keep_this"
+            # Check that new variable was added
+            assert merged_env["VAR3"] == "new_value"
+
+        finally:
+            apkg_path.unlink()
+
+
 class TestDeployCommand:
     """Test the deploy CLI command."""
 
@@ -262,6 +424,7 @@ class TestDeployCommand:
         assert "--apkg-file" in result.output
         assert "--env" in result.output
         assert "--app-id" in result.output
+        assert "--runtime-env" in result.output
 
     def test_deploy_command_missing_api_key(self):
         """Test deploy command without API key."""
@@ -375,5 +538,81 @@ class TestDeployCommand:
 
                 # Verify client was created with correct environment
                 mock_client_class.assert_called_with(environment="local", api_key="test-key")
+        finally:
+            Path(apkg_path).unlink()
+
+    @patch("pixell.core.deployment.DeploymentClient")
+    def test_deploy_command_with_runtime_env(self, mock_client_class):
+        """Test deploy command with runtime environment variables."""
+        mock_client = Mock()
+        mock_client.ENVIRONMENTS = {"prod": {"name": "Production"}}
+        mock_client.base_url = "https://api.example.com"
+        mock_client.deploy.return_value = {
+            "deployment": {
+                "id": "deploy-123",
+                "status": "queued",
+                "queued_at": "2024-01-01T00:00:00Z",
+            },
+            "package": {"id": "pkg-123", "version": "1.0.0", "size_bytes": 1024},
+            "tracking": {"status_url": "https://api.example.com/deployments/deploy-123"},
+        }
+        mock_client_class.return_value = mock_client
+
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            apkg_path = f.name
+
+        try:
+            with patch("pixell.core.deployment.get_api_key", return_value="test-key"):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "deploy",
+                        "--apkg-file",
+                        apkg_path,
+                        "--app-id",
+                        "test-app",
+                        "--runtime-env",
+                        "VAR1=value1",
+                        "--runtime-env",
+                        "VAR2=value2",
+                    ],
+                )
+
+                assert result.exit_code == 0
+                assert "Runtime environment variables: 2 variable(s)" in result.output
+
+                # Verify deploy was called with runtime_env
+                mock_client.deploy.assert_called_once()
+                call_kwargs = mock_client.deploy.call_args[1]
+                assert call_kwargs["runtime_env"] == {"VAR1": "value1", "VAR2": "value2"}
+        finally:
+            Path(apkg_path).unlink()
+
+    def test_deploy_command_invalid_runtime_env_format(self):
+        """Test deploy command with invalid runtime env format."""
+        runner = CliRunner()
+
+        with tempfile.NamedTemporaryFile(suffix=".apkg", delete=False) as f:
+            apkg_path = f.name
+
+        try:
+            with patch("pixell.core.deployment.get_api_key", return_value="test-key"):
+                result = runner.invoke(
+                    cli,
+                    [
+                        "deploy",
+                        "--apkg-file",
+                        apkg_path,
+                        "--app-id",
+                        "test-app",
+                        "--runtime-env",
+                        "INVALID_FORMAT",
+                    ],
+                )
+
+                assert result.exit_code == 1
+                assert "Invalid runtime environment variable format" in result.output
         finally:
             Path(apkg_path).unlink()

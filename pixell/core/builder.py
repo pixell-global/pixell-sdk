@@ -490,6 +490,7 @@ setup(
             "expose": expose,
             "ports": ports,
             "multiplex": True,
+            "environment": self.manifest.environment,
         }
 
         with open(build_dir / "deploy.json", "w") as f:

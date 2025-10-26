@@ -328,3 +328,116 @@ def handler(context):
             builder = AgentBuilder(project_dir)
             with pytest.raises(BuildError, match="Validation failed"):
                 builder.build()
+
+    def test_build_with_environment_variables(self):
+        """Test that environment variables from agent.yaml are included in deploy.json."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir) / "env-agent"
+            project_dir.mkdir()
+
+            # Create agent.yaml with environment variables
+            manifest_data = {
+                "version": "1.0",
+                "name": "env-agent",
+                "display_name": "Environment Agent",
+                "description": "An agent with environment variables",
+                "author": "Test Author",
+                "license": "MIT",
+                "runtime": "python3.11",
+                "entrypoint": "src.main:handler",
+                "metadata": {"version": "1.0.0"},
+                "environment": {
+                    "A2A_AGENT_APPS": "agent1,agent2,agent3",
+                    "CUSTOM_VAR": "static_value",
+                    "A2A_PORT": "${A2A_PORT:-50051}",
+                },
+            }
+
+            with open(project_dir / "agent.yaml", "w") as f:
+                yaml.dump(manifest_data, f)
+
+            # Create src directory and main file
+            (project_dir / "src").mkdir()
+            (project_dir / "src" / "main.py").write_text("""
+def handler(context):
+    return {"status": "success"}
+""")
+
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
+            builder = AgentBuilder(project_dir)
+            output_path = builder.build()
+
+            assert output_path.exists()
+
+            # Extract and verify environment in deploy.json
+            with tempfile.TemporaryDirectory() as extract_dir:
+                with zipfile.ZipFile(output_path, "r") as zf:
+                    zf.extractall(extract_dir)
+
+                extract_path = Path(extract_dir)
+
+                # Check deploy.json contains environment
+                deploy_json_path = extract_path / "deploy.json"
+                assert deploy_json_path.exists()
+
+                with open(deploy_json_path) as f:
+                    deploy_data = json.load(f)
+
+                assert "environment" in deploy_data
+                assert deploy_data["environment"]["A2A_AGENT_APPS"] == "agent1,agent2,agent3"
+                assert deploy_data["environment"]["CUSTOM_VAR"] == "static_value"
+                assert deploy_data["environment"]["A2A_PORT"] == "${A2A_PORT:-50051}"
+
+    def test_build_with_empty_environment(self):
+        """Test that empty environment dict is handled correctly in deploy.json."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir) / "no-env-agent"
+            project_dir.mkdir()
+
+            # Create agent.yaml without environment variables
+            manifest_data = {
+                "version": "1.0",
+                "name": "no-env-agent",
+                "display_name": "No Env Agent",
+                "description": "An agent without environment variables",
+                "author": "Test Author",
+                "license": "MIT",
+                "runtime": "python3.11",
+                "entrypoint": "src.main:handler",
+                "metadata": {"version": "1.0.0"},
+            }
+
+            with open(project_dir / "agent.yaml", "w") as f:
+                yaml.dump(manifest_data, f)
+
+            # Create src directory and main file
+            (project_dir / "src").mkdir()
+            (project_dir / "src" / "main.py").write_text("""
+def handler(context):
+    return {"status": "success"}
+""")
+
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
+            builder = AgentBuilder(project_dir)
+            output_path = builder.build()
+
+            assert output_path.exists()
+
+            # Extract and verify environment in deploy.json is empty dict
+            with tempfile.TemporaryDirectory() as extract_dir:
+                with zipfile.ZipFile(output_path, "r") as zf:
+                    zf.extractall(extract_dir)
+
+                extract_path = Path(extract_dir)
+
+                # Check deploy.json contains empty environment
+                deploy_json_path = extract_path / "deploy.json"
+                assert deploy_json_path.exists()
+
+                with open(deploy_json_path) as f:
+                    deploy_data = json.load(f)
+
+                assert "environment" in deploy_data
+                assert deploy_data["environment"] == {}
