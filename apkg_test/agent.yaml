@@ -43,6 +43,14 @@ mcp:
   enabled: true
   config_file: "mcp.json"
 
+# UI 설정 - 리액트 빌드 결과물 경로
+ui:
+  path: "client/dist"
+
+# REST API 설정 (정적 파일 서빙용)
+rest:
+  entry: "src.rest.index:mount"
+
 # Extended metadata for registry
 metadata:
   version: "0.1.0"

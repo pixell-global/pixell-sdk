@@ -69,6 +69,9 @@ class AgentBuilder:
             # Copy files to temp directory
             self._copy_agent_files(temp_path)
 
+            # Copy pre-built frontend if configured
+            self._copy_frontend_assets(temp_path)
+
             # Create metadata
             self._create_metadata(temp_path)
 
@@ -148,6 +151,42 @@ class AgentBuilder:
                     )
                 else:
                     shutil.copy2(src_path, dest_path)
+
+    def _copy_frontend_assets(self, build_dir: Path):
+        """Copy pre-built frontend assets if configured."""
+        if not self.manifest or not getattr(self.manifest, "ui", None):
+            return
+        
+        ui_config = self.manifest.ui
+        if not ui_config or not ui_config.path:
+            return
+        
+        # UI 소스 디렉토리 찾기 (agent.yaml에서 지정된 경로만 사용)
+        if not ui_config.path:
+            print(f"[WARN] UI path not specified in agent.yaml")
+            return
+        
+        ui_source_dir = self.project_dir / ui_config.path
+        if not ui_source_dir.exists() or not ui_source_dir.is_dir():
+            print(f"[ERROR] Specified UI path not found: {ui_config.path}")
+            print(f"[INFO] Please ensure the path exists and contains built frontend files")
+            return
+        
+        print(f"[INFO] Using UI path: {ui_config.path}")
+        
+        # 빌드 결과물을 APKG에 복사 (원본 경로 구조 유지)
+        try:
+            # agent.yaml에서 지정한 경로 구조를 그대로 유지
+            ui_dest = build_dir / ui_config.path
+            ui_dest.parent.mkdir(parents=True, exist_ok=True)
+            
+            if ui_dest.exists():
+                shutil.rmtree(ui_dest)
+            shutil.copytree(ui_source_dir, ui_dest)
+            print(f"[SUCCESS] Copied frontend to APKG at {ui_config.path}")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to copy frontend: {e}")
 
     def _create_metadata(self, build_dir: Path):
         """Create package metadata files."""
@@ -459,14 +498,25 @@ setup(
             if src_file.exists():
                 shutil.copy2(src_file, rest_dir / src_file.name)
 
-        # UI: copy static directory to dist/ui/
+        # UI: copy built static assets to dist/ui/
         if getattr(self.manifest, "ui", None) and self.manifest.ui and self.manifest.ui.path:
-            ui_src = self.project_dir / self.manifest.ui.path
-            ui_dest = dist_dir / "ui"
-            if ui_src.exists() and ui_src.is_dir():
+            # Check if we have a built frontend in client/build
+            built_ui_src = build_dir / "client" / "build"
+            if built_ui_src.exists() and built_ui_src.is_dir():
+                ui_dest = dist_dir / "ui"
                 if ui_dest.exists():
                     shutil.rmtree(ui_dest)
-                shutil.copytree(ui_src, ui_dest)
+                shutil.copytree(built_ui_src, ui_dest)
+                print(f"[DIST] Copied built frontend to dist/ui/")
+            else:
+                # Fallback to original UI path if no build found
+                ui_src = self.project_dir / self.manifest.ui.path
+                ui_dest = dist_dir / "ui"
+                if ui_src.exists() and ui_src.is_dir():
+                    if ui_dest.exists():
+                        shutil.rmtree(ui_dest)
+                    shutil.copytree(ui_src, ui_dest)
+                    print(f"[DIST] Copied UI assets to dist/ui/")
 
     def _create_deploy_metadata(self, build_dir: Path):
         """Emit deploy.json with exposed surfaces and ports."""
