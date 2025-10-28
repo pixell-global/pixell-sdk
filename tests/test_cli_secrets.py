@@ -31,7 +31,9 @@ class TestSecretsListCommand:
     @patch("pixell.core.secrets.SecretsClient")
     @patch("pixell.core.deployment.get_app_id")
     @patch("pixell.core.deployment.get_api_key")
-    def test_list_success_table_format(self, mock_get_api_key, mock_get_app_id, mock_client, runner):
+    def test_list_success_table_format(
+        self, mock_get_api_key, mock_get_app_id, mock_client, runner
+    ):
         """Test listing secrets in table format."""
         mock_get_app_id.return_value = "app-123"
         mock_get_api_key.return_value = "test-key"
@@ -117,7 +119,9 @@ class TestSecretsListCommand:
     @patch("pixell.core.secrets.SecretsClient")
     @patch("pixell.core.deployment.get_app_id")
     @patch("pixell.core.deployment.get_api_key")
-    def test_list_authentication_error(self, mock_get_api_key, mock_get_app_id, mock_client, runner):
+    def test_list_authentication_error(
+        self, mock_get_api_key, mock_get_app_id, mock_client, runner
+    ):
         """Test listing with authentication error."""
         mock_get_app_id.return_value = "app-123"
         mock_get_api_key.return_value = "invalid-key"

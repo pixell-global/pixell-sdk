@@ -1579,7 +1579,9 @@ def secrets_set(app_id, file, secret, api_key, env):
             ctx.exit(1)
 
     # Confirm operation
-    click.echo(f"This will replace ALL secrets for app {app_id} with {len(secrets_data)} secret(s).")
+    click.echo(
+        f"This will replace ALL secrets for app {app_id} with {len(secrets_data)} secret(s)."
+    )
     click.echo("Existing secrets not in this list will be deleted.")
     if not click.confirm("Do you want to continue?"):
         click.echo("Cancelled.")

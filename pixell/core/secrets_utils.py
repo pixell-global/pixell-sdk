@@ -69,7 +69,9 @@ def parse_json_file(file_path: Path) -> Dict[str, str]:
         secrets = {}
         for key, value in data.items():
             if not isinstance(value, str):
-                raise SecretsError(f"Secret value for '{key}' must be a string, got {type(value).__name__}")
+                raise SecretsError(
+                    f"Secret value for '{key}' must be a string, got {type(value).__name__}"
+                )
             secrets[key] = value
 
         return secrets

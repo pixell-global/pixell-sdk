@@ -83,7 +83,7 @@ class TestParseJsonFile:
     def test_parse_empty_json(self):
         """Test parsing empty JSON object."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            f.write('{}')
+            f.write("{}")
             f.flush()
             file_path = Path(f.name)
 
@@ -225,7 +225,7 @@ UNQUOTED=value
 
     def test_parse_env_with_spaces_in_value(self):
         """Test parsing .env file with spaces in values."""
-        content = 'MESSAGE=Hello World'
+        content = "MESSAGE=Hello World"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write(content)
             f.flush()
@@ -239,7 +239,7 @@ UNQUOTED=value
 
     def test_parse_env_with_equals_in_value(self):
         """Test parsing .env file with equals sign in value."""
-        content = 'CONNECTION_STRING=postgresql://user:pass=secret@host'
+        content = "CONNECTION_STRING=postgresql://user:pass=secret@host"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write(content)
             f.flush()
