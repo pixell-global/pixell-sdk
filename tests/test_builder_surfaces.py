@@ -480,14 +480,8 @@ def handler(context):
                         "endpoint": "https://par.pixell.global/agents/test",
                         "protocol": "grpc",
                         "description": "Test agent for coordination",
-                        "capabilities": [
-                            "test capability 1",
-                            "test capability 2"
-                        ],
-                        "example_queries": [
-                            "test query 1",
-                            "test query 2"
-                        ]
+                        "capabilities": ["test capability 1", "test capability 2"],
+                        "example_queries": ["test query 1", "test query 2"],
                     }
                 ]
             }
@@ -520,7 +514,10 @@ def handler(context):
                 assert "agents" in extracted_config
                 assert len(extracted_config["agents"]) == 1
                 assert extracted_config["agents"][0]["name"] == "Test Agent"
-                assert extracted_config["agents"][0]["agent_app_id"] == "4906eeb7-9959-414e-84c6-f2445822ebe4"
+                assert (
+                    extracted_config["agents"][0]["agent_app_id"]
+                    == "4906eeb7-9959-414e-84c6-f2445822ebe4"
+                )
 
     def test_build_without_agents_config_json(self):
         """Test that build succeeds when agents_config.json is absent."""
@@ -570,7 +567,9 @@ def handler(context):
 
                 # Check that agents_config.json does NOT exist
                 agents_config_path = extract_path / "agents_config.json"
-                assert not agents_config_path.exists(), "agents_config.json should not be included when absent"
+                assert not agents_config_path.exists(), (
+                    "agents_config.json should not be included when absent"
+                )
 
     def test_build_with_invalid_agents_config_json(self):
         """Test that build succeeds even with malformed agents_config.json (validation is runtime concern)."""
@@ -621,4 +620,6 @@ def handler(context):
 
                 extract_path = Path(extract_dir)
                 agents_config_path = extract_path / "agents_config.json"
-                assert agents_config_path.exists(), "agents_config.json should be included even if invalid"
+                assert agents_config_path.exists(), (
+                    "agents_config.json should be included even if invalid"
+                )
