@@ -441,3 +441,184 @@ def handler(context):
 
                 assert "environment" in deploy_data
                 assert deploy_data["environment"] == {}
+
+    def test_build_with_agents_config_json(self):
+        """Test that agents_config.json is included in APKG when present."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir) / "multi-agent"
+            project_dir.mkdir()
+
+            # Create agent.yaml
+            manifest_data = {
+                "version": "1.0",
+                "name": "multi-agent",
+                "display_name": "Multi Agent",
+                "description": "A multi-agent orchestrator",
+                "author": "Test Author",
+                "license": "MIT",
+                "runtime": "python3.11",
+                "entrypoint": "src.main:handler",
+                "metadata": {"version": "1.0.0"},
+            }
+
+            with open(project_dir / "agent.yaml", "w") as f:
+                yaml.dump(manifest_data, f)
+
+            # Create src directory and main file
+            (project_dir / "src").mkdir()
+            (project_dir / "src" / "main.py").write_text("""
+def handler(context):
+    return {"status": "success"}
+""")
+
+            # Create agents_config.json with sample multi-agent config
+            agents_config = {
+                "agents": [
+                    {
+                        "agent_app_id": "4906eeb7-9959-414e-84c6-f2445822ebe4",
+                        "name": "Test Agent",
+                        "endpoint": "https://par.pixell.global/agents/test",
+                        "protocol": "grpc",
+                        "description": "Test agent for coordination",
+                        "capabilities": [
+                            "test capability 1",
+                            "test capability 2"
+                        ],
+                        "example_queries": [
+                            "test query 1",
+                            "test query 2"
+                        ]
+                    }
+                ]
+            }
+
+            with open(project_dir / "agents_config.json", "w") as f:
+                json.dump(agents_config, f, indent=2)
+
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
+            builder = AgentBuilder(project_dir)
+            output_path = builder.build()
+
+            assert output_path.exists()
+
+            # Extract and verify agents_config.json is included
+            with tempfile.TemporaryDirectory() as extract_dir:
+                with zipfile.ZipFile(output_path, "r") as zf:
+                    zf.extractall(extract_dir)
+
+                extract_path = Path(extract_dir)
+
+                # Check that agents_config.json exists
+                agents_config_path = extract_path / "agents_config.json"
+                assert agents_config_path.exists(), "agents_config.json should be included in APKG"
+
+                # Verify the content is valid JSON and matches what we wrote
+                with open(agents_config_path) as f:
+                    extracted_config = json.load(f)
+
+                assert "agents" in extracted_config
+                assert len(extracted_config["agents"]) == 1
+                assert extracted_config["agents"][0]["name"] == "Test Agent"
+                assert extracted_config["agents"][0]["agent_app_id"] == "4906eeb7-9959-414e-84c6-f2445822ebe4"
+
+    def test_build_without_agents_config_json(self):
+        """Test that build succeeds when agents_config.json is absent."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir) / "simple-agent"
+            project_dir.mkdir()
+
+            # Create agent.yaml
+            manifest_data = {
+                "version": "1.0",
+                "name": "simple-agent",
+                "display_name": "Simple Agent",
+                "description": "A simple agent without multi-agent coordination",
+                "author": "Test Author",
+                "license": "MIT",
+                "runtime": "python3.11",
+                "entrypoint": "src.main:handler",
+                "metadata": {"version": "1.0.0"},
+            }
+
+            with open(project_dir / "agent.yaml", "w") as f:
+                yaml.dump(manifest_data, f)
+
+            # Create src directory and main file
+            (project_dir / "src").mkdir()
+            (project_dir / "src" / "main.py").write_text("""
+def handler(context):
+    return {"status": "success"}
+""")
+
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
+
+            # DO NOT create agents_config.json - this is the test case
+            builder = AgentBuilder(project_dir)
+            output_path = builder.build()
+
+            # Build should succeed
+            assert output_path.exists()
+
+            # Extract and verify agents_config.json is NOT included
+            with tempfile.TemporaryDirectory() as extract_dir:
+                with zipfile.ZipFile(output_path, "r") as zf:
+                    zf.extractall(extract_dir)
+
+                extract_path = Path(extract_dir)
+
+                # Check that agents_config.json does NOT exist
+                agents_config_path = extract_path / "agents_config.json"
+                assert not agents_config_path.exists(), "agents_config.json should not be included when absent"
+
+    def test_build_with_invalid_agents_config_json(self):
+        """Test that build succeeds even with malformed agents_config.json (validation is runtime concern)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_dir = Path(temp_dir) / "invalid-config-agent"
+            project_dir.mkdir()
+
+            # Create agent.yaml
+            manifest_data = {
+                "version": "1.0",
+                "name": "invalid-config-agent",
+                "display_name": "Invalid Config Agent",
+                "description": "Agent with invalid agents_config.json",
+                "author": "Test Author",
+                "license": "MIT",
+                "runtime": "python3.11",
+                "entrypoint": "src.main:handler",
+                "metadata": {"version": "1.0.0"},
+            }
+
+            with open(project_dir / "agent.yaml", "w") as f:
+                yaml.dump(manifest_data, f)
+
+            # Create src directory and main file
+            (project_dir / "src").mkdir()
+            (project_dir / "src" / "main.py").write_text("""
+def handler(context):
+    return {"status": "success"}
+""")
+
+            # Create invalid agents_config.json (malformed but still a file)
+            # Build should still succeed - validation is a runtime concern
+            with open(project_dir / "agents_config.json", "w") as f:
+                f.write("invalid json content {]")
+
+            # Required .env
+            (project_dir / ".env").write_text("API_KEY=placeholder\n")
+            builder = AgentBuilder(project_dir)
+
+            # Build should succeed - we don't validate the JSON content during build
+            output_path = builder.build()
+            assert output_path.exists()
+
+            # Extract and verify the file is included (even though it's invalid)
+            with tempfile.TemporaryDirectory() as extract_dir:
+                with zipfile.ZipFile(output_path, "r") as zf:
+                    zf.extractall(extract_dir)
+
+                extract_path = Path(extract_dir)
+                agents_config_path = extract_path / "agents_config.json"
+                assert agents_config_path.exists(), "agents_config.json should be included even if invalid"
