@@ -103,12 +103,12 @@ class AgentBuilder:
 
     def _copy_agent_files(self, dest_dir: Path):
         """Copy agent files to the build directory."""
-        # Files and directories to include
-        include_items = ["src", "agent.yaml", ".env"]
+        # Required files and directories
+        include_items = ["agent.yaml", ".env"]
 
         # Optional files and directories (common Python project structures)
         optional_items = [
-            "requirements.txt",
+            "src",  # src/ directory is now optional
             "README.md",
             "LICENSE",
             "core",
@@ -121,11 +121,25 @@ class AgentBuilder:
         if self.manifest and self.manifest.mcp and self.manifest.mcp.config_file:
             optional_items.append(self.manifest.mcp.config_file)
 
+        # Check for pyproject.toml (uv dependency management)
+        # If pyproject.toml exists, use it and skip requirements.txt
+        pyproject_toml = self.project_dir / "pyproject.toml"
+        requirements_txt = self.project_dir / "requirements.txt"
+        
+        if pyproject_toml.exists():
+            optional_items.append("pyproject.toml")
+            print(f"[INFO] pyproject.toml found - will use it instead of requirements.txt")
+        elif requirements_txt.exists():
+            optional_items.append("requirements.txt")
+
         # Copy required items
         for item in include_items:
             src_path = self.project_dir / item
             dest_path = dest_dir / item
 
+            if not src_path.exists():
+                continue
+                
             print(f"Copying {item}: {src_path} -> {dest_path}")
             if src_path.is_dir():
                 shutil.copytree(
@@ -207,7 +221,13 @@ class AgentBuilder:
             json.dump(package_meta, f, indent=2)
 
     def _create_requirements(self, build_dir: Path):
-        """Create requirements.txt from manifest if not present."""
+        """Create requirements.txt from manifest if not present and pyproject.toml doesn't exist."""
+        # Skip if pyproject.toml exists (uv dependency management takes priority)
+        pyproject_toml = build_dir / "pyproject.toml"
+        if pyproject_toml.exists():
+            print("[INFO] pyproject.toml found - skipping requirements.txt generation")
+            return
+        
         req_path = build_dir / "requirements.txt"
 
         if not req_path.exists() and self.manifest and self.manifest.dependencies:
@@ -473,50 +493,52 @@ setup(
         return created
 
     def _create_dist_layout(self, build_dir: Path):
-        """Create /dist directory with surfaces assets according to PRD."""
+        """Copy surface files directly to APKG root (no dist/ folder)."""
         if not self.manifest:
             raise BuildError("Manifest not loaded")
 
-        dist_dir = build_dir / "dist"
-        dist_dir.mkdir(exist_ok=True)
-
-        # A2A: copy server implementation into dist/a2a/
-        if getattr(self.manifest, "a2a", None) and self.manifest.a2a:
-            module_path, _func = self.manifest.a2a.service.split(":", 1)
+        # A2A: copy entry file directly to APKG root
+        if getattr(self.manifest, "a2a", None) and self.manifest.a2a and getattr(
+            self.manifest.a2a, "entry", None
+        ):
+            module_path, _func = self.manifest.a2a.entry.split(":", 1)
             src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
-            a2a_dir = dist_dir / "a2a"
-            a2a_dir.mkdir(exist_ok=True)
             if src_file.exists():
-                shutil.copy2(src_file, a2a_dir / src_file.name)
+                dest_file = build_dir / src_file.name
+                shutil.copy2(src_file, dest_file)
+                print(f"[A2A] Copied {src_file.name} to APKG root")
 
-        # REST: copy entry module into dist/rest/
+        # REST: copy entry file directly to APKG root
         if getattr(self.manifest, "rest", None) and self.manifest.rest:
-            module_path, _func = self.manifest.rest.entry.split(":", 1)
+            rest_entry = self.manifest.rest.entry
+            # If rest.entry doesn't have ':', use entrypoint's module
+            if ":" not in rest_entry:
+                if self.manifest.entrypoint and ":" in self.manifest.entrypoint:
+                    module_path, _ = self.manifest.entrypoint.split(":", 1)
+                else:
+                    # Skip if no entrypoint to derive module from
+                    print(f"[WARN] REST entry '{rest_entry}' is not in 'module:function' format and no entrypoint available")
+                    return
+            else:
+                module_path, _func = rest_entry.split(":", 1)
+            
             src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
-            rest_dir = dist_dir / "rest"
-            rest_dir.mkdir(exist_ok=True)
             if src_file.exists():
-                shutil.copy2(src_file, rest_dir / src_file.name)
+                dest_file = build_dir / src_file.name
+                shutil.copy2(src_file, dest_file)
+                print(f"[REST] Copied {src_file.name} to APKG root")
 
-        # UI: copy built static assets to dist/ui/
+        # UI: copy UI assets with original path structure to APKG root
         if getattr(self.manifest, "ui", None) and self.manifest.ui and self.manifest.ui.path:
-            # Check if we have a built frontend in client/build
-            built_ui_src = build_dir / "client" / "build"
-            if built_ui_src.exists() and built_ui_src.is_dir():
-                ui_dest = dist_dir / "ui"
+            ui_src = self.project_dir / self.manifest.ui.path
+            if ui_src.exists() and ui_src.is_dir():
+                # Preserve original path structure (e.g., "client/dist" -> "client/dist" in APKG)
+                ui_dest = build_dir / self.manifest.ui.path
+                ui_dest.parent.mkdir(parents=True, exist_ok=True)
                 if ui_dest.exists():
                     shutil.rmtree(ui_dest)
-                shutil.copytree(built_ui_src, ui_dest)
-                print(f"[DIST] Copied built frontend to dist/ui/")
-            else:
-                # Fallback to original UI path if no build found
-                ui_src = self.project_dir / self.manifest.ui.path
-                ui_dest = dist_dir / "ui"
-                if ui_src.exists() and ui_src.is_dir():
-                    if ui_dest.exists():
-                        shutil.rmtree(ui_dest)
-                    shutil.copytree(ui_src, ui_dest)
-                    print(f"[DIST] Copied UI assets to dist/ui/")
+                shutil.copytree(ui_src, ui_dest)
+                print(f"[UI] Copied UI assets to {self.manifest.ui.path} in APKG root")
 
     def _create_deploy_metadata(self, build_dir: Path):
         """Emit deploy.json with exposed surfaces and ports."""

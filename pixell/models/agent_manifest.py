@@ -45,23 +45,41 @@ class AgentManifest(BaseModel):
 
     # Surfaces (optional)
     class A2AConfig(BaseModel):
-        service: str = Field(description="Module:function for A2A gRPC server entry")
-
-        @field_validator("service")
-        @classmethod
-        def validate_service(cls, v):  # type: ignore[no-redef]
-            if ":" not in v:
-                raise ValueError("A2A service must be in format 'module:function'")
-            return v
-
-    class RestConfig(BaseModel):
-        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app")
+        # Prefer 'entry' for consistency with REST; keep 'service' for backwards compatibility
+        entry: Optional[str] = Field(
+            default=None,
+            description="Module:function for A2A gRPC server entry (optional)",
+        )
+        # Backwards compatible alias for manifests that still use `service`
+        service: Optional[str] = Field(
+            default=None,
+            description="DEPRECATED: use 'entry' instead",
+            alias="service",
+        )
 
         @field_validator("entry")
         @classmethod
         def validate_entry(cls, v):  # type: ignore[no-redef]
-            if ":" not in v:
-                raise ValueError("REST entry must be in format 'module:function'")
+            # Allow omission; full path validation is handled in Validator/Builder
+            if v is not None and ":" not in v:
+                raise ValueError("A2A entry must be in format 'module:function'")
+            return v
+
+        @model_validator(mode="after")
+        def _populate_entry_from_service(self):  # type: ignore[no-redef]
+            # If only legacy `service` is provided, mirror it into `entry`
+            if self.entry is None and self.service is not None:
+                self.entry = self.service
+            return self
+
+    class RestConfig(BaseModel):
+        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app, or just function name to use entrypoint's module")
+
+        @field_validator("entry")
+        @classmethod
+        def validate_entry(cls, v):  # type: ignore[no-redef]
+            # Allow function name only (will use entrypoint's module in validator)
+            # Full validation happens in AgentValidator._validate_surfaces
             return v
 
     class UIConfig(BaseModel):
