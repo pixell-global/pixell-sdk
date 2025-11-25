@@ -139,20 +139,29 @@ class AgentBuilder:
 
             if not src_path.exists():
                 continue
-                
-            print(f"Copying {item}: {src_path} -> {dest_path}")
-            if src_path.is_dir():
-                shutil.copytree(
-                    src_path, dest_path, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
-                )
-                # List files in the copied directory for debugging
-                for root, dirs, files in os.walk(dest_path):
-                    for file in files:
-                        file_path = Path(root) / file
-                        print(f"  Included: {file_path.relative_to(dest_dir)}")
-            else:
-                shutil.copy2(src_path, dest_path)
+            
+            # Special handling for agent.yaml: remove None values (especially entrypoint when optional)
+            if item == "agent.yaml" and self.manifest:
+                print(f"Copying {item} (with None values excluded): {src_path} -> {dest_path}")
+                # Dump manifest excluding None values to match server validation expectations
+                manifest_dict = self.manifest.model_dump(exclude_none=True)
+                with open(dest_path, "w", encoding="utf-8") as f:
+                    yaml.dump(manifest_dict, f, default_flow_style=False, sort_keys=False)
                 print(f"  Included: {dest_path.relative_to(dest_dir)}")
+            else:
+                print(f"Copying {item}: {src_path} -> {dest_path}")
+                if src_path.is_dir():
+                    shutil.copytree(
+                        src_path, dest_path, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+                    )
+                    # List files in the copied directory for debugging
+                    for root, dirs, files in os.walk(dest_path):
+                        for file in files:
+                            file_path = Path(root) / file
+                            print(f"  Included: {file_path.relative_to(dest_dir)}")
+                else:
+                    shutil.copy2(src_path, dest_path)
+                    print(f"  Included: {dest_path.relative_to(dest_dir)}")
 
         # Copy optional items if they exist
         for item in optional_items:
@@ -210,11 +219,15 @@ class AgentBuilder:
         # Create package metadata
         if not self.manifest:
             raise BuildError("Manifest not loaded")
+        
+        # Dump manifest, excluding None values (especially entrypoint when optional)
+        manifest_dict = self.manifest.model_dump(exclude_none=True)
+        
         package_meta = {
             "format_version": "1.0",
             "created_by": "pixell-kit",
             "created_at": self._get_timestamp(),
-            "manifest": self.manifest.model_dump(),
+            "manifest": manifest_dict,
         }
 
         with open(metadata_dir / "package.json", "w") as f:

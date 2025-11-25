@@ -25,7 +25,7 @@ def main():
     # Can be overridden via --path argument
     default_path = os.environ.get(
         "PIXELL_TEST_BUILD_PATH",
-        r"B:\Workspace\Pixell Global\vivid-commenter"
+        r"B:\Workspace\Pixell Global\paf-core-agent"
     )
     
     parser = argparse.ArgumentParser(
