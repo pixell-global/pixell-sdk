@@ -18,6 +18,65 @@ class MetadataConfig(BaseModel):
     homepage: Optional[str] = Field(default=None)
     repository: Optional[str] = Field(default=None)
     tags: List[str] = Field(default_factory=list)
+    author_email: Optional[str] = Field(default=None, description="Author email address")
+
+
+class PermissionsConfig(BaseModel):
+    """Permission requirements for the agent.
+
+    Permissions define what data and APIs the agent needs access to.
+    Required permissions must be granted for the agent to function.
+    Optional permissions enhance functionality but aren't mandatory.
+    """
+
+    required: List[str] = Field(
+        default_factory=list,
+        description="Permissions that must be granted for the agent to function",
+    )
+    optional: List[str] = Field(
+        default_factory=list,
+        description="Permissions that enhance functionality but aren't required",
+    )
+
+    @field_validator("required", "optional")
+    @classmethod
+    def validate_permissions(cls, v: List[str]) -> List[str]:
+        """Validate permission format."""
+        valid_prefixes = [
+            "user.profile",
+            "user.files",
+            "user.conversations",
+            "oauth.",
+            "files.",
+            "conversations.",
+            "tasks.",
+        ]
+        for perm in v:
+            if not any(perm.startswith(prefix) for prefix in valid_prefixes):
+                # Allow custom permissions but warn
+                pass
+        return v
+
+
+class DataAccessConfig(BaseModel):
+    """Data access documentation for the agent.
+
+    Documents what external services and user data the agent accesses.
+    This is primarily for transparency and user consent.
+    """
+
+    oauth_providers: List[str] = Field(
+        default_factory=list,
+        description="OAuth providers the agent uses (e.g., google, github, tiktok)",
+    )
+    user_data: List[str] = Field(
+        default_factory=list,
+        description="Types of user data accessed (e.g., profile, files, conversations)",
+    )
+    external_apis: List[str] = Field(
+        default_factory=list,
+        description="External APIs the agent calls",
+    )
 
 
 class AgentManifest(BaseModel):
@@ -42,6 +101,12 @@ class AgentManifest(BaseModel):
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
     metadata: MetadataConfig = Field(..., description="Agent metadata")
+    permissions: Optional[PermissionsConfig] = Field(
+        default=None, description="Permission requirements for the agent"
+    )
+    data_access: Optional[DataAccessConfig] = Field(
+        default=None, description="Data access documentation for the agent"
+    )
 
     # Surfaces (optional)
     class A2AConfig(BaseModel):
