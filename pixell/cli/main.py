@@ -6,15 +6,15 @@ from typing import List, Dict, Any
 import asyncio
 
 try:
-    __version__ = version("pixell-kit")
+    __version__ = version("pixell-sdk")
 except PackageNotFoundError:
-    __version__ = "0.1.0-dev"
+    __version__ = "0.4.12-dev"
 
 
 @click.group()
 @click.version_option(version=__version__, prog_name="pixell")
 def cli():
-    """Pixell Kit - Package AI agents into portable APKG files."""
+    """PixellSDK - Build and deploy AI agent applications."""
     pass
 
 
