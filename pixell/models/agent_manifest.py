@@ -121,8 +121,13 @@ class AgentManifest(BaseModel):
             description="DEPRECATED: use 'entry' instead",
             alias="service",
         )
+        # HTTP-based A2A server (JSON-RPC over HTTP instead of gRPC)
+        http_server: Optional[str] = Field(
+            default=None,
+            description="Module:function for A2A HTTP server entry (returns handlers dict)",
+        )
 
-        @field_validator("entry")
+        @field_validator("entry", "http_server")
         @classmethod
         def validate_entry(cls, v):  # type: ignore[no-redef]
             # Allow omission; full path validation is handled in Validator/Builder

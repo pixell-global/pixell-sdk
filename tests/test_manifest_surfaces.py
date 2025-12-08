@@ -72,7 +72,7 @@ class TestAgentManifestSurfaces:
 
     def test_a2a_service_validation(self):
         """Test A2A service field validation."""
-        # Valid format
+        # Valid format with colon
         manifest_data = {
             "version": "1.0",
             "name": "test-agent",
@@ -88,13 +88,17 @@ class TestAgentManifestSurfaces:
         manifest = AgentManifest(**manifest_data)
         assert manifest.a2a.service == "src.a2a.server:serve"
 
-        # Invalid format - missing colon
-        with pytest.raises(ValueError, match="A2A service must be in format 'module:function'"):
-            AgentManifest(**{**manifest_data, "a2a": {"service": "src.a2a.server.serve"}})
+        # Test with 'entry' field (preferred)
+        manifest_with_entry = AgentManifest(**{**manifest_data, "a2a": {"entry": "src.a2a.server:serve"}})
+        assert manifest_with_entry.a2a.entry == "src.a2a.server:serve"
+
+        # Invalid format - missing colon in 'entry' should raise error
+        with pytest.raises(ValueError, match="A2A entry must be in format 'module:function'"):
+            AgentManifest(**{**manifest_data, "a2a": {"entry": "src.a2a.server.serve"}})
 
     def test_rest_entry_validation(self):
         """Test REST entry field validation."""
-        # Valid format
+        # Valid format with module:function
         manifest_data = {
             "version": "1.0",
             "name": "test-agent",
@@ -110,9 +114,14 @@ class TestAgentManifestSurfaces:
         manifest = AgentManifest(**manifest_data)
         assert manifest.rest.entry == "src.rest.index:mount"
 
-        # Invalid format - missing colon
-        with pytest.raises(ValueError, match="REST entry must be in format 'module:function'"):
-            AgentManifest(**{**manifest_data, "rest": {"entry": "src.rest.index.mount"}})
+        # REST entry also allows function name only (will use entrypoint's module)
+        # Full validation happens in AgentValidator._validate_surfaces
+        manifest_with_func_only = AgentManifest(**{
+            **manifest_data,
+            "entrypoint": "src.main:handler",
+            "rest": {"entry": "mount"}
+        })
+        assert manifest_with_func_only.rest.entry == "mount"
 
     def test_ui_path_validation(self):
         """Test UI path field."""

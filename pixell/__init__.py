@@ -21,6 +21,6 @@ Example usage:
             return {"result": ...}
 """
 
-__version__ = "0.4.12"
+__version__ = "0.4.14"
 __author__ = "Pixell Team"
 __email__ = "dev@pixell.global"

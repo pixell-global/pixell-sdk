@@ -168,9 +168,132 @@ export PIXELL_AWS_REGION=us-east-1
 - 🔐 Optional package signing with GPG
 - 🐍 Python 3.11+ support (TypeScript coming soon)
 
+---
+
+## SDK Runtime
+
+The Pixell SDK provides runtime infrastructure for agent execution, including task queue processing, user context management, and progress reporting.
+
+### Installation
+
+```bash
+pip install pixell-sdk
+```
+
+### Quick Start
+
+```python
+import asyncio
+from pixell.sdk import UserContext, TaskConsumer
+
+async def handle_task(ctx: UserContext, payload: dict) -> dict:
+    # Report progress
+    await ctx.report_progress("starting", percent=0)
+
+    # Access user data
+    profile = await ctx.get_user_profile()
+
+    # Call OAuth APIs on behalf of the user
+    events = await ctx.call_oauth_api(
+        provider="google",
+        method="GET",
+        path="/calendar/v3/calendars/primary/events"
+    )
+
+    await ctx.report_progress("completed", percent=100)
+    return {"status": "success", "events": len(events.get("items", []))}
+
+async def main():
+    consumer = TaskConsumer(
+        agent_id="my-agent",
+        redis_url="redis://localhost:6379",
+        pxui_base_url="https://api.pixell.global",
+        handler=handle_task,
+    )
+
+    async with consumer:
+        await consumer.start()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### Core Components
+
+| Component | Description |
+|-----------|-------------|
+| `TaskConsumer` | Redis task queue consumer with concurrency control |
+| `UserContext` | Execution context with access to user data and OAuth APIs |
+| `ProgressReporter` | Real-time progress updates via Redis pub/sub |
+| `PXUIDataClient` | HTTP client for PXUI platform API |
+
+### UserContext Methods
+
+```python
+# OAuth API calls (Google, GitHub, Slack, TikTok, etc.)
+result = await ctx.call_oauth_api(provider, method, path, body?, headers?)
+
+# User data access
+profile = await ctx.get_user_profile()
+files = await ctx.get_files(filter?, limit?)
+content = await ctx.get_file_content(file_id)
+conversations = await ctx.get_conversations(limit?, since?)
+history = await ctx.get_task_history(agent_id?, limit?)
+
+# Progress reporting
+await ctx.report_progress(status, percent?, message?)
+await ctx.report_error(error_type, message, recoverable?)
+```
+
+### Error Handling
+
+```python
+from pixell.sdk import (
+    AuthenticationError,  # Invalid/expired token
+    RateLimitError,       # Rate limit exceeded (check retry_after)
+    APIError,             # API error response
+    ConnectionError,      # Network failure
+    TaskTimeoutError,     # Task exceeded timeout
+)
+
+try:
+    result = await ctx.call_oauth_api(...)
+except RateLimitError as e:
+    retry_after = e.details.get("retry_after", 60)
+    await asyncio.sleep(retry_after)
+except AuthenticationError:
+    # Token invalid - cannot retry
+    raise
+```
+
+### Configuration Options
+
+```python
+consumer = TaskConsumer(
+    agent_id="my-agent",
+    redis_url="redis://localhost:6379",
+    pxui_base_url="https://api.pixell.global",
+    handler=handle_task,
+    concurrency=10,        # Max concurrent tasks (default: 10)
+    poll_interval=1.0,     # Queue poll interval in seconds
+    task_timeout=300.0,    # Task timeout in seconds (default: 5 min)
+)
+```
+
+### Redis Queue Keys
+
+- `pixell:agents:{agent_id}:tasks` - Main task queue
+- `pixell:agents:{agent_id}:processing` - Tasks being processed
+- `pixell:agents:{agent_id}:dead_letter` - Failed tasks
+- `pixell:tasks:{task_id}:progress` - Progress pub/sub channel
+
+---
+
 ## Documentation
 
 See the [full documentation](https://docs.pixell.global/pixell) for detailed usage.
+
+For SDK tutorials and advanced patterns, see [SDK_TUTORIAL.md](https://github.com/pixell-global/pixell-kit/blob/main/docs/SDK_TUTORIAL.md).
 
 ## License
 
