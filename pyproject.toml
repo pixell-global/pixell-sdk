@@ -83,6 +83,9 @@ packages = [
   "pixell.protocol",
   "pixell.test",
   "pixell.sdk",
+  "pixell.sdk.a2a",
+  "pixell.sdk.plan_mode",
+  "pixell.sdk.translation",
 ]
 include-package-data = true
 

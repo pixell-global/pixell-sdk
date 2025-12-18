@@ -1,0 +1,64 @@
+# Example agent.yaml with plan_mode and translation
+
+version: "1.0"
+name: reddit-research-agent
+display_name: Reddit Research Agent
+description: Research subreddits and gather insights with multi-phase plan mode
+author: Pixell Team
+license: MIT
+entrypoint: main:server
+
+runtime: python3.11
+dependencies:
+  - fastapi>=0.100.0
+  - uvicorn>=0.20.0
+  - pydantic>=2.0.0
+
+capabilities:
+  - research
+  - plan_mode
+  - translation
+
+metadata:
+  version: "1.0.0"
+  tags:
+    - research
+    - reddit
+    - plan-mode
+
+# Plan mode configuration
+plan_mode:
+  supported: true
+  phases:
+    - clarification
+    - discovery
+    - selection
+    - preview
+    - executing
+  discovery_type: subreddits
+
+# Translation configuration
+translation:
+  supported: true
+  default_language: en
+  supported_languages:
+    - en
+    - ko
+    - ja
+    - zh
+
+# A2A HTTP server
+a2a:
+  http_server: main:server
+
+permissions:
+  required:
+    - user.profile.read
+  optional:
+    - user.files.read
+
+data_access:
+  external_apis:
+    - Reddit API
+  user_data:
+    - profile

@@ -79,6 +79,81 @@ class DataAccessConfig(BaseModel):
     )
 
 
+class PlanModeConfig(BaseModel):
+    """Plan mode configuration for multi-phase workflows.
+
+    Plan mode enables agents to implement interactive workflows with
+    clarification, discovery, selection, and preview phases.
+    """
+
+    supported: bool = Field(
+        default=True,
+        description="Whether plan mode is supported by this agent",
+    )
+    phases: List[str] = Field(
+        default_factory=list,
+        description="Supported phases (clarification, discovery, selection, preview, executing)",
+    )
+    discovery_type: Optional[str] = Field(
+        default=None,
+        description="Type of items discovered (subreddits, hashtags, channels, etc.)",
+    )
+
+    @field_validator("phases")
+    @classmethod
+    def validate_phases(cls, v: List[str]) -> List[str]:
+        """Validate phase names."""
+        valid_phases = [
+            "clarification",
+            "discovery",
+            "selection",
+            "preview",
+            "executing",
+        ]
+        for phase in v:
+            if phase not in valid_phases:
+                raise ValueError(
+                    f"Invalid phase: {phase}. Valid phases: {', '.join(valid_phases)}"
+                )
+        return v
+
+
+class TranslationConfig(BaseModel):
+    """Translation configuration for i18n support.
+
+    Agents can opt into translation support. The SDK provides the interface,
+    but agents bring their own LLM for translation (they pay for tokens).
+    """
+
+    supported: bool = Field(
+        default=True,
+        description="Whether translation is supported by this agent",
+    )
+    default_language: str = Field(
+        default="en",
+        description="Default/working language for the agent (ISO 639-1)",
+    )
+    supported_languages: List[str] = Field(
+        default_factory=lambda: ["en"],
+        description="List of supported language codes (ISO 639-1)",
+    )
+
+    @field_validator("default_language", "supported_languages", mode="before")
+    @classmethod
+    def validate_language_codes(cls, v):
+        """Validate ISO 639-1 language codes."""
+        import re
+
+        if isinstance(v, str):
+            if not re.match(r"^[a-z]{2}$", v):
+                raise ValueError(f"Invalid language code: {v}. Use ISO 639-1 (e.g., 'en', 'ko')")
+        elif isinstance(v, list):
+            for lang in v:
+                if not re.match(r"^[a-z]{2}$", lang):
+                    raise ValueError(f"Invalid language code: {lang}. Use ISO 639-1 (e.g., 'en', 'ko')")
+        return v
+
+
 class AgentManifest(BaseModel):
     """Agent manifest schema for agent.yaml files."""
 
@@ -164,6 +239,14 @@ class AgentManifest(BaseModel):
     )
     required_ui_capabilities: Optional[List[str]] = Field(
         default=None, description="Capabilities this agent requires from the UI client"
+    )
+
+    # Plan mode and translation (optional)
+    plan_mode: Optional[PlanModeConfig] = Field(
+        default=None, description="Plan mode configuration for multi-phase workflows"
+    )
+    translation: Optional[TranslationConfig] = Field(
+        default=None, description="Translation/i18n configuration"
     )
 
     @field_validator("name")
