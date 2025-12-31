@@ -116,25 +116,28 @@ async def plan_mode_server(
         await ctx.emit_status("working", "Starting plan mode workflow...")
 
         # Request clarification
-        test_handlers.last_clarification_id = await plan.request_clarification([
-            Question(
-                id="topic",
-                type=QuestionType.FREE_TEXT,
-                question="What topic are you researching?",
-                header="Topic",
-                placeholder="e.g., gaming, fitness",
-            ),
-            Question(
-                id="depth",
-                type=QuestionType.SINGLE_CHOICE,
-                question="How thorough should the search be?",
-                header="Depth",
-                options=[
-                    QuestionOption(id="quick", label="Quick", description="Top 5 results"),
-                    QuestionOption(id="deep", label="Deep", description="Top 20 results"),
-                ],
-            ),
-        ], message="I need some information to help you.")
+        test_handlers.last_clarification_id = await plan.request_clarification(
+            [
+                Question(
+                    id="topic",
+                    type=QuestionType.FREE_TEXT,
+                    question="What topic are you researching?",
+                    header="Topic",
+                    placeholder="e.g., gaming, fitness",
+                ),
+                Question(
+                    id="depth",
+                    type=QuestionType.SINGLE_CHOICE,
+                    question="How thorough should the search be?",
+                    header="Depth",
+                    options=[
+                        QuestionOption(id="quick", label="Quick", description="Top 5 results"),
+                        QuestionOption(id="deep", label="Deep", description="Top 20 results"),
+                    ],
+                ),
+            ],
+            message="I need some information to help you.",
+        )
 
         test_handlers.clarification_requested.set()
 

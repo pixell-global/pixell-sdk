@@ -50,24 +50,27 @@ async def multi_round_server(free_port: int) -> tuple:
         handlers.phase_history.append("initial_clarification")
         handlers.clarification_round = 1
 
-        await plan.request_clarification([
-            Question(
-                id="topic",
-                type=QuestionType.FREE_TEXT,
-                question="What topic are you interested in?",
-                header="Topic",
-            ),
-            Question(
-                id="depth",
-                type=QuestionType.SINGLE_CHOICE,
-                question="How deep should we search?",
-                header="Depth",
-                options=[
-                    QuestionOption(id="quick", label="Quick"),
-                    QuestionOption(id="deep", label="Deep"),
-                ],
-            ),
-        ], message="First round: Basic info needed")
+        await plan.request_clarification(
+            [
+                Question(
+                    id="topic",
+                    type=QuestionType.FREE_TEXT,
+                    question="What topic are you interested in?",
+                    header="Topic",
+                ),
+                Question(
+                    id="depth",
+                    type=QuestionType.SINGLE_CHOICE,
+                    question="How deep should we search?",
+                    header="Depth",
+                    options=[
+                        QuestionOption(id="quick", label="Quick"),
+                        QuestionOption(id="deep", label="Deep"),
+                    ],
+                ),
+            ],
+            message="First round: Basic info needed",
+        )
 
     @server.on_respond
     async def handle_respond(ctx: ResponseContext):
@@ -81,44 +84,51 @@ async def multi_round_server(free_port: int) -> tuple:
                 handlers.clarification_round = 2
                 handlers.phase_history.append("second_clarification")
 
-                await plan.request_clarification([
-                    Question(
-                        id="timeframe",
-                        type=QuestionType.SINGLE_CHOICE,
-                        question="What timeframe?",
-                        header="Time",
-                        options=[
-                            QuestionOption(id="week", label="Past Week"),
-                            QuestionOption(id="month", label="Past Month"),
-                            QuestionOption(id="year", label="Past Year"),
-                        ],
-                    ),
-                    Question(
-                        id="include_comments",
-                        type=QuestionType.YES_NO,
-                        question="Include comments?",
-                        header="Comments",
-                    ),
-                ], message="Second round: Additional details needed")
+                await plan.request_clarification(
+                    [
+                        Question(
+                            id="timeframe",
+                            type=QuestionType.SINGLE_CHOICE,
+                            question="What timeframe?",
+                            header="Time",
+                            options=[
+                                QuestionOption(id="week", label="Past Week"),
+                                QuestionOption(id="month", label="Past Month"),
+                                QuestionOption(id="year", label="Past Year"),
+                            ],
+                        ),
+                        Question(
+                            id="include_comments",
+                            type=QuestionType.YES_NO,
+                            question="Include comments?",
+                            header="Comments",
+                        ),
+                    ],
+                    message="Second round: Additional details needed",
+                )
 
             elif handlers.clarification_round == 2:
                 handlers.clarification_round = 3
                 handlers.phase_history.append("discovery")
 
-                await plan.emit_discovery([
-                    DiscoveredItem(
-                        id="source_1",
-                        name="Source 1",
-                        description="First source",
-                        metadata={"score": 95},
-                    ),
-                    DiscoveredItem(
-                        id="source_2",
-                        name="Source 2",
-                        description="Second source",
-                        metadata={"score": 85},
-                    ),
-                ], discovery_type="sources", message="Found sources")
+                await plan.emit_discovery(
+                    [
+                        DiscoveredItem(
+                            id="source_1",
+                            name="Source 1",
+                            description="First source",
+                            metadata={"score": 95},
+                        ),
+                        DiscoveredItem(
+                            id="source_2",
+                            name="Source 2",
+                            description="Second source",
+                            metadata={"score": 85},
+                        ),
+                    ],
+                    discovery_type="sources",
+                    message="Found sources",
+                )
 
                 await plan.request_selection(
                     min_select=1,
@@ -130,13 +140,17 @@ async def multi_round_server(free_port: int) -> tuple:
                 handlers.clarification_round = 4
                 handlers.phase_history.append("rollback_clarification")
 
-                await plan.emit_discovery([
-                    DiscoveredItem(
-                        id="refined_1",
-                        name="Refined 1",
-                        description="Better match",
-                    ),
-                ], discovery_type="refined_sources", message="Refined results")
+                await plan.emit_discovery(
+                    [
+                        DiscoveredItem(
+                            id="refined_1",
+                            name="Refined 1",
+                            description="Better match",
+                        ),
+                    ],
+                    discovery_type="refined_sources",
+                    message="Refined results",
+                )
 
                 await plan.request_selection(message="Select refined sources")
 
@@ -166,14 +180,17 @@ async def multi_round_server(free_port: int) -> tuple:
                 handlers.clarification_round = 3
                 handlers.phase_history.append("rejection_rollback")
 
-                await plan.request_clarification([
-                    Question(
-                        id="refinement",
-                        type=QuestionType.FREE_TEXT,
-                        question="What would you like to change?",
-                        header="Changes",
-                    ),
-                ], message="Please tell us what to change")
+                await plan.request_clarification(
+                    [
+                        Question(
+                            id="refinement",
+                            type=QuestionType.FREE_TEXT,
+                            question="What would you like to change?",
+                            header="Changes",
+                        ),
+                    ],
+                    message="Please tell us what to change",
+                )
 
     from uvicorn import Config, Server
 
@@ -212,7 +229,8 @@ class TestMultiRoundClarification:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # Round 1: Initial message
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -238,7 +256,8 @@ class TestMultiRoundClarification:
 
             # Round 1: Respond with basic answers
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clarification_id_1,
@@ -259,7 +278,8 @@ class TestMultiRoundClarification:
 
             # Round 2: Respond with follow-up answers
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clarification_id_2,
@@ -298,7 +318,8 @@ class TestMultiRoundClarification:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # Initial message
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -322,7 +343,8 @@ class TestMultiRoundClarification:
 
             # First clarification response
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_1,
@@ -338,7 +360,8 @@ class TestMultiRoundClarification:
 
             # Second clarification response
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_2,
@@ -354,7 +377,8 @@ class TestMultiRoundClarification:
 
             # Selection response
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "selectionId": selection_id,
@@ -373,7 +397,8 @@ class TestMultiRoundClarification:
 
             # Approve and complete
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "planId": plan_id,
@@ -407,7 +432,8 @@ class TestMultiRoundClarification:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # Initial message
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -430,7 +456,8 @@ class TestMultiRoundClarification:
                 clar_id_1 = events[-1]["data"]["clarificationId"]
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_1,
@@ -445,7 +472,8 @@ class TestMultiRoundClarification:
                 clar_id_2 = events[-1]["data"]["clarificationId"]
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_2,
@@ -460,7 +488,8 @@ class TestMultiRoundClarification:
                 selection_id = events[-1]["data"]["selectionId"]
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "selectionId": selection_id,
@@ -476,7 +505,8 @@ class TestMultiRoundClarification:
 
             # REJECT the plan
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "planId": plan_id,
@@ -508,7 +538,8 @@ class TestAnswerAccumulation:
 
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -531,7 +562,8 @@ class TestAnswerAccumulation:
                 clar_id_1 = events[-1]["data"]["clarificationId"]
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_1,
@@ -546,7 +578,8 @@ class TestAnswerAccumulation:
                 clar_id_2 = events[-1]["data"]["clarificationId"]
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id_2,
@@ -583,14 +616,16 @@ class TestAnswerAccumulation:
 
         @server.on_message
         async def handle_message(ctx: MessageContext):
-            await ctx.plan_mode.request_clarification([
-                Question(
-                    id="shared_question",
-                    type=QuestionType.FREE_TEXT,
-                    question="Enter value",
-                    header="Value",
-                ),
-            ])
+            await ctx.plan_mode.request_clarification(
+                [
+                    Question(
+                        id="shared_question",
+                        type=QuestionType.FREE_TEXT,
+                        question="Enter value",
+                        header="Value",
+                    ),
+                ]
+            )
 
         round_count = [0]
 
@@ -604,14 +639,16 @@ class TestAnswerAccumulation:
                 round_count[0] += 1
 
                 if round_count[0] == 1:
-                    await plan.request_clarification([
-                        Question(
-                            id="shared_question",
-                            type=QuestionType.FREE_TEXT,
-                            question="Enter value again",
-                            header="Value",
-                        ),
-                    ])
+                    await plan.request_clarification(
+                        [
+                            Question(
+                                id="shared_question",
+                                type=QuestionType.FREE_TEXT,
+                                question="Enter value again",
+                                header="Value",
+                            ),
+                        ]
+                    )
                 else:
                     preview = SearchPlanPreview(
                         user_intent="test",
@@ -641,7 +678,8 @@ class TestAnswerAccumulation:
         try:
             async with httpx.AsyncClient(timeout=30.0) as http_client:
                 async with http_client.stream(
-                    "POST", f"{base_url}/",
+                    "POST",
+                    f"{base_url}/",
                     json={
                         "jsonrpc": "2.0",
                         "id": str(uuid.uuid4()),
@@ -664,7 +702,8 @@ class TestAnswerAccumulation:
                     clar_id_1 = events[-1]["data"]["clarificationId"]
 
                 async with http_client.stream(
-                    "POST", f"{base_url}/respond",
+                    "POST",
+                    f"{base_url}/respond",
                     json={
                         "sessionId": session_id,
                         "clarificationId": clar_id_1,
@@ -679,7 +718,8 @@ class TestAnswerAccumulation:
                     clar_id_2 = events[-1]["data"]["clarificationId"]
 
                 async with http_client.stream(
-                    "POST", f"{base_url}/respond",
+                    "POST",
+                    f"{base_url}/respond",
                     json={
                         "sessionId": session_id,
                         "clarificationId": clar_id_2,

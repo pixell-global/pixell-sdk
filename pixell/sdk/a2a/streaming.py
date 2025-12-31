@@ -12,6 +12,7 @@ from pixell.sdk.a2a.protocol import A2AMessage
 @dataclass
 class SSEEvent:
     """Server-Sent Event."""
+
     event: str
     data: dict[str, Any]
     id: Optional[str] = None
@@ -115,11 +116,14 @@ class SSEStream:
             message: Human-readable status message
             **data: Additional data to include in the event
         """
-        await self._emit("status-update", {
-            "state": state,
-            "message": message,
-            **data,
-        })
+        await self._emit(
+            "status-update",
+            {
+                "state": state,
+                "message": message,
+                **data,
+            },
+        )
 
     async def emit_progress(
         self,
@@ -154,10 +158,13 @@ class SSEStream:
         Args:
             clarification: ClarificationNeeded data
         """
-        await self._emit("clarification_needed", {
-            "state": "input-required",
-            **clarification,
-        })
+        await self._emit(
+            "clarification_needed",
+            {
+                "state": "input-required",
+                **clarification,
+            },
+        )
 
     async def emit_discovery(
         self,
@@ -168,10 +175,13 @@ class SSEStream:
         Args:
             discovery: DiscoveryResult data
         """
-        await self._emit("discovery_result", {
-            "state": "working",
-            **discovery,
-        })
+        await self._emit(
+            "discovery_result",
+            {
+                "state": "working",
+                **discovery,
+            },
+        )
 
     async def emit_selection(
         self,
@@ -184,10 +194,13 @@ class SSEStream:
         Args:
             selection: SelectionRequired data
         """
-        await self._emit("selection_required", {
-            "state": "input-required",
-            **selection,
-        })
+        await self._emit(
+            "selection_required",
+            {
+                "state": "input-required",
+                **selection,
+            },
+        )
 
     async def emit_preview(
         self,
@@ -200,10 +213,13 @@ class SSEStream:
         Args:
             preview: SearchPlanPreview or PlanProposed data
         """
-        await self._emit("preview_ready", {
-            "state": "input-required",
-            **preview,
-        })
+        await self._emit(
+            "preview_ready",
+            {
+                "state": "input-required",
+                **preview,
+            },
+        )
 
     async def emit_schedule_proposal(
         self,
@@ -217,10 +233,13 @@ class SSEStream:
         Args:
             proposal: ScheduleProposal.to_dict() data
         """
-        await self._emit("schedule_proposal", {
-            "state": "input-required",
-            **proposal,
-        })
+        await self._emit(
+            "schedule_proposal",
+            {
+                "state": "input-required",
+                **proposal,
+            },
+        )
 
     async def emit_result(
         self,
@@ -233,11 +252,14 @@ class SSEStream:
             message: A2A message with results
             final: Whether this is the final message
         """
-        await self._emit("message", {
-            "state": "completed" if final else "working",
-            "message": message.to_dict(),
-            "final": final,
-        })
+        await self._emit(
+            "message",
+            {
+                "state": "completed" if final else "working",
+                "message": message.to_dict(),
+                "final": final,
+            },
+        )
 
     async def emit_error(
         self,
@@ -254,13 +276,16 @@ class SSEStream:
             recoverable: Whether the error is recoverable
             **data: Additional error data
         """
-        await self._emit("error", {
-            "state": "failed",
-            "error_type": error_type,
-            "message": message,
-            "recoverable": recoverable,
-            **data,
-        })
+        await self._emit(
+            "error",
+            {
+                "state": "failed",
+                "error_type": error_type,
+                "message": message,
+                "recoverable": recoverable,
+                **data,
+            },
+        )
 
     async def events(self) -> AsyncGenerator[SSEEvent, None]:
         """Async generator yielding SSE events.
@@ -310,7 +335,9 @@ def create_sse_response(stream: SSEStream) -> AsyncGenerator[str, None]:
             media_type="text/event-stream"
         )
     """
+
     async def _generate() -> AsyncGenerator[str, None]:
         async for event in stream.events():
             yield event.encode()
+
     return _generate()

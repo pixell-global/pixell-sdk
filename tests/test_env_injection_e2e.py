@@ -44,7 +44,8 @@ class TestEnvironmentInjectionE2E:
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 import os
 
 def handler(context):
@@ -61,7 +62,8 @@ def handler(context):
         "port": port,
         "database_url": db_url,
     }
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -177,7 +179,8 @@ def handler(context):
             # Create src directory and A2A server
             (project_dir / "src").mkdir()
             (project_dir / "src" / "a2a").mkdir()
-            (project_dir / "src" / "a2a" / "server.py").write_text("""
+            (project_dir / "src" / "a2a" / "server.py").write_text(
+                """
 import os
 
 def serve():
@@ -188,7 +191,8 @@ def serve():
     print(f"Starting A2A server on port {port}")
     print(f"Available agents: {agents}")
     print(f"Use Unix socket: {use_socket}")
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -242,10 +246,12 @@ def serve():
 
             # Create src directory
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")

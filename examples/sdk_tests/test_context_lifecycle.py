@@ -205,6 +205,7 @@ class TestContextLifecycle:
 
     async def test_closed_context_raises_error(self):
         """Test that using closed context raises error."""
+
         class MockContext:
             def __init__(self):
                 self._closed = False
@@ -438,13 +439,7 @@ class TestContextMetadata:
         """Test context handles large payload correctly."""
         large_data = {
             "items": [{"id": i, "data": "x" * 100} for i in range(1000)],
-            "nested": {
-                "level1": {
-                    "level2": {
-                        "level3": {"values": list(range(100))}
-                    }
-                }
-            }
+            "nested": {"level1": {"level2": {"level3": {"values": list(range(100))}}}},
         }
 
         metadata = TaskMetadata(
@@ -524,7 +519,7 @@ class TestContextErrorScenarios:
         for op_name, op_func in [
             ("get_profile", ctx.get_profile),
             ("get_files", ctx.get_files),
-            ("report_progress", lambda: ctx.report_progress("test", 50))
+            ("report_progress", lambda: ctx.report_progress("test", 50)),
         ]:
             try:
                 await op_func() if asyncio.iscoroutinefunction(op_func) else await op_func()

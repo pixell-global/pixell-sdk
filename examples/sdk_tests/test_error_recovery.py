@@ -88,11 +88,7 @@ class TestErrorClassification:
 
     def test_error_serialization(self):
         """Test error serialization to dict."""
-        error = SDKError(
-            "Test error",
-            code="TEST_ERROR",
-            details={"key": "value", "count": 42}
-        )
+        error = SDKError("Test error", code="TEST_ERROR", details={"key": "value", "count": 42})
 
         serialized = error.to_dict()
 
@@ -126,7 +122,7 @@ class TestRetryLogic:
                 except ConnectionError:
                     if attempt == max_retries:
                         raise
-                    await asyncio.sleep(0.01 * (2 ** attempt))  # Exponential backoff
+                    await asyncio.sleep(0.01 * (2**attempt))  # Exponential backoff
             raise ConnectionError("Max retries exceeded")
 
         result = await retry_wrapper()
@@ -192,7 +188,7 @@ class TestRetryLogic:
                 except ConnectionError:
                     if attempt == max_attempts - 1:
                         raise
-                    delay = base_delay * (2 ** attempt)
+                    delay = base_delay * (2**attempt)
                     delays.append(delay)
                     await asyncio.sleep(delay)
 
@@ -264,7 +260,7 @@ class TestErrorRecovery:
                 "task_id": task_id,
                 "error_type": type(error).__name__,
                 "message": str(error),
-                "details": error.details
+                "details": error.details,
             }
 
             # Route based on recoverability
@@ -295,7 +291,7 @@ class TestErrorRecovery:
             """Save checkpoint for recovery."""
             checkpoint_state[name] = {
                 "result": result,
-                "completed_at": datetime.utcnow().isoformat()
+                "completed_at": datetime.utcnow().isoformat(),
             }
 
         async def recover_from_checkpoint() -> Dict[str, Any]:
@@ -328,6 +324,7 @@ class TestErrorRecovery:
 
     async def test_error_context_preservation(self):
         """Test that error context is preserved through the chain."""
+
         async def inner_operation():
             raise ValueError("Original error in inner operation")
 
@@ -335,11 +332,7 @@ class TestErrorRecovery:
             try:
                 await inner_operation()
             except ValueError as e:
-                raise TaskHandlerError(
-                    "Handler failed",
-                    task_id="task-123",
-                    cause=e
-                )
+                raise TaskHandlerError("Handler failed", task_id="task-123", cause=e)
 
         async def outer_operation():
             try:
@@ -351,7 +344,7 @@ class TestErrorRecovery:
                     "message": str(e),
                     "task_id": e.details.get("task_id"),
                     "original_error": str(e.cause) if e.cause else None,
-                    "original_type": type(e.cause).__name__ if e.cause else None
+                    "original_type": type(e.cause).__name__ if e.cause else None,
                 }
 
         result = await outer_operation()
@@ -447,10 +440,7 @@ class TestTimeoutHandling:
 
         async def execute_with_timeout():
             try:
-                result = await asyncio.wait_for(
-                    slow_operation(),
-                    timeout=timeout_seconds
-                )
+                result = await asyncio.wait_for(slow_operation(), timeout=timeout_seconds)
                 return {"status": "success", "result": result}
             except asyncio.TimeoutError:
                 raise TaskTimeoutError(task_id, timeout_seconds)

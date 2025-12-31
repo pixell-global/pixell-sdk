@@ -41,9 +41,28 @@ class Phase(str, Enum):
 # Key is current phase, value is list of valid next phases
 VALID_TRANSITIONS: dict[Phase, list[Phase]] = {
     Phase.IDLE: [Phase.CLARIFICATION, Phase.DISCOVERY, Phase.EXECUTING, Phase.ERROR],
-    Phase.CLARIFICATION: [Phase.DISCOVERY, Phase.SELECTION, Phase.PREVIEW, Phase.EXECUTING, Phase.CLARIFICATION, Phase.ERROR],
-    Phase.DISCOVERY: [Phase.SELECTION, Phase.PREVIEW, Phase.EXECUTING, Phase.CLARIFICATION, Phase.ERROR],
-    Phase.SELECTION: [Phase.PREVIEW, Phase.EXECUTING, Phase.SELECTION, Phase.CLARIFICATION, Phase.ERROR],
+    Phase.CLARIFICATION: [
+        Phase.DISCOVERY,
+        Phase.SELECTION,
+        Phase.PREVIEW,
+        Phase.EXECUTING,
+        Phase.CLARIFICATION,
+        Phase.ERROR,
+    ],
+    Phase.DISCOVERY: [
+        Phase.SELECTION,
+        Phase.PREVIEW,
+        Phase.EXECUTING,
+        Phase.CLARIFICATION,
+        Phase.ERROR,
+    ],
+    Phase.SELECTION: [
+        Phase.PREVIEW,
+        Phase.EXECUTING,
+        Phase.SELECTION,
+        Phase.CLARIFICATION,
+        Phase.ERROR,
+    ],
     Phase.PREVIEW: [Phase.EXECUTING, Phase.CLARIFICATION, Phase.ERROR],
     Phase.EXECUTING: [Phase.COMPLETED, Phase.ERROR],
     Phase.COMPLETED: [],  # Terminal

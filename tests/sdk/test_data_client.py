@@ -131,7 +131,9 @@ class TestPXUIDataClient:
     async def test_list_task_history(self, client, mock_response_200):
         """Test list_task_history method."""
         # The method expects {"tasks": [...]} structure
-        mock_response_200.json.return_value = {"tasks": [{"task_id": "task-1", "status": "completed"}]}
+        mock_response_200.json.return_value = {
+            "tasks": [{"task_id": "task-1", "status": "completed"}]
+        }
 
         with patch.object(client, "_get_client") as mock_get_client:
             mock_http_client = AsyncMock()

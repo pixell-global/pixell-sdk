@@ -34,6 +34,7 @@ class MessageContext:
         translation: Translation context for i18n
         stream: SSE stream for emitting events
     """
+
     message: A2AMessage
     session_id: str
     stream: SSEStream
@@ -99,11 +100,13 @@ class MessageContext:
         # Auto-detect name from path if not provided
         if not name:
             from pathlib import Path as PathLib
+
             name = PathLib(path).name
 
         # Auto-detect format from extension if not provided
         if not format:
             from pathlib import Path as PathLib
+
             suffix = PathLib(path).suffix.lower()
             format = suffix[1:] if suffix else "unknown"
 
@@ -135,6 +138,7 @@ class ResponseContext:
         session_id: Session identifier
         stream: SSE stream for emitting events
     """
+
     session_id: str
     stream: SSEStream
     clarification_id: Optional[str] = None
@@ -201,11 +205,13 @@ class ResponseContext:
         # Auto-detect name from path if not provided
         if not name:
             from pathlib import Path as PathLib
+
             name = PathLib(path).name
 
         # Auto-detect format from extension if not provided
         if not format:
             from pathlib import Path as PathLib
+
             suffix = PathLib(path).suffix.lower()
             format = suffix[1:] if suffix else "unknown"
 
@@ -295,20 +301,16 @@ class A2AHandler:
         """
         try:
             if request.method in ("message/send", "message/stream"):
-                return await self._handle_message(
-                    request, stream, plan_mode, translation
-                )
+                return await self._handle_message(request, stream, plan_mode, translation)
             elif request.method == "respond":
-                return await self._handle_respond(
-                    request, stream, plan_mode, translation
-                )
+                return await self._handle_respond(request, stream, plan_mode, translation)
             else:
                 return JSONRPCResponse.failure(
                     request.id,
                     JSONRPCError(
                         code=JSONRPCError.METHOD_NOT_FOUND,
                         message=f"Method not found: {request.method}",
-                    )
+                    ),
                 )
         except Exception as e:
             return JSONRPCResponse.failure(
@@ -316,7 +318,7 @@ class A2AHandler:
                 JSONRPCError(
                     code=JSONRPCError.INTERNAL_ERROR,
                     message=str(e),
-                )
+                ),
             )
 
     async def _handle_message(
@@ -333,7 +335,7 @@ class A2AHandler:
                 JSONRPCError(
                     code=JSONRPCError.INTERNAL_ERROR,
                     message="No message handler registered",
-                )
+                ),
             )
 
         params = SendMessageParams.from_dict(request.params)
@@ -366,7 +368,7 @@ class A2AHandler:
                 JSONRPCError(
                     code=JSONRPCError.INTERNAL_ERROR,
                     message="No respond handler registered",
-                )
+                ),
             )
 
         params = RespondParams.from_dict(request.params)

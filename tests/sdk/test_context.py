@@ -128,9 +128,7 @@ class TestUserContext:
     @pytest.mark.asyncio
     async def test_get_files(self, context, mock_client):
         """Test get_files method."""
-        mock_client.list_files = AsyncMock(
-            return_value=[{"id": "file-1", "name": "test.txt"}]
-        )
+        mock_client.list_files = AsyncMock(return_value=[{"id": "file-1", "name": "test.txt"}])
 
         result = await context.get_files(filter={"type": "txt"}, limit=50)
 

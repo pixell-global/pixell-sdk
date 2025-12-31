@@ -70,7 +70,15 @@ async def handle_message(ctx: MessageContext):
     plan = ctx.plan_mode
 
     # Detect scheduling intent
-    scheduling_keywords = ["schedule", "every", "daily", "weekly", "recurring", "automated", "remind"]
+    scheduling_keywords = [
+        "schedule",
+        "every",
+        "daily",
+        "weekly",
+        "recurring",
+        "automated",
+        "remind",
+    ]
     has_scheduling_intent = any(kw in message_lower for kw in scheduling_keywords)
 
     if has_scheduling_intent:
@@ -109,6 +117,7 @@ async def handle_message(ctx: MessageContext):
 
 if __name__ == "__main__":
     import uvicorn
+
     print("Starting Schedule Proposal Test Agent on http://localhost:8080")
     print("Test with: curl -X POST http://localhost:8080/ ...")
     uvicorn.run(server.app, host="0.0.0.0", port=8080)

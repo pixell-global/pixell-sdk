@@ -64,12 +64,14 @@ class ProgressReporter:
         """
         try:
             client = await self._get_client()
-            message = json.dumps({
-                **data,
-                "task_id": self.task_id,
-                "user_id": self.user_id,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            message = json.dumps(
+                {
+                    **data,
+                    "task_id": self.task_id,
+                    "user_id": self.user_id,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
             await client.publish(self.channel, message)
         except Exception as e:
             raise ProgressError(

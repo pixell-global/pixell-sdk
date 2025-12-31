@@ -9,6 +9,7 @@ import uuid
 
 class TaskState(str, Enum):
     """Task execution states."""
+
     WORKING = "working"
     INPUT_REQUIRED = "input-required"
     COMPLETED = "completed"
@@ -19,6 +20,7 @@ class TaskState(str, Enum):
 @dataclass
 class TextPart:
     """Text content part."""
+
     text: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -28,6 +30,7 @@ class TextPart:
 @dataclass
 class DataPart:
     """Structured data part."""
+
     data: dict[str, Any]
     mimeType: str = "application/json"
 
@@ -38,6 +41,7 @@ class DataPart:
 @dataclass
 class FilePart:
     """File reference part."""
+
     file: dict[str, Any]  # {name, mimeType, bytes or uri}
 
     def to_dict(self) -> dict[str, Any]:
@@ -50,6 +54,7 @@ MessagePart = Union[TextPart, DataPart, FilePart]
 @dataclass
 class A2AMessage:
     """A2A protocol message."""
+
     role: str  # "user" | "agent"
     parts: list[MessagePart]
     messageId: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -67,33 +72,25 @@ class A2AMessage:
     @classmethod
     def agent_with_data(cls, text: str, data: dict[str, Any]) -> "A2AMessage":
         """Create an agent message with text and structured data."""
-        return cls(
-            role="agent",
-            parts=[TextPart(text=text), DataPart(data=data)]
-        )
+        return cls(role="agent", parts=[TextPart(text=text), DataPart(data=data)])
 
     @property
     def text(self) -> str:
         """Get concatenated text from all text parts."""
-        return "".join(
-            part.text for part in self.parts
-            if isinstance(part, TextPart)
-        )
+        return "".join(part.text for part in self.parts if isinstance(part, TextPart))
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "messageId": self.messageId,
             "role": self.role,
-            "parts": [
-                part.to_dict() if hasattr(part, 'to_dict') else part
-                for part in self.parts
-            ],
+            "parts": [part.to_dict() if hasattr(part, "to_dict") else part for part in self.parts],
         }
 
 
 @dataclass
 class TaskStatus:
     """Task execution status."""
+
     state: TaskState
     message: Optional[A2AMessage] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -111,6 +108,7 @@ class TaskStatus:
 @dataclass
 class JSONRPCError:
     """JSON-RPC error object."""
+
     code: int
     message: str
     data: Optional[dict[str, Any]] = None
@@ -137,6 +135,7 @@ class JSONRPCError:
 @dataclass
 class JSONRPCRequest:
     """JSON-RPC 2.0 request."""
+
     method: str
     params: dict[str, Any]
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -163,6 +162,7 @@ class JSONRPCRequest:
 @dataclass
 class JSONRPCResponse:
     """JSON-RPC 2.0 response."""
+
     id: str
     result: Optional[dict[str, Any]] = None
     error: Optional[JSONRPCError] = None
@@ -188,6 +188,7 @@ class JSONRPCResponse:
 @dataclass
 class SendMessageParams:
     """Parameters for message/send method."""
+
     message: A2AMessage
     sessionId: Optional[str] = None
     workflowId: Optional[str] = None  # Root correlation ID from orchestrator
@@ -201,7 +202,9 @@ class SendMessageParams:
             if "text" in part:
                 parts.append(TextPart(text=part["text"]))
             elif "data" in part:
-                parts.append(DataPart(data=part["data"], mimeType=part.get("mimeType", "application/json")))
+                parts.append(
+                    DataPart(data=part["data"], mimeType=part.get("mimeType", "application/json"))
+                )
             elif "file" in part:
                 parts.append(FilePart(file=part["file"]))
 
@@ -222,12 +225,14 @@ class SendMessageParams:
 @dataclass
 class StreamMessageParams(SendMessageParams):
     """Parameters for message/stream method (same as send)."""
+
     pass
 
 
 @dataclass
 class RespondParams:
     """Parameters for respond method (user response to input-required)."""
+
     clarificationId: Optional[str] = None
     selectionId: Optional[str] = None
     planId: Optional[str] = None

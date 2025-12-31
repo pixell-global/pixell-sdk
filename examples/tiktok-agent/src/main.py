@@ -39,7 +39,9 @@ class TikTokAnalyzerAgent:
             print(f"Processing prompt: {prompt}")
 
             # Step 1: Fetch TikTok profile
-            await context.report_progress("fetching_profile", percent=20, message="Fetching TikTok profile")
+            await context.report_progress(
+                "fetching_profile", percent=20, message="Fetching TikTok profile"
+            )
 
             profile = await context.call_oauth_api(
                 provider="tiktok",
@@ -49,13 +51,17 @@ class TikTokAnalyzerAgent:
             )
 
             # Step 2: Fetch user's files (if they uploaded comparison data)
-            await context.report_progress("checking_files", percent=40, message="Checking for uploaded data")
+            await context.report_progress(
+                "checking_files", percent=40, message="Checking for uploaded data"
+            )
 
             files = await context.get_files(filter={"type": "csv"}, limit=10)
             has_comparison_data = len(files) > 0
 
             # Step 3: Get historical data from previous runs
-            await context.report_progress("loading_history", percent=60, message="Loading historical data")
+            await context.report_progress(
+                "loading_history", percent=60, message="Loading historical data"
+            )
 
             history = await context.get_task_history(agent_id="tiktok-analyzer", limit=5)
 
@@ -84,7 +90,9 @@ class TikTokAnalyzerAgent:
             )
             raise
 
-    def _analyze_profile(self, profile: dict[str, Any], history: list[dict[str, Any]]) -> dict[str, Any]:
+    def _analyze_profile(
+        self, profile: dict[str, Any], history: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze TikTok profile data.
 
         Args:

@@ -126,7 +126,7 @@ class AgentBuilder:
         # If pyproject.toml exists, use it and skip requirements.txt
         pyproject_toml = self.project_dir / "pyproject.toml"
         requirements_txt = self.project_dir / "requirements.txt"
-        
+
         if pyproject_toml.exists():
             optional_items.append("pyproject.toml")
             print("[INFO] pyproject.toml found - will use it instead of requirements.txt")
@@ -140,7 +140,7 @@ class AgentBuilder:
 
             if not src_path.exists():
                 continue
-            
+
             # Special handling for agent.yaml: remove None values (especially entrypoint when optional)
             if item == "agent.yaml" and self.manifest:
                 print(f"Copying {item} (with None values excluded): {src_path} -> {dest_path}")
@@ -180,35 +180,35 @@ class AgentBuilder:
         """Copy pre-built frontend assets if configured."""
         if not self.manifest or not getattr(self.manifest, "ui", None):
             return
-        
+
         ui_config = self.manifest.ui
         if not ui_config or not ui_config.path:
             return
-        
+
         # UI 소스 디렉토리 찾기 (agent.yaml에서 지정된 경로만 사용)
         if not ui_config.path:
             print("[WARN] UI path not specified in agent.yaml")
             return
-        
+
         ui_source_dir = self.project_dir / ui_config.path
         if not ui_source_dir.exists() or not ui_source_dir.is_dir():
             print(f"[ERROR] Specified UI path not found: {ui_config.path}")
             print("[INFO] Please ensure the path exists and contains built frontend files")
             return
-        
+
         print(f"[INFO] Using UI path: {ui_config.path}")
-        
+
         # 빌드 결과물을 APKG에 복사 (원본 경로 구조 유지)
         try:
             # agent.yaml에서 지정한 경로 구조를 그대로 유지
             ui_dest = build_dir / ui_config.path
             ui_dest.parent.mkdir(parents=True, exist_ok=True)
-            
+
             if ui_dest.exists():
                 shutil.rmtree(ui_dest)
             shutil.copytree(ui_source_dir, ui_dest)
             print(f"[SUCCESS] Copied frontend to APKG at {ui_config.path}")
-            
+
         except Exception as e:
             print(f"[ERROR] Failed to copy frontend: {e}")
 
@@ -220,10 +220,10 @@ class AgentBuilder:
         # Create package metadata
         if not self.manifest:
             raise BuildError("Manifest not loaded")
-        
+
         # Dump manifest, excluding None values (especially entrypoint when optional)
         manifest_dict = self.manifest.model_dump(exclude_none=True)
-        
+
         package_meta = {
             "format_version": "1.0",
             "created_by": "pixell-kit",
@@ -241,7 +241,7 @@ class AgentBuilder:
         if pyproject_toml.exists():
             print("[INFO] pyproject.toml found - skipping requirements.txt generation")
             return
-        
+
         req_path = build_dir / "requirements.txt"
 
         if not req_path.exists() and self.manifest and self.manifest.dependencies:
@@ -512,8 +512,10 @@ setup(
             raise BuildError("Manifest not loaded")
 
         # A2A: copy entry file directly to APKG root
-        if getattr(self.manifest, "a2a", None) and self.manifest.a2a and getattr(
-            self.manifest.a2a, "entry", None
+        if (
+            getattr(self.manifest, "a2a", None)
+            and self.manifest.a2a
+            and getattr(self.manifest.a2a, "entry", None)
         ):
             module_path, _func = self.manifest.a2a.entry.split(":", 1)
             src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
@@ -531,11 +533,13 @@ setup(
                     module_path, _ = self.manifest.entrypoint.split(":", 1)
                 else:
                     # Skip if no entrypoint to derive module from
-                    print(f"[WARN] REST entry '{rest_entry}' is not in 'module:function' format and no entrypoint available")
+                    print(
+                        f"[WARN] REST entry '{rest_entry}' is not in 'module:function' format and no entrypoint available"
+                    )
                     return
             else:
                 module_path, _func = rest_entry.split(":", 1)
-            
+
             src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
             if src_file.exists():
                 dest_file = build_dir / src_file.name

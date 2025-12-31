@@ -95,26 +95,30 @@ async def handle_message(ctx: MessageContext):
     # -------------------------------------------------------------------------
     await ctx.emit_status("working", "I need some information to help you...")
 
-    clarification_id = await plan.request_clarification([
-        Question(
-            id="topic",
-            type=QuestionType.FREE_TEXT,
-            question="What topic would you like to research?",
-            header="Topic",
-            placeholder="e.g., machine learning, fitness, cooking",
-        ),
-        Question(
-            id="depth",
-            type=QuestionType.SINGLE_CHOICE,
-            question="How deep should the research be?",
-            header="Depth",
-            options=[
-                QuestionOption(id="quick", label="Quick scan", description="Top 5 subreddits"),
-                QuestionOption(id="moderate", label="Moderate", description="Top 15 subreddits"),
-                QuestionOption(id="deep", label="Deep dive", description="Top 30+ subreddits"),
-            ],
-        ),
-    ])
+    clarification_id = await plan.request_clarification(
+        [
+            Question(
+                id="topic",
+                type=QuestionType.FREE_TEXT,
+                question="What topic would you like to research?",
+                header="Topic",
+                placeholder="e.g., machine learning, fitness, cooking",
+            ),
+            Question(
+                id="depth",
+                type=QuestionType.SINGLE_CHOICE,
+                question="How deep should the research be?",
+                header="Depth",
+                options=[
+                    QuestionOption(id="quick", label="Quick scan", description="Top 5 subreddits"),
+                    QuestionOption(
+                        id="moderate", label="Moderate", description="Top 15 subreddits"
+                    ),
+                    QuestionOption(id="deep", label="Deep dive", description="Top 30+ subreddits"),
+                ],
+            ),
+        ]
+    )
 
     # Create waiter for clarification response
     waiter = asyncio.Future()
@@ -172,7 +176,9 @@ async def handle_respond(ctx: ResponseContext):
             ),
         ]
 
-        await plan.emit_discovery(discovered, "subreddits", message=f"Found {len(discovered)} relevant subreddits")
+        await plan.emit_discovery(
+            discovered, "subreddits", message=f"Found {len(discovered)} relevant subreddits"
+        )
 
         # -----------------------------------------------------------------
         # Phase 3: Selection
@@ -191,7 +197,9 @@ async def handle_respond(ctx: ResponseContext):
         plan.set_selection_response(ctx.selected_ids, ctx.selection_id)
 
         selected_items = plan.get_selected_items()
-        await ctx.emit_status("working", f"Preparing research plan for {len(selected_items)} subreddits...")
+        await ctx.emit_status(
+            "working", f"Preparing research plan for {len(selected_items)} subreddits..."
+        )
 
         # -----------------------------------------------------------------
         # Phase 4: Preview
@@ -245,7 +253,9 @@ async def handle_respond(ctx: ResponseContext):
             await plan.complete(result, message="Research completed!")
 
         else:
-            await ctx.emit_status("working", "Plan cancelled. Let me know if you want to try again.")
+            await ctx.emit_status(
+                "working", "Plan cancelled. Let me know if you want to try again."
+            )
 
 
 # =============================================================================

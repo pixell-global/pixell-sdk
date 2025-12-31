@@ -75,9 +75,7 @@ class PlanModeContext:
             True if transition was valid
         """
         is_valid = validate_transition(
-            self.phase,
-            new_phase,
-            self.supported_phases if self.supported_phases else None
+            self.phase, new_phase, self.supported_phases if self.supported_phases else None
         )
 
         old_phase = self.phase
@@ -319,10 +317,7 @@ class PlanModeContext:
             modifications: Optional modifications requested by user
         """
         if plan_id and plan_id != self._pending_plan_id:
-            logger.warning(
-                f"Plan ID mismatch: expected {self._pending_plan_id}, "
-                f"got {plan_id}"
-            )
+            logger.warning(f"Plan ID mismatch: expected {self._pending_plan_id}, " f"got {plan_id}")
 
         self._pending_plan_id = None
 
@@ -390,10 +385,7 @@ class PlanModeContext:
         Returns:
             List of selected DiscoveredItem objects
         """
-        return [
-            item for item in self.discovered_items
-            if item.id in self.selected_ids
-        ]
+        return [item for item in self.discovered_items if item.id in self.selected_ids]
 
     async def emit_file_created(
         self,

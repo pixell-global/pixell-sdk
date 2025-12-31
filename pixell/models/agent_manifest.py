@@ -112,9 +112,7 @@ class PlanModeConfig(BaseModel):
         ]
         for phase in v:
             if phase not in valid_phases:
-                raise ValueError(
-                    f"Invalid phase: {phase}. Valid phases: {', '.join(valid_phases)}"
-                )
+                raise ValueError(f"Invalid phase: {phase}. Valid phases: {', '.join(valid_phases)}")
         return v
 
 
@@ -150,7 +148,9 @@ class TranslationConfig(BaseModel):
         elif isinstance(v, list):
             for lang in v:
                 if not re.match(r"^[a-z]{2}$", lang):
-                    raise ValueError(f"Invalid language code: {lang}. Use ISO 639-1 (e.g., 'en', 'ko')")
+                    raise ValueError(
+                        f"Invalid language code: {lang}. Use ISO 639-1 (e.g., 'en', 'ko')"
+                    )
         return v
 
 
@@ -218,7 +218,9 @@ class AgentManifest(BaseModel):
             return self
 
     class RestConfig(BaseModel):
-        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app, or just function name to use entrypoint's module")
+        entry: str = Field(
+            description="Module:function that mounts REST routes on FastAPI app, or just function name to use entrypoint's module"
+        )
 
         @field_validator("entry")
         @classmethod

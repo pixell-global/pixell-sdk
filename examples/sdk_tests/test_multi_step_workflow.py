@@ -27,18 +27,16 @@ class TestMultiStepWorkflow:
         mock_client.get_user_profile.return_value = {
             "id": "user-456",
             "email": "test@example.com",
-            "name": "Test User"
+            "name": "Test User",
         }
         mock_client.list_files.return_value = [
             {"id": "file-1", "name": "doc1.pdf"},
-            {"id": "file-2", "name": "doc2.pdf"}
+            {"id": "file-2", "name": "doc2.pdf"},
         ]
         mock_client.oauth_proxy_call.return_value = {
             "items": [{"id": "event-1"}, {"id": "event-2"}]
         }
-        mock_client.list_conversations.return_value = [
-            {"id": "conv-1", "title": "Conversation 1"}
-        ]
+        mock_client.list_conversations.return_value = [{"id": "conv-1", "title": "Conversation 1"}]
 
         return mock_client, mock_reporter
 
@@ -79,19 +77,13 @@ class TestMultiStepWorkflow:
                 "profile": profile,
                 "files_count": len(files),
                 "events_count": len(events["items"]),
-                "conversations_count": len(convos)
+                "conversations_count": len(convos),
             }
 
         result = await execute_workflow()
 
         # Verify workflow executed in order
-        assert workflow_steps == [
-            "start",
-            "profile:Test User",
-            "files:2",
-            "events:2",
-            "convos:1"
-        ]
+        assert workflow_steps == ["start", "profile:Test User", "files:2", "events:2", "convos:1"]
 
         # Verify progress was reported 5 times
         assert mock_reporter.update.call_count == 5
@@ -109,9 +101,7 @@ class TestMultiStepWorkflow:
         mock_client, mock_reporter = self.create_mock_context()
 
         # Make OAuth call fail with rate limit
-        mock_client.oauth_proxy_call.side_effect = RateLimitError(
-            "Rate limited", retry_after=60
-        )
+        mock_client.oauth_proxy_call.side_effect = RateLimitError("Rate limited", retry_after=60)
 
         completed_steps = []
         error_reported = False
@@ -142,7 +132,7 @@ class TestMultiStepWorkflow:
                     "RATE_LIMITED",
                     str(e),
                     recoverable=True,
-                    details={"retry_after": e.details.get("retry_after")}
+                    details={"retry_after": e.details.get("retry_after")},
                 )
                 return {"status": "rate_limited", "completed_steps": completed_steps}
 
@@ -228,9 +218,7 @@ class TestMultiStepWorkflow:
             executed_steps.clear()
 
             # Mock files based on count
-            mock_client.list_files.return_value = [
-                {"id": f"file-{i}"} for i in range(file_count)
-            ]
+            mock_client.list_files.return_value = [{"id": f"file-{i}"} for i in range(file_count)]
 
             await mock_reporter.update("starting", percent=0)
             executed_steps.append("start")
@@ -280,11 +268,7 @@ class TestMultiStepWorkflow:
         progress_history = []
 
         async def track_progress(status, percent=None, message=None, **kwargs):
-            progress_history.append({
-                "status": status,
-                "percent": percent,
-                "message": message
-            })
+            progress_history.append({"status": status, "percent": percent, "message": message})
 
         mock_reporter.update.side_effect = track_progress
 

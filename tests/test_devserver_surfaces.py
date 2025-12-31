@@ -39,14 +39,16 @@ class TestDevServerSurfaces:
             (project_dir / "src" / "rest").mkdir()
 
             # Create REST module with mount function
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 from fastapi import FastAPI
 
 def mount(app: FastAPI) -> None:
     @app.get("/api/test")
     async def test_endpoint():
         return {"message": "Hello from REST"}
-""")
+"""
+            )
 
             # Create __init__.py files for proper module structure
             (project_dir / "src" / "__init__.py").write_text("")
@@ -232,20 +234,24 @@ def mount(app: FastAPI) -> None:
             (project_dir / "src" / "rest").mkdir()
 
             # Create A2A module
-            (project_dir / "src" / "a2a" / "server.py").write_text("""
+            (project_dir / "src" / "a2a" / "server.py").write_text(
+                """
 def serve():
     pass
-""")
+"""
+            )
 
             # Create REST module
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 from fastapi import FastAPI
 
 def mount(app: FastAPI) -> None:
     @app.get("/api/hello")
     async def hello():
         return {"message": "Hello from full agent"}
-""")
+"""
+            )
 
             # Create UI directory
             (project_dir / "ui").mkdir()
@@ -302,10 +308,12 @@ def mount(app: FastAPI) -> None:
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Create dev server
             server = DevServer(project_dir, port=8080)

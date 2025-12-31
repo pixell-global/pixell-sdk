@@ -60,10 +60,7 @@ class TranslationContext:
         Returns True if user language differs from agent language
         and a translator is available.
         """
-        return (
-            self.translator is not None
-            and self.user_language != self.agent_language
-        )
+        return self.translator is not None and self.user_language != self.agent_language
 
     async def translate_from_user(
         self,

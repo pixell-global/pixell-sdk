@@ -155,7 +155,7 @@ class AgentValidator:
                     return
             else:
                 rest_module, rest_func = rest_entry.split(":", 1)
-            
+
             rest_file = self.project_dir / (rest_module.replace(".", "/") + ".py")
             if not rest_file.exists():
                 self.errors.append(f"REST entry module not found: {rest_file}")

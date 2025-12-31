@@ -61,14 +61,16 @@ async def error_server(free_port: int) -> tuple:
                 raise ValueError("Simulated exception in handler")
             return
 
-        await plan.request_clarification([
-            Question(
-                id="input",
-                type=QuestionType.FREE_TEXT,
-                question="Enter something",
-                header="Input",
-            ),
-        ])
+        await plan.request_clarification(
+            [
+                Question(
+                    id="input",
+                    type=QuestionType.FREE_TEXT,
+                    question="Enter something",
+                    header="Input",
+                ),
+            ]
+        )
 
     @server.on_respond
     async def handle_respond(ctx: ResponseContext):
@@ -138,7 +140,8 @@ class TestRecoverableErrors:
 
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -177,7 +180,8 @@ class TestRecoverableErrors:
 
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -215,7 +219,8 @@ class TestRecoverableErrors:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # First, get clarification successfully
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -242,7 +247,8 @@ class TestRecoverableErrors:
             handlers.error_type = "recoverable"
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id,
@@ -279,7 +285,8 @@ class TestMalformedRequests:
             # Try to respond without a session - use streaming to properly handle SSE
             try:
                 async with http_client.stream(
-                    "POST", f"{base_url}/respond",
+                    "POST",
+                    f"{base_url}/respond",
                     json={
                         "clarificationId": str(uuid.uuid4()),
                         "answers": {"input": "test"},
@@ -308,7 +315,8 @@ class TestMalformedRequests:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # First start a session
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -331,7 +339,8 @@ class TestMalformedRequests:
 
             # Respond with wrong clarification ID
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": "wrong-id",  # Invalid ID
@@ -358,7 +367,8 @@ class TestMalformedRequests:
 
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -382,7 +392,8 @@ class TestMalformedRequests:
 
             # Respond with empty answers
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id,
@@ -416,7 +427,8 @@ class TestWorkflowRecovery:
             session_id_1 = str(uuid.uuid4())
 
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -443,7 +455,8 @@ class TestWorkflowRecovery:
             session_id_2 = str(uuid.uuid4())
 
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -477,7 +490,8 @@ class TestWorkflowRecovery:
         async with httpx.AsyncClient(timeout=30.0) as http_client:
             # Get clarification
             async with http_client.stream(
-                "POST", f"{base_url}/",
+                "POST",
+                f"{base_url}/",
                 json={
                     "jsonrpc": "2.0",
                     "id": str(uuid.uuid4()),
@@ -501,7 +515,8 @@ class TestWorkflowRecovery:
 
             # Respond to clarification
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clar_id,
@@ -517,7 +532,8 @@ class TestWorkflowRecovery:
 
             # Approve and complete
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "planId": plan_id,

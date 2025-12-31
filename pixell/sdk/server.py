@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AgentCard:
     """Agent card for .well-known/agent.json."""
+
     name: str
     description: str = ""
     version: str = "1.0.0"
@@ -257,7 +258,7 @@ class AgentServer:
 
                 # Strip outputs_dir prefix if present (path might be "exports/file.html" or just "file.html")
                 if self._outputs_dir_name and path.startswith(f"{self._outputs_dir_name}/"):
-                    path = path[len(self._outputs_dir_name) + 1:]
+                    path = path[len(self._outputs_dir_name) + 1 :]
 
                 full_path = self._outputs_dir / path
 
@@ -313,6 +314,7 @@ class AgentServer:
                 plan_mode = None
                 if self.plan_mode_config:
                     from pixell.sdk.plan_mode import PlanModeContext
+
                     session_id = body.get("params", {}).get("sessionId")
                     if session_id and session_id in self._sessions:
                         plan_mode = self._sessions[session_id]
@@ -326,6 +328,7 @@ class AgentServer:
                 translation = None
                 if self.translator:
                     from pixell.sdk.translation import TranslationContext
+
                     metadata = body.get("params", {}).get("metadata", {})
                     translation = TranslationContext(
                         translator=self.translator,
@@ -337,10 +340,14 @@ class AgentServer:
                 if method == "message/stream":
                     # Store session immediately for streaming requests
                     session_id = body.get("params", {}).get("sessionId")
-                    logger.info(f"[message/stream] Attempting to store session: {session_id}, plan_mode exists: {plan_mode is not None}")
+                    logger.info(
+                        f"[message/stream] Attempting to store session: {session_id}, plan_mode exists: {plan_mode is not None}"
+                    )
                     if session_id and plan_mode:
                         self._sessions[session_id] = plan_mode
-                        logger.info(f"[message/stream] Session stored! Total sessions: {len(self._sessions)}, Keys: {list(self._sessions.keys())}")
+                        logger.info(
+                            f"[message/stream] Session stored! Total sessions: {len(self._sessions)}, Keys: {list(self._sessions.keys())}"
+                        )
 
                     # Return SSE stream
                     async def handle_and_stream():
@@ -389,7 +396,7 @@ class AgentServer:
                     JSONRPCError(
                         code=JSONRPCError.INTERNAL_ERROR,
                         message=str(e),
-                    )
+                    ),
                 )
                 return JSONResponse(
                     error_response.to_dict(),
@@ -429,14 +436,19 @@ class AgentServer:
                 if session_id and session_id in self._sessions:
                     plan_mode = self._sessions[session_id]
                     plan_mode.stream = stream
-                    logger.info(f"[/respond] Found session! Phase: {plan_mode.phase if hasattr(plan_mode, 'phase') else 'unknown'}")
-                    logger.info(f"[/respond] Pending IDs - clarification: {getattr(plan_mode, '_pending_clarification_id', None)}, selection: {getattr(plan_mode, '_pending_selection_id', None)}")
+                    logger.info(
+                        f"[/respond] Found session! Phase: {plan_mode.phase if hasattr(plan_mode, 'phase') else 'unknown'}"
+                    )
+                    logger.info(
+                        f"[/respond] Pending IDs - clarification: {getattr(plan_mode, '_pending_clarification_id', None)}, selection: {getattr(plan_mode, '_pending_selection_id', None)}"
+                    )
                 else:
                     logger.warning(f"[/respond] Session NOT FOUND: {session_id}")
 
                 translation = None
                 if self.translator:
                     from pixell.sdk.translation import TranslationContext
+
                     translation = TranslationContext(
                         translator=self.translator,
                         user_language=body.get("language", "en"),
@@ -444,9 +456,7 @@ class AgentServer:
 
                 async def handle_and_stream():
                     asyncio.create_task(
-                        self._handler.handle_request(
-                            rpc_request, stream, plan_mode, translation
-                        )
+                        self._handler.handle_request(rpc_request, stream, plan_mode, translation)
                     )
                     async for event in stream.events():
                         yield event.encode()
@@ -482,8 +492,7 @@ class AgentServer:
             import uvicorn
         except ImportError:
             raise ImportError(
-                "Uvicorn is required for AgentServer. "
-                "Install it with: pip install uvicorn"
+                "Uvicorn is required for AgentServer. " "Install it with: pip install uvicorn"
             )
 
         if self._app is None:
@@ -507,8 +516,7 @@ class AgentServer:
             import uvicorn
         except ImportError:
             raise ImportError(
-                "Uvicorn is required for AgentServer. "
-                "Install it with: pip install uvicorn"
+                "Uvicorn is required for AgentServer. " "Install it with: pip install uvicorn"
             )
 
         if self._app is None:

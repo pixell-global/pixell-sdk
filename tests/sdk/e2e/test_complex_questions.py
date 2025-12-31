@@ -50,58 +50,61 @@ async def complex_questions_server(
         handlers.clarification_count += 1
 
         # Ask all 5 question types in one clarification
-        await plan.request_clarification([
-            # 1. Free text
-            Question(
-                id="free_text_q",
-                type=QuestionType.FREE_TEXT,
-                question="What is your research topic?",
-                header="Topic",
-                placeholder="Enter topic here...",
-            ),
-            # 2. Single choice
-            Question(
-                id="single_choice_q",
-                type=QuestionType.SINGLE_CHOICE,
-                question="Select research depth",
-                header="Depth",
-                options=[
-                    QuestionOption(id="shallow", label="Shallow", description="Quick scan"),
-                    QuestionOption(id="medium", label="Medium", description="Moderate depth"),
-                    QuestionOption(id="deep", label="Deep", description="Thorough analysis"),
-                ],
-            ),
-            # 3. Multiple choice
-            Question(
-                id="multiple_choice_q",
-                type=QuestionType.MULTIPLE_CHOICE,
-                question="Select data sources",
-                header="Sources",
-                options=[
-                    QuestionOption(id="reddit", label="Reddit"),
-                    QuestionOption(id="twitter", label="Twitter"),
-                    QuestionOption(id="youtube", label="YouTube"),
-                    QuestionOption(id="tiktok", label="TikTok"),
-                ],
-            ),
-            # 4. Yes/No
-            Question(
-                id="yes_no_q",
-                type=QuestionType.YES_NO,
-                question="Include NSFW content?",
-                header="NSFW",
-            ),
-            # 5. Numeric range
-            Question(
-                id="numeric_range_q",
-                type=QuestionType.NUMERIC_RANGE,
-                question="Minimum follower count",
-                header="Followers",
-                min=1000,
-                max=10000000,
-                step=1000,
-            ),
-        ], message="Please answer all questions to configure your research.")
+        await plan.request_clarification(
+            [
+                # 1. Free text
+                Question(
+                    id="free_text_q",
+                    type=QuestionType.FREE_TEXT,
+                    question="What is your research topic?",
+                    header="Topic",
+                    placeholder="Enter topic here...",
+                ),
+                # 2. Single choice
+                Question(
+                    id="single_choice_q",
+                    type=QuestionType.SINGLE_CHOICE,
+                    question="Select research depth",
+                    header="Depth",
+                    options=[
+                        QuestionOption(id="shallow", label="Shallow", description="Quick scan"),
+                        QuestionOption(id="medium", label="Medium", description="Moderate depth"),
+                        QuestionOption(id="deep", label="Deep", description="Thorough analysis"),
+                    ],
+                ),
+                # 3. Multiple choice
+                Question(
+                    id="multiple_choice_q",
+                    type=QuestionType.MULTIPLE_CHOICE,
+                    question="Select data sources",
+                    header="Sources",
+                    options=[
+                        QuestionOption(id="reddit", label="Reddit"),
+                        QuestionOption(id="twitter", label="Twitter"),
+                        QuestionOption(id="youtube", label="YouTube"),
+                        QuestionOption(id="tiktok", label="TikTok"),
+                    ],
+                ),
+                # 4. Yes/No
+                Question(
+                    id="yes_no_q",
+                    type=QuestionType.YES_NO,
+                    question="Include NSFW content?",
+                    header="NSFW",
+                ),
+                # 5. Numeric range
+                Question(
+                    id="numeric_range_q",
+                    type=QuestionType.NUMERIC_RANGE,
+                    question="Minimum follower count",
+                    header="Followers",
+                    min=1000,
+                    max=10000000,
+                    step=1000,
+                ),
+            ],
+            message="Please answer all questions to configure your research.",
+        )
 
     @server.on_respond
     async def handle_respond(ctx: ResponseContext):
@@ -181,7 +184,9 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -229,7 +234,8 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -254,7 +260,8 @@ class TestAllQuestionTypes:
 
         # Approve and complete
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "planId": plan_id,
@@ -296,7 +303,9 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -323,7 +332,8 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -367,7 +377,9 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -386,7 +398,8 @@ class TestAllQuestionTypes:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -429,7 +442,9 @@ class TestAllQuestionTypes:
             }
 
             async with http_client.stream(
-                "POST", f"{base_url}/", json=message_request,
+                "POST",
+                f"{base_url}/",
+                json=message_request,
                 headers={"Accept": "text/event-stream"},
             ) as response:
                 events = await collect_sse_until(
@@ -447,7 +462,8 @@ class TestAllQuestionTypes:
             }
 
             async with http_client.stream(
-                "POST", f"{base_url}/respond",
+                "POST",
+                f"{base_url}/respond",
                 json={
                     "sessionId": session_id,
                     "clarificationId": clarification_id,

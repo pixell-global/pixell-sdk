@@ -107,9 +107,7 @@ class PXUIDataClient:
                     raise AuthenticationError("Invalid or expired token")
                 elif response.status_code == 429:
                     retry_after = response.headers.get("Retry-After")
-                    raise RateLimitError(
-                        retry_after=int(retry_after) if retry_after else None
-                    )
+                    raise RateLimitError(retry_after=int(retry_after) if retry_after else None)
                 elif response.status_code >= 400:
                     try:
                         body = response.json()

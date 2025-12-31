@@ -33,10 +33,12 @@ class TestValidatorSurfaces:
 
             # Create src directory and REST module
             (project_dir / "src" / "rest").mkdir(parents=True)
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 def mount(app):
     pass
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -101,10 +103,12 @@ def mount(app):
 
             # Create src directory and REST module without the function
             (project_dir / "src" / "rest").mkdir(parents=True)
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 def other_function():
     pass
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -137,10 +141,12 @@ def other_function():
 
             # Create src directory and A2A module
             (project_dir / "src" / "a2a").mkdir(parents=True)
-            (project_dir / "src" / "a2a" / "server.py").write_text("""
+            (project_dir / "src" / "a2a" / "server.py").write_text(
+                """
 def serve():
     pass
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -302,10 +308,12 @@ def serve():
 
             # Create src directory and REST module
             (project_dir / "src" / "rest").mkdir(parents=True)
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 def mount(app):
     pass
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")

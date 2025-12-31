@@ -15,6 +15,7 @@ def test_error_imports():
 def test_version():
     """Test version is accessible."""
     import pixell
+
     print(f"✓ Package version: {pixell.__version__}")
 
 

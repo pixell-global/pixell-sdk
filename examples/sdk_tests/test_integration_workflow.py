@@ -99,7 +99,7 @@ class TestCompleteTaskLifecycle:
             # Report starting
             await redis.publish(
                 f"pixell:tasks:{task_data['task_id']}:progress",
-                json.dumps({"status": "starting", "percent": 0})
+                json.dumps({"status": "starting", "percent": 0}),
             )
             workflow_log.append("progress_0")
 
@@ -112,7 +112,7 @@ class TestCompleteTaskLifecycle:
             # Report progress
             await redis.publish(
                 f"pixell:tasks:{task_data['task_id']}:progress",
-                json.dumps({"status": "processing", "percent": 50})
+                json.dumps({"status": "processing", "percent": 50}),
             )
             workflow_log.append("progress_50")
 
@@ -122,7 +122,7 @@ class TestCompleteTaskLifecycle:
             # Report completion
             await redis.publish(
                 f"pixell:tasks:{task_data['task_id']}:progress",
-                json.dumps({"status": "completed", "percent": 100})
+                json.dumps({"status": "completed", "percent": 100}),
             )
             workflow_log.append("progress_100")
 
@@ -130,8 +130,7 @@ class TestCompleteTaskLifecycle:
 
         # Simulate consumer processing
         task_json = await redis.brpoplpush(
-            "pixell:agents:test-agent:tasks",
-            "pixell:agents:test-agent:processing"
+            "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
         )
 
         assert task_json is not None
@@ -140,7 +139,7 @@ class TestCompleteTaskLifecycle:
         # Update status to processing
         await redis.hset(
             f"pixell:tasks:{parsed_task['task_id']}:status",
-            mapping={"status": "processing", "started_at": datetime.utcnow().isoformat()}
+            mapping={"status": "processing", "started_at": datetime.utcnow().isoformat()},
         )
 
         # Execute handler
@@ -152,8 +151,8 @@ class TestCompleteTaskLifecycle:
             mapping={
                 "status": "completed",
                 "result": json.dumps(result),
-                "completed_at": datetime.utcnow().isoformat()
-            }
+                "completed_at": datetime.utcnow().isoformat(),
+            },
         )
 
         # Remove from processing queue
@@ -171,8 +170,10 @@ class TestCompleteTaskLifecycle:
         ]
 
         # Verify Redis state
-        assert "pixell:agents:test-agent:processing" not in redis.queues or \
-               task_json not in redis.queues.get("pixell:agents:test-agent:processing", [])
+        assert (
+            "pixell:agents:test-agent:processing" not in redis.queues
+            or task_json not in redis.queues.get("pixell:agents:test-agent:processing", [])
+        )
 
         status = await redis.hgetall(f"pixell:tasks:{task_data['task_id']}:status")
         assert status["status"] == "completed"
@@ -205,8 +206,7 @@ class TestCompleteTaskLifecycle:
 
         # Get task from queue
         task_json = await redis.brpoplpush(
-            "pixell:agents:test-agent:tasks",
-            "pixell:agents:test-agent:processing"
+            "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
         )
 
         # Execute with timeout
@@ -214,7 +214,9 @@ class TestCompleteTaskLifecycle:
         error_occurred = False
 
         try:
-            await asyncio.wait_for(slow_handler(None, task_data["payload"]), timeout=timeout_seconds)
+            await asyncio.wait_for(
+                slow_handler(None, task_data["payload"]), timeout=timeout_seconds
+            )
         except asyncio.TimeoutError:
             error_occurred = True
 
@@ -223,13 +225,15 @@ class TestCompleteTaskLifecycle:
                 f"pixell:tasks:{task_data['task_id']}:status",
                 mapping={
                     "status": "failed",
-                    "error": json.dumps({
-                        "type": "TASK_TIMEOUT",
-                        "message": f"Task exceeded {timeout_seconds}s timeout",
-                        "recoverable": False
-                    }),
-                    "failed_at": datetime.utcnow().isoformat()
-                }
+                    "error": json.dumps(
+                        {
+                            "type": "TASK_TIMEOUT",
+                            "message": f"Task exceeded {timeout_seconds}s timeout",
+                            "recoverable": False,
+                        }
+                    ),
+                    "failed_at": datetime.utcnow().isoformat(),
+                },
             )
 
             # Move to dead letter queue
@@ -270,8 +274,7 @@ class TestCompleteTaskLifecycle:
 
         # Get task
         task_json = await redis.brpoplpush(
-            "pixell:agents:test-agent:tasks",
-            "pixell:agents:test-agent:processing"
+            "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
         )
 
         # Execute handler
@@ -283,14 +286,16 @@ class TestCompleteTaskLifecycle:
                 f"pixell:tasks:{task_data['task_id']}:status",
                 mapping={
                     "status": "failed",
-                    "error": json.dumps({
-                        "type": "RATE_LIMITED",
-                        "message": str(e),
-                        "retry_after": e.details.get("retry_after"),
-                        "recoverable": True
-                    }),
-                    "failed_at": datetime.utcnow().isoformat()
-                }
+                    "error": json.dumps(
+                        {
+                            "type": "RATE_LIMITED",
+                            "message": str(e),
+                            "retry_after": e.details.get("retry_after"),
+                            "recoverable": True,
+                        }
+                    ),
+                    "failed_at": datetime.utcnow().isoformat(),
+                },
             )
 
             # Don't move to dead letter (recoverable)
@@ -328,8 +333,7 @@ class TestCompleteTaskLifecycle:
 
         # Get task
         task_json = await redis.brpoplpush(
-            "pixell:agents:test-agent:tasks",
-            "pixell:agents:test-agent:processing"
+            "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
         )
 
         # Execute handler
@@ -341,13 +345,11 @@ class TestCompleteTaskLifecycle:
                 f"pixell:tasks:{task_data['task_id']}:status",
                 mapping={
                     "status": "failed",
-                    "error": json.dumps({
-                        "type": "AUTH_FAILED",
-                        "message": str(e),
-                        "recoverable": False
-                    }),
-                    "failed_at": datetime.utcnow().isoformat()
-                }
+                    "error": json.dumps(
+                        {"type": "AUTH_FAILED", "message": str(e), "recoverable": False}
+                    ),
+                    "failed_at": datetime.utcnow().isoformat(),
+                },
             )
 
             # Move to dead letter (non-recoverable)
@@ -389,8 +391,7 @@ class TestMultipleTasksProcessing:
         # Process all tasks sequentially
         while True:
             task_json = await redis.brpoplpush(
-                "pixell:agents:test-agent:tasks",
-                "pixell:agents:test-agent:processing"
+                "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
             )
 
             if task_json is None:
@@ -444,8 +445,7 @@ class TestMultipleTasksProcessing:
         tasks = []
         while True:
             task_json = await redis.brpoplpush(
-                "pixell:agents:test-agent:tasks",
-                "pixell:agents:test-agent:processing"
+                "pixell:agents:test-agent:tasks", "pixell:agents:test-agent:processing"
             )
 
             if task_json is None:
@@ -481,7 +481,7 @@ class TestEndToEndScenarios:
             "payload": {
                 "analysis_type": "calendar_summary",
                 "date_range": "last_week",
-                "include_files": True
+                "include_files": True,
             },
         }
 
@@ -489,8 +489,7 @@ class TestEndToEndScenarios:
 
         # Simulate agent workflow
         task_json = await redis.brpoplpush(
-            "pixell:agents:data-analyzer:tasks",
-            "pixell:agents:data-analyzer:processing"
+            "pixell:agents:data-analyzer:tasks", "pixell:agents:data-analyzer:processing"
         )
 
         parsed_task = json.loads(task_json)
@@ -501,7 +500,7 @@ class TestEndToEndScenarios:
             workflow_events.append({"step": "init", "percent": 0})
             await redis.publish(
                 f"pixell:tasks:{parsed_task['task_id']}:progress",
-                json.dumps({"status": "starting", "percent": 0, "message": "Initializing"})
+                json.dumps({"status": "starting", "percent": 0, "message": "Initializing"}),
             )
 
             # 2. Fetch profile
@@ -512,7 +511,7 @@ class TestEndToEndScenarios:
             workflow_events.append({"step": "calendar", "percent": 30})
             await redis.publish(
                 f"pixell:tasks:{parsed_task['task_id']}:progress",
-                json.dumps({"status": "processing", "percent": 30, "message": "Fetching calendar"})
+                json.dumps({"status": "processing", "percent": 30, "message": "Fetching calendar"}),
             )
             await asyncio.sleep(0.01)
 
@@ -521,7 +520,9 @@ class TestEndToEndScenarios:
                 workflow_events.append({"step": "files", "percent": 50})
                 await redis.publish(
                     f"pixell:tasks:{parsed_task['task_id']}:progress",
-                    json.dumps({"status": "processing", "percent": 50, "message": "Fetching files"})
+                    json.dumps(
+                        {"status": "processing", "percent": 50, "message": "Fetching files"}
+                    ),
                 )
                 await asyncio.sleep(0.01)
 
@@ -529,7 +530,7 @@ class TestEndToEndScenarios:
             workflow_events.append({"step": "analyze", "percent": 75})
             await redis.publish(
                 f"pixell:tasks:{parsed_task['task_id']}:progress",
-                json.dumps({"status": "processing", "percent": 75, "message": "Analyzing data"})
+                json.dumps({"status": "processing", "percent": 75, "message": "Analyzing data"}),
             )
             await asyncio.sleep(0.01)
 
@@ -540,7 +541,7 @@ class TestEndToEndScenarios:
             workflow_events.append({"step": "complete", "percent": 100})
             await redis.publish(
                 f"pixell:tasks:{parsed_task['task_id']}:progress",
-                json.dumps({"status": "completed", "percent": 100, "message": "Analysis complete"})
+                json.dumps({"status": "completed", "percent": 100, "message": "Analysis complete"}),
             )
 
             return {
@@ -548,8 +549,8 @@ class TestEndToEndScenarios:
                 "summary": {
                     "meetings": 15,
                     "files_analyzed": 8,
-                    "insights": ["Busy week", "Most meetings on Tuesday"]
-                }
+                    "insights": ["Busy week", "Most meetings on Tuesday"],
+                },
             }
 
         result = await run_analysis()
@@ -560,8 +561,8 @@ class TestEndToEndScenarios:
             mapping={
                 "status": "completed",
                 "result": json.dumps(result),
-                "completed_at": datetime.utcnow().isoformat()
-            }
+                "completed_at": datetime.utcnow().isoformat(),
+            },
         )
 
         # Cleanup
@@ -591,7 +592,7 @@ class TestEndToEndScenarios:
             "jwt_token": "valid-token",
             "payload": {
                 "providers": ["google", "github", "slack"],
-                "action": "aggregate_notifications"
+                "action": "aggregate_notifications",
             },
         }
 
@@ -611,8 +612,7 @@ class TestEndToEndScenarios:
 
         # Process task
         task_json = await redis.brpoplpush(
-            "pixell:agents:integration-agent:tasks",
-            "pixell:agents:integration-agent:processing"
+            "pixell:agents:integration-agent:tasks", "pixell:agents:integration-agent:processing"
         )
 
         parsed_task = json.loads(task_json)
@@ -628,15 +628,10 @@ class TestEndToEndScenarios:
                 return await mock_oauth_call(provider, "GET", "/conversations.history")
             return {}
 
-        results = await asyncio.gather(*[
-            fetch_from_provider(p) for p in providers
-        ])
+        results = await asyncio.gather(*[fetch_from_provider(p) for p in providers])
 
         # Aggregate results
-        total_items = sum(
-            len(r.get("notifications", r.get("messages", [])))
-            for r in results
-        )
+        total_items = sum(len(r.get("notifications", r.get("messages", []))) for r in results)
 
         # Verify all providers called
         assert len(api_calls) == 3

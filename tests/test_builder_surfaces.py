@@ -43,16 +43,20 @@ class TestBuilderSurfaces:
             (project_dir / "src" / "rest").mkdir()
 
             # Create A2A server file
-            (project_dir / "src" / "a2a" / "server.py").write_text("""
+            (project_dir / "src" / "a2a" / "server.py").write_text(
+                """
 def serve():
     pass
-""")
+"""
+            )
 
             # Create REST index file
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 def mount(app):
     pass
-""")
+"""
+            )
 
             # Create UI directory and files
             (project_dir / "ui").mkdir()
@@ -134,10 +138,12 @@ def mount(app):
             (project_dir / "src" / "rest").mkdir()
 
             # Create REST index file
-            (project_dir / "src" / "rest" / "index.py").write_text("""
+            (project_dir / "src" / "rest" / "index.py").write_text(
+                """
 def mount(app):
     pass
-""")
+"""
+            )
 
             # Build the package
             # Required .env
@@ -249,10 +255,12 @@ def mount(app):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Build the package
             # Required .env
@@ -345,10 +353,12 @@ def handler(context):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -400,10 +410,12 @@ def handler(context):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -453,10 +465,12 @@ def handler(context):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Create agents_config.json with sample multi-agent config
             agents_config = {
@@ -530,10 +544,12 @@ def handler(context):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Required .env
             (project_dir / ".env").write_text("API_KEY=placeholder\n")
@@ -554,9 +570,9 @@ def handler(context):
 
                 # Check that agents_config.json does NOT exist
                 agents_config_path = extract_path / "agents_config.json"
-                assert not agents_config_path.exists(), (
-                    "agents_config.json should not be included when absent"
-                )
+                assert (
+                    not agents_config_path.exists()
+                ), "agents_config.json should not be included when absent"
 
     def test_build_with_invalid_agents_config_json(self):
         """Test that build succeeds even with malformed agents_config.json (validation is runtime concern)."""
@@ -582,10 +598,12 @@ def handler(context):
 
             # Create src directory and main file
             (project_dir / "src").mkdir()
-            (project_dir / "src" / "main.py").write_text("""
+            (project_dir / "src" / "main.py").write_text(
+                """
 def handler(context):
     return {"status": "success"}
-""")
+"""
+            )
 
             # Create invalid agents_config.json (malformed but still a file)
             # Build should still succeed - validation is a runtime concern
@@ -607,6 +625,6 @@ def handler(context):
 
                 extract_path = Path(extract_dir)
                 agents_config_path = extract_path / "agents_config.json"
-                assert agents_config_path.exists(), (
-                    "agents_config.json should be included even if invalid"
-                )
+                assert (
+                    agents_config_path.exists()
+                ), "agents_config.json should be included even if invalid"

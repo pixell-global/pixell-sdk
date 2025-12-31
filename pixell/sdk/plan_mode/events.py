@@ -8,6 +8,7 @@ import uuid
 
 class QuestionType(str, Enum):
     """Types of questions for clarification."""
+
     SINGLE_CHOICE = "single_choice"  # Radio buttons
     MULTIPLE_CHOICE = "multiple_choice"  # Checkboxes
     FREE_TEXT = "free_text"  # Text input
@@ -18,6 +19,7 @@ class QuestionType(str, Enum):
 @dataclass
 class QuestionOption:
     """Option for choice-based questions."""
+
     id: str
     label: str
     description: Optional[str] = None
@@ -32,6 +34,7 @@ class QuestionOption:
 @dataclass
 class Question:
     """Individual clarification question."""
+
     id: str
     type: QuestionType
     question: str
@@ -72,6 +75,7 @@ class Question:
 @dataclass
 class ClarificationNeeded:
     """Agent request for user clarification."""
+
     questions: list[Question]
     agent_id: str = ""
     clarification_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -97,6 +101,7 @@ class ClarificationNeeded:
 @dataclass
 class ClarificationResponse:
     """User response to clarification request."""
+
     clarification_id: str
     answers: dict[str, Any]  # question_id -> value
 
@@ -111,6 +116,7 @@ class ClarificationResponse:
 @dataclass
 class DiscoveredItem:
     """Item discovered during discovery phase."""
+
     id: str
     name: str
     description: Optional[str] = None
@@ -131,6 +137,7 @@ class DiscoveredItem:
 @dataclass
 class DiscoveryResult:
     """Result of discovery phase."""
+
     discovery_type: str  # "subreddits", "hashtags", "channels", etc.
     items: list[DiscoveredItem]
     discovery_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -149,6 +156,7 @@ class DiscoveryResult:
 @dataclass
 class SelectionRequired:
     """Agent request for user to select from discovered items."""
+
     items: list[DiscoveredItem]
     selection_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     discovery_type: str = ""
@@ -174,6 +182,7 @@ class SelectionRequired:
 @dataclass
 class SelectionResponse:
     """User response to selection request."""
+
     selection_id: str
     selected_ids: list[str]
 
@@ -188,6 +197,7 @@ class SelectionResponse:
 @dataclass
 class PlanStep:
     """Step in a proposed plan."""
+
     id: str
     description: str
     status: str = "pending"  # pending, in_progress, completed, failed, skipped
@@ -213,6 +223,7 @@ class PlanStep:
 @dataclass
 class PlanProposed:
     """Agent-proposed execution plan."""
+
     title: str
     steps: list[PlanStep]
     agent_id: str = ""
@@ -240,6 +251,7 @@ class PlanProposed:
 @dataclass
 class PlanApproval:
     """User approval/rejection of proposed plan."""
+
     plan_id: str
     approved: bool
     modifications: Optional[dict[str, Any]] = None
@@ -256,6 +268,7 @@ class PlanApproval:
 @dataclass
 class SearchPlanPreview:
     """Preview for tik-agent style search plans."""
+
     user_intent: str
     search_keywords: list[str]
     hashtags: list[str] = field(default_factory=list)
@@ -292,6 +305,7 @@ class SearchPlanPreview:
 @dataclass
 class IntervalSpec:
     """Interval specification for scheduled tasks."""
+
     value: int
     unit: str  # 'minutes' | 'hours' | 'days' | 'weeks'
 
@@ -317,6 +331,7 @@ class ScheduleProposal:
             rationale="You asked for daily reports, so I'm proposing this schedule",
         )
     """
+
     name: str
     prompt: str
     schedule_type: str  # 'cron' | 'interval' | 'one_time'
@@ -388,6 +403,7 @@ class ScheduleProposal:
 @dataclass
 class ScheduleResponse:
     """User response to a schedule proposal."""
+
     proposal_id: str
     action: str  # 'confirm' | 'edit' | 'cancel'
     modifications: Optional[dict[str, Any]] = None

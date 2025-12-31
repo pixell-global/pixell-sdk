@@ -113,6 +113,7 @@ class TestTaskConsumerProcessing:
     @pytest.mark.asyncio
     async def test_process_task_timeout(self, consumer, task_data):
         """Test task timeout handling."""
+
         # Create a handler that takes too long
         async def slow_handler(ctx, payload):
             await asyncio.sleep(10)

@@ -318,7 +318,11 @@ class TestTranslationContextIntegration:
     async def test_full_translation_flow(self):
         """Test complete translation flow: user -> agent -> user."""
         translations = {
-            ("안녕하세요, 게임 콘텐츠를 찾아주세요", "ko", "en"): "Hello, please find gaming content",
+            (
+                "안녕하세요, 게임 콘텐츠를 찾아주세요",
+                "ko",
+                "en",
+            ): "Hello, please find gaming content",
             ("Found 10 gaming creators for you", "en", "ko"): "10명의 게임 크리에이터를 찾았습니다",
         }
 
@@ -346,9 +350,9 @@ class TestTranslationContextIntegration:
         """Test detecting language then translating."""
 
         def detect(text):
-            if any(c >= '가' and c <= '힣' for c in text):
+            if any(c >= "가" and c <= "힣" for c in text):
                 return "ko"
-            elif any(c >= 'あ' and c <= 'ん' for c in text):
+            elif any(c >= "あ" and c <= "ん" for c in text):
                 return "ja"
             return "en"
 

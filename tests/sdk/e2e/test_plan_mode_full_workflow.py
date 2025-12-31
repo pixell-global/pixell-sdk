@@ -176,10 +176,7 @@ class TestPlanModeFullWorkflow:
             )
 
             # Verify completion
-            completed_events = [
-                e for e in events
-                if e.get("data", {}).get("state") == "completed"
-            ]
+            completed_events = [e for e in events if e.get("data", {}).get("state") == "completed"]
             assert len(completed_events) >= 1, f"No completed event. Got: {events}"
 
         # Wait for handler to complete
@@ -219,7 +216,9 @@ class TestPlanModeFullWorkflow:
 
         # Get clarification
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -232,7 +231,8 @@ class TestPlanModeFullWorkflow:
 
         # Respond to clarification
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -250,7 +250,8 @@ class TestPlanModeFullWorkflow:
 
         # Respond to selection
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "selectionId": selection_id,
@@ -268,7 +269,8 @@ class TestPlanModeFullWorkflow:
 
         # Reject the plan
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "planId": plan_id,
@@ -380,7 +382,9 @@ class TestDiscoveryAndSelectionEvents:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -393,7 +397,8 @@ class TestDiscoveryAndSelectionEvents:
 
         # Respond and get discovery
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,

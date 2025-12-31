@@ -50,7 +50,9 @@ class TestSessionPersistence:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -65,7 +67,8 @@ class TestSessionPersistence:
         user_answers = {"topic": "esports", "depth": "deep"}
 
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -86,7 +89,8 @@ class TestSessionPersistence:
 
         # Step 3: Respond to selection
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "selectionId": selection_id,
@@ -132,7 +136,9 @@ class TestSessionPersistence:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_request,
+            "POST",
+            f"{base_url}/",
+            json=message_request,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -145,7 +151,8 @@ class TestSessionPersistence:
 
         # Respond to clarification
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "clarificationId": clarification_id,
@@ -168,7 +175,8 @@ class TestSessionPersistence:
         selected = ["r/gaming", "r/games"]
 
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_id,
                 "selectionId": selection_id,
@@ -223,7 +231,9 @@ class TestSessionIsolation:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_a,
+            "POST",
+            f"{base_url}/",
+            json=message_a,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -251,7 +261,9 @@ class TestSessionIsolation:
         }
 
         async with http_client.stream(
-            "POST", f"{base_url}/", json=message_b,
+            "POST",
+            f"{base_url}/",
+            json=message_b,
             headers={"Accept": "text/event-stream"},
         ) as response:
             events = await collect_sse_until(
@@ -262,7 +274,8 @@ class TestSessionIsolation:
 
         # Respond to session A with topic "gaming"
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_a_id,
                 "clarificationId": clarification_a_id,
@@ -277,7 +290,8 @@ class TestSessionIsolation:
 
         # Respond to session B with topic "fitness"
         async with http_client.stream(
-            "POST", f"{base_url}/respond",
+            "POST",
+            f"{base_url}/respond",
             json={
                 "sessionId": session_b_id,
                 "clarificationId": clarification_b_id,

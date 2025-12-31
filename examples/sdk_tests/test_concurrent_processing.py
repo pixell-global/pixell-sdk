@@ -54,6 +54,7 @@ class TestConcurrentProcessing:
 
     async def test_task_consumer_concurrency_property(self):
         """Test TaskConsumer concurrency configuration."""
+
         async def dummy_handler(ctx, payload):
             return {"status": "success"}
 
@@ -72,6 +73,7 @@ class TestConcurrentProcessing:
 
     async def test_parallel_consumers_different_agents(self):
         """Test multiple consumers for different agents."""
+
         async def handler_a(ctx, payload):
             return {"agent": "a", "result": "success"}
 
@@ -109,24 +111,25 @@ class TestConcurrentProcessing:
 
         async def mock_update(task_id: str, status: str, percent: int):
             async with lock:
-                update_log.append({
-                    "task_id": task_id,
-                    "status": status,
-                    "percent": percent,
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                update_log.append(
+                    {
+                        "task_id": task_id,
+                        "status": status,
+                        "percent": percent,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
+                )
             await asyncio.sleep(0.001)  # Simulate network delay
 
         async def simulate_task_progress(task_id: str):
             for percent in [0, 25, 50, 75, 100]:
-                status = "starting" if percent == 0 else "completed" if percent == 100 else "processing"
+                status = (
+                    "starting" if percent == 0 else "completed" if percent == 100 else "processing"
+                )
                 await mock_update(task_id, status, percent)
 
         # Run 5 tasks concurrently
-        tasks = [
-            asyncio.create_task(simulate_task_progress(f"task-{i}"))
-            for i in range(5)
-        ]
+        tasks = [asyncio.create_task(simulate_task_progress(f"task-{i}")) for i in range(5)]
         await asyncio.gather(*tasks)
 
         # Verify all updates recorded
@@ -158,10 +161,7 @@ class TestConcurrentProcessing:
             return local_state
 
         # Run tasks with different initial values concurrently
-        tasks = [
-            asyncio.create_task(isolated_handler(f"task-{i}", i * 10))
-            for i in range(5)
-        ]
+        tasks = [asyncio.create_task(isolated_handler(f"task-{i}", i * 10)) for i in range(5)]
         await asyncio.gather(*tasks)
 
         # Verify each task has correct final state
@@ -212,10 +212,7 @@ class TestConcurrentProcessing:
                 raise
 
         # Start tasks
-        tasks = [
-            asyncio.create_task(cancellable_task(f"task-{i}"))
-            for i in range(5)
-        ]
+        tasks = [asyncio.create_task(cancellable_task(f"task-{i}")) for i in range(5)]
 
         # Give tasks a moment to start
         await asyncio.sleep(0.01)
@@ -292,10 +289,7 @@ class TestConcurrentProcessing:
             await redis_operation(f"task:{task_id}:status", "set", "completed")
 
         # Run multiple tasks concurrently
-        tasks = [
-            asyncio.create_task(process_task(f"task-{i}"))
-            for i in range(10)
-        ]
+        tasks = [asyncio.create_task(process_task(f"task-{i}")) for i in range(10)]
         await asyncio.gather(*tasks)
 
         # Verify all tasks completed

@@ -132,7 +132,9 @@ class TaskConsumer:
 
         await client.hset(
             f"pixell:tasks:{task_id}:status",
-            mapping={k: json.dumps(v) if isinstance(v, dict) else str(v) for k, v in status_data.items()},
+            mapping={
+                k: json.dumps(v) if isinstance(v, dict) else str(v) for k, v in status_data.items()
+            },
         )
 
     async def _handle_error(

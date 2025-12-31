@@ -24,10 +24,9 @@ def main():
     # Default path for debugging (F5 in VS Code)
     # Can be overridden via --path argument
     default_path = os.environ.get(
-        "PIXELL_TEST_BUILD_PATH",
-        r"B:\Workspace\Pixell Global\paf-core-agent"
+        "PIXELL_TEST_BUILD_PATH", r"B:\Workspace\Pixell Global\paf-core-agent"
     )
-    
+
     parser = argparse.ArgumentParser(
         description="Test script to build a package using pixell build"
     )
@@ -87,16 +86,17 @@ def main():
         print(f"❌ FAILED: Build failed: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
     except Exception as e:
         print(f"❌ ERROR: Unexpected error: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

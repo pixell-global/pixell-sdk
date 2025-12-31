@@ -272,8 +272,9 @@ class TestPhaseWorkflow:
         ]
 
         for from_phase, to_phase in transitions:
-            assert validate_transition(from_phase, to_phase, supported) is True, \
-                f"Transition {from_phase.value} -> {to_phase.value} should be valid"
+            assert (
+                validate_transition(from_phase, to_phase, supported) is True
+            ), f"Transition {from_phase.value} -> {to_phase.value} should be valid"
 
     def test_workflow_with_clarification_loop(self):
         """Test workflow that loops back for more clarification."""

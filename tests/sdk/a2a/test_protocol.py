@@ -71,7 +71,9 @@ class TestFilePart:
         assert part.file["name"] == "test.txt"
 
     def test_to_dict(self):
-        part = FilePart(file={"name": "doc.pdf", "mimeType": "application/pdf", "bytes": "base64data"})
+        part = FilePart(
+            file={"name": "doc.pdf", "mimeType": "application/pdf", "bytes": "base64data"}
+        )
         result = part.to_dict()
         assert result["file"]["name"] == "doc.pdf"
 

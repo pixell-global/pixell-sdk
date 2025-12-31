@@ -198,11 +198,31 @@ def preview_card(
                 "gradient": "amber-50",
             },
             "fields": [
-                {"key": "searchKeywords", "label": "Keywords", "type": "tags", "editable": editable},
+                {
+                    "key": "searchKeywords",
+                    "label": "Keywords",
+                    "type": "tags",
+                    "editable": editable,
+                },
                 {"key": "hashtags", "label": "Hashtags", "type": "tags", "editable": editable},
-                {"key": "followerMin", "label": "Min Followers", "type": "number", "editable": editable},
-                {"key": "followerMax", "label": "Max Followers", "type": "number", "editable": editable},
-                {"key": "minEngagement", "label": "Min Engagement", "type": "percent", "editable": editable},
+                {
+                    "key": "followerMin",
+                    "label": "Min Followers",
+                    "type": "number",
+                    "editable": editable,
+                },
+                {
+                    "key": "followerMax",
+                    "label": "Max Followers",
+                    "type": "number",
+                    "editable": editable,
+                },
+                {
+                    "key": "minEngagement",
+                    "label": "Min Engagement",
+                    "type": "percent",
+                    "editable": editable,
+                },
                 {"key": "location", "label": "Location", "type": "text", "editable": editable},
             ],
         }

@@ -121,9 +121,7 @@ class TestRequestClarification:
 
     @pytest.mark.asyncio
     async def test_request_clarification_emits_event(self, ctx):
-        questions = [
-            Question(id="q1", type=QuestionType.YES_NO, question="Continue?")
-        ]
+        questions = [Question(id="q1", type=QuestionType.YES_NO, question="Continue?")]
 
         await ctx.request_clarification(questions, message="Please confirm")
 
@@ -135,9 +133,7 @@ class TestRequestClarification:
 
     @pytest.mark.asyncio
     async def test_request_clarification_with_context(self, ctx):
-        questions = [
-            Question(id="q1", type=QuestionType.FREE_TEXT, question="Q?")
-        ]
+        questions = [Question(id="q1", type=QuestionType.FREE_TEXT, question="Q?")]
 
         await ctx.request_clarification(
             questions,
@@ -545,12 +541,20 @@ class TestFullWorkflow:
         )
 
         # Phase 1: Clarification
-        clarification_id = await ctx.request_clarification([
-            Question(id="topic", type=QuestionType.FREE_TEXT, question="Topic?"),
-            Question(id="depth", type=QuestionType.SINGLE_CHOICE, question="Depth?",
-                     options=[QuestionOption(id="quick", label="Quick"),
-                              QuestionOption(id="deep", label="Deep")]),
-        ])
+        clarification_id = await ctx.request_clarification(
+            [
+                Question(id="topic", type=QuestionType.FREE_TEXT, question="Topic?"),
+                Question(
+                    id="depth",
+                    type=QuestionType.SINGLE_CHOICE,
+                    question="Depth?",
+                    options=[
+                        QuestionOption(id="quick", label="Quick"),
+                        QuestionOption(id="deep", label="Deep"),
+                    ],
+                ),
+            ]
+        )
         assert ctx.phase == Phase.CLARIFICATION
 
         # User responds
@@ -625,9 +629,9 @@ class TestFullWorkflow:
         )
 
         # Start clarification
-        await ctx.request_clarification([
-            Question(id="q", type=QuestionType.FREE_TEXT, question="Q?")
-        ])
+        await ctx.request_clarification(
+            [Question(id="q", type=QuestionType.FREE_TEXT, question="Q?")]
+        )
 
         # Error occurs
         await ctx.error("api_error", "External service unavailable", recoverable=True)
@@ -638,7 +642,7 @@ class TestFullWorkflow:
         assert ctx.phase == Phase.IDLE
 
         # Retry
-        await ctx.request_clarification([
-            Question(id="q", type=QuestionType.FREE_TEXT, question="Q?")
-        ])
+        await ctx.request_clarification(
+            [Question(id="q", type=QuestionType.FREE_TEXT, question="Q?")]
+        )
         assert ctx.phase == Phase.CLARIFICATION
