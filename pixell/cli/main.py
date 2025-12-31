@@ -21,7 +21,7 @@ def cli():
 
 
 # Import all commands from commands package
-from pixell.cli.commands import (
+from pixell.cli.commands import (  # noqa: E402
     init_cmd,
     build_cmd,
     run_dev_cmd,
