@@ -7,14 +7,9 @@ including retry logic, error classification, and recovery strategies.
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch, call
 from typing import List, Dict, Any
 
 from pixell.sdk import (
-    UserContext,
-    TaskMetadata,
-    TaskConsumer,
-    PXUIDataClient,
     ProgressReporter,
     SDKError,
     ConsumerError,

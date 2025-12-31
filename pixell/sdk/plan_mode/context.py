@@ -8,12 +8,9 @@ from pixell.sdk.plan_mode.phases import Phase, validate_transition
 from pixell.sdk.plan_mode.events import (
     Question,
     ClarificationNeeded,
-    ClarificationResponse,
     DiscoveredItem,
     DiscoveryResult,
     SelectionRequired,
-    SelectionResponse,
-    PlanStep,
     PlanProposed,
     SearchPlanPreview,
     IntervalSpec,

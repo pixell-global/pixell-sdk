@@ -1,6 +1,5 @@
 """Tests for Plan Mode Events."""
 
-import pytest
 import uuid
 from pixell.sdk.plan_mode.events import (
     QuestionType,

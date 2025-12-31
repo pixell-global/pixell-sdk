@@ -4,16 +4,10 @@ import pytest
 import json
 import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime
 
 from pixell.sdk.task_consumer import TaskConsumer
-from pixell.sdk.context import UserContext
 from pixell.sdk.errors import (
-    ConsumerError,
-    TaskTimeoutError,
-    TaskHandlerError,
     RateLimitError,
-    ClientError,
 )
 
 

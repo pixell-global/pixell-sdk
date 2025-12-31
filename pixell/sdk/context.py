@@ -1,12 +1,12 @@
 """UserContext - Execution context for agent tasks."""
 
 from dataclasses import dataclass, field
-from typing import Any, Optional, Callable, Awaitable
+from typing import Any, Optional
 from datetime import datetime
 
 from pixell.sdk.data_client import PXUIDataClient
 from pixell.sdk.progress import ProgressReporter
-from pixell.sdk.errors import ContextError, ContextNotInitializedError
+from pixell.sdk.errors import ContextNotInitializedError
 
 
 @dataclass

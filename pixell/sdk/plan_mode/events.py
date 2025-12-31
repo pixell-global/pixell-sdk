@@ -1,7 +1,7 @@
 """Plan Mode Events - Event types for plan mode communication."""
 
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from dataclasses import dataclass, field
 import uuid
 

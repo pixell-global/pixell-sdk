@@ -12,7 +12,6 @@ from pixell.sdk.errors import (
     ConsumerError,
     TaskTimeoutError,
     TaskHandlerError,
-    QueueError,
 )
 
 

@@ -1,6 +1,5 @@
 """Tests for SDK error classes."""
 
-import pytest
 from pixell.sdk.errors import (
     SDKError,
     ConsumerError,

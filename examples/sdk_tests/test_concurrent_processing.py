@@ -7,17 +7,10 @@ including semaphore-based concurrency limits and parallel task execution.
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 from typing import List, Dict, Any
 
 from pixell.sdk import (
-    UserContext,
-    TaskMetadata,
     TaskConsumer,
-    PXUIDataClient,
-    ProgressReporter,
-    SDKError,
-    TaskTimeoutError,
 )
 
 
@@ -183,7 +176,7 @@ class TestConcurrentProcessing:
     async def test_graceful_shutdown_waits_for_tasks(self):
         """Test graceful shutdown waits for in-flight tasks."""
         completed_tasks = []
-        shutdown_signal = asyncio.Event()
+        asyncio.Event()
 
         async def long_running_task(task_id: str):
             await asyncio.sleep(0.05)

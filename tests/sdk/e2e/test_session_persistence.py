@@ -160,7 +160,7 @@ class TestSessionPersistence:
             selection_id = events[-1]["data"]["selectionId"]
             # Save discovered items for verification
             discovery_events = [e for e in events if e.get("event") == "discovery_result"]
-            discovered_items = discovery_events[0]["data"]["items"]
+            discovery_events[0]["data"]["items"]
 
         await asyncio.wait_for(test_handlers.selection_requested.wait(), timeout=5.0)
 

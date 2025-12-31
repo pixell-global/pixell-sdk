@@ -7,7 +7,6 @@ Usage:
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add parent directory to path to import pixell
@@ -55,7 +54,7 @@ def main():
     print(f"📦 Deploying {APKG_FILE_NAME}...")
     print(f"   Environment: {env}")
     print(f"   App ID: {app_id}")
-    print(f"   Force overwrite: ENABLED")
+    print("   Force overwrite: ENABLED")
     print()
 
     try:

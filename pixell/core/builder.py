@@ -129,7 +129,7 @@ class AgentBuilder:
         
         if pyproject_toml.exists():
             optional_items.append("pyproject.toml")
-            print(f"[INFO] pyproject.toml found - will use it instead of requirements.txt")
+            print("[INFO] pyproject.toml found - will use it instead of requirements.txt")
         elif requirements_txt.exists():
             optional_items.append("requirements.txt")
 
@@ -187,13 +187,13 @@ class AgentBuilder:
         
         # UI 소스 디렉토리 찾기 (agent.yaml에서 지정된 경로만 사용)
         if not ui_config.path:
-            print(f"[WARN] UI path not specified in agent.yaml")
+            print("[WARN] UI path not specified in agent.yaml")
             return
         
         ui_source_dir = self.project_dir / ui_config.path
         if not ui_source_dir.exists() or not ui_source_dir.is_dir():
             print(f"[ERROR] Specified UI path not found: {ui_config.path}")
-            print(f"[INFO] Please ensure the path exists and contains built frontend files")
+            print("[INFO] Please ensure the path exists and contains built frontend files")
             return
         
         print(f"[INFO] Using UI path: {ui_config.path}")

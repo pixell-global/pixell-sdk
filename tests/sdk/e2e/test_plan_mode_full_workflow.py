@@ -5,7 +5,6 @@ workflow with actual HTTP requests and SSE streaming.
 """
 
 import asyncio
-import json
 import uuid
 
 import httpx

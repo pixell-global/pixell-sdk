@@ -14,10 +14,9 @@ from pixell.sdk.plan_mode import (
     Question,
     QuestionType,
     QuestionOption,
-    DiscoveredItem,
     SearchPlanPreview,
 )
-from tests.sdk.e2e.conftest import collect_sse_until, find_free_port
+from tests.sdk.e2e.conftest import collect_sse_until
 
 
 class ComplexQuestionHandlers:
@@ -131,7 +130,6 @@ async def complex_questions_server(
                 )
 
     # Start server
-    import uvicorn
     from uvicorn import Config, Server
 
     app = server.app

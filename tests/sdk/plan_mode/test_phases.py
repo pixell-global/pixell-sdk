@@ -1,6 +1,5 @@
 """Tests for Plan Mode Phases."""
 
-import pytest
 from pixell.sdk.plan_mode.phases import (
     Phase,
     VALID_TRANSITIONS,

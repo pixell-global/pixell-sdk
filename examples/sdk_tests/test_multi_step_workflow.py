@@ -6,19 +6,12 @@ interact together to process tasks with multiple stages.
 """
 
 import asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Any
+from unittest.mock import AsyncMock
 
 from pixell.sdk import (
-    UserContext,
-    TaskMetadata,
-    TaskConsumer,
     PXUIDataClient,
     ProgressReporter,
-    SDKError,
     RateLimitError,
-    APIError,
 )
 
 
@@ -128,17 +121,17 @@ class TestMultiStepWorkflow:
 
             try:
                 # Step 1: Get profile (succeeds)
-                profile = await mock_client.get_user_profile("user-456")
+                await mock_client.get_user_profile("user-456")
                 completed_steps.append("profile")
                 await mock_reporter.update("processing", percent=25)
 
                 # Step 2: Get files (succeeds)
-                files = await mock_client.list_files("user-456")
+                await mock_client.list_files("user-456")
                 completed_steps.append("files")
                 await mock_reporter.update("processing", percent=50)
 
                 # Step 3: OAuth call (fails)
-                events = await mock_client.oauth_proxy_call(
+                await mock_client.oauth_proxy_call(
                     "user-456", "google", "GET", "/calendar/v3/events"
                 )
                 completed_steps.append("events")

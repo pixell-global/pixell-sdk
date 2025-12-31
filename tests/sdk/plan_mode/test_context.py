@@ -2,7 +2,6 @@
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
 from pixell.sdk.plan_mode.context import PlanModeContext
 from pixell.sdk.plan_mode.phases import Phase
 from pixell.sdk.plan_mode.events import (
@@ -353,7 +352,7 @@ class TestEmitPreview:
             ],
         )
 
-        plan_id = await ctx.emit_preview(plan)
+        await ctx.emit_preview(plan)
 
         event = await asyncio.wait_for(ctx.stream._queue.get(), timeout=1.0)
         assert event.event == "preview_ready"

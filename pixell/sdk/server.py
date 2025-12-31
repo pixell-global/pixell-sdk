@@ -24,11 +24,10 @@ Example:
     server.run()
 """
 
-import json
 import logging
 import asyncio
 import inspect
-from typing import Any, Optional, Callable, Awaitable, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -37,18 +36,16 @@ from pixell.sdk.a2a.protocol import (
     JSONRPCResponse,
     JSONRPCError,
 )
-from pixell.sdk.a2a.streaming import SSEStream, create_sse_response
+from pixell.sdk.a2a.streaming import SSEStream
 from pixell.sdk.a2a.handlers import (
     A2AHandler,
-    MessageContext,
-    ResponseContext,
     MessageHandler,
     ResponseHandler,
 )
 
 if TYPE_CHECKING:
     from pixell.sdk.plan_mode import PlanModeContext
-    from pixell.sdk.translation import Translator, TranslationContext
+    from pixell.sdk.translation import Translator
 
 logger = logging.getLogger(__name__)
 
@@ -469,7 +466,7 @@ class AgentServer:
                     },
                 )
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Error handling respond")
                 raise
 

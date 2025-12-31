@@ -61,7 +61,7 @@ class TestSSEEvent:
         event = SSEEvent(event="complex", data=data)
         encoded = event.encode()
         # Verify JSON is valid
-        data_line = [l for l in encoded.split("\n") if l.startswith("data:")][0]
+        data_line = [line for line in encoded.split("\n") if line.startswith("data:")][0]
         json_str = data_line.replace("data: ", "")
         parsed = json.loads(json_str)
         assert parsed["nested"]["array"] == [1, 2, 3]

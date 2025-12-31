@@ -2,7 +2,6 @@
 
 from typing import Any, Optional, Callable, Awaitable, TYPE_CHECKING
 from dataclasses import dataclass, field
-from datetime import datetime
 import uuid
 
 from pixell.sdk.a2a.protocol import (

@@ -2,7 +2,7 @@
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from pixell.sdk.a2a.handlers import (
     MessageContext,
     ResponseContext,

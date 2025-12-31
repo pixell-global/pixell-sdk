@@ -2,11 +2,11 @@
 
 import json
 import asyncio
-from typing import Any, Optional, AsyncGenerator, Callable, Awaitable
-from dataclasses import dataclass, field
+from typing import Any, Optional, AsyncGenerator
+from dataclasses import dataclass
 from datetime import datetime
 
-from pixell.sdk.a2a.protocol import A2AMessage, TaskState, TaskStatus
+from pixell.sdk.a2a.protocol import A2AMessage
 
 
 @dataclass

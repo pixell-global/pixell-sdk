@@ -6,7 +6,6 @@ from datetime import datetime
 import httpx
 
 from pixell.sdk.errors import (
-    ClientError,
     AuthenticationError,
     RateLimitError,
     APIError,

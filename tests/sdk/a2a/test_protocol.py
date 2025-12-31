@@ -1,6 +1,5 @@
 """Tests for A2A Protocol types."""
 
-import pytest
 import uuid
 from pixell.sdk.a2a.protocol import (
     A2AMessage,

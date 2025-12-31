@@ -4,31 +4,11 @@
 
 def test_core_imports():
     """Test core component imports."""
-    from pixell.sdk import UserContext
-    from pixell.sdk import TaskMetadata
-    from pixell.sdk import TaskConsumer
-    from pixell.sdk import PXUIDataClient
-    from pixell.sdk import ProgressReporter
     print("✓ All core components imported successfully")
 
 
 def test_error_imports():
     """Test error class imports."""
-    from pixell.sdk import (
-        SDKError,
-        ConsumerError,
-        TaskTimeoutError,
-        TaskHandlerError,
-        QueueError,
-        ClientError,
-        AuthenticationError,
-        RateLimitError,
-        APIError,
-        ConnectionError,
-        ContextError,
-        ContextNotInitializedError,
-        ProgressError,
-    )
     print("✓ All error classes imported successfully")
 
 

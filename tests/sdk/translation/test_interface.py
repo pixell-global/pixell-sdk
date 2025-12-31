@@ -266,7 +266,7 @@ class TestTranslatorEdgeCases:
     async def test_same_language_translation(self):
         """Translating to same language."""
         translator = MockTranslator()
-        result = await translator.translate("Hello", "en", "en")
+        await translator.translate("Hello", "en", "en")
         # Should still call translate (implementation decides behavior)
         assert len(translator.translate_calls) == 1
 

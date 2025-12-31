@@ -232,7 +232,6 @@ async def plan_mode_server(
     app = server.app
 
     # For real server tests, we need to actually run the server
-    import uvicorn
     from uvicorn import Config, Server
 
     config = Config(app=app, host="127.0.0.1", port=free_port, log_level="warning")

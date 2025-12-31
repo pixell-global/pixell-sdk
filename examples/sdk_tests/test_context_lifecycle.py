@@ -7,15 +7,11 @@ UserContext and its underlying resources.
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from pixell.sdk import (
     UserContext,
     TaskMetadata,
-    PXUIDataClient,
-    ProgressReporter,
-    ContextError,
     ContextNotInitializedError,
 )
 
@@ -115,7 +111,7 @@ class TestContextLifecycle:
             async def close(self):
                 pass
 
-        async with MockContext() as ctx:
+        async with MockContext():
             assert entered
             assert not exited
 

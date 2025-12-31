@@ -143,7 +143,7 @@ async def handle_respond(ctx: ResponseContext):
         plan.set_clarification_response(ctx.answers, ctx.clarification_id)
 
         topic = ctx.answers.get("topic", "general")
-        depth = ctx.answers.get("depth", "moderate")
+        ctx.answers.get("depth", "moderate")
 
         await ctx.emit_status("working", f"Searching for {topic} subreddits...")
 

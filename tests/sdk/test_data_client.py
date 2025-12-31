@@ -2,7 +2,6 @@
 
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime
 
 import httpx
 

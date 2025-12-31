@@ -8,21 +8,10 @@ integration between all SDK components working together.
 import asyncio
 import json
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 
 from pixell.sdk import (
-    UserContext,
-    TaskMetadata,
-    TaskConsumer,
-    PXUIDataClient,
-    ProgressReporter,
-    SDKError,
-    ConsumerError,
-    TaskTimeoutError,
-    TaskHandlerError,
     RateLimitError,
-    APIError,
     AuthenticationError,
 )
 
@@ -103,8 +92,6 @@ class TestCompleteTaskLifecycle:
         await redis.rpush("pixell:agents:test-agent:tasks", json.dumps(task_data))
 
         # Mock API responses
-        mock_profile = {"id": "user-456", "name": "Test User", "email": "test@example.com"}
-        mock_events = {"items": [{"id": "event-1", "summary": "Meeting"}]}
 
         async def mock_handler(ctx, payload):
             workflow_log.append("handler_started")

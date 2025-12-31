@@ -276,7 +276,7 @@ class TestTranslateBatchToUser:
         ctx = TranslationContext(translator=translator, user_language="ko")
 
         texts = ["こんにちは", "さようなら"]
-        results = await ctx.translate_batch_to_user(texts, from_lang="ja")
+        await ctx.translate_batch_to_user(texts, from_lang="ja")
 
         assert translator.translate_calls[0][1] == "ja"
 
@@ -469,8 +469,8 @@ class TestTranslationContextEdgeCases:
         )
 
         # Korean user, Japanese agent
-        result = await ctx.translate_from_user("안녕하세요")
+        await ctx.translate_from_user("안녕하세요")
         assert translator.translate_calls[-1] == ("안녕하세요", "ko", "ja")
 
-        result = await ctx.translate_to_user("こんにちは")
+        await ctx.translate_to_user("こんにちは")
         assert translator.translate_calls[-1] == ("こんにちは", "ja", "ko")

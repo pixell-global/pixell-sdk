@@ -5,14 +5,10 @@ This example shows how an agent developer would use the Pixell SDK
 to build a task-processing agent.
 """
 
-import asyncio
 from typing import Any
 from pixell.sdk import (
     UserContext,
     TaskConsumer,
-    TaskMetadata,
-    PXUIDataClient,
-    ProgressReporter,
     SDKError,
     TaskTimeoutError,
     RateLimitError,

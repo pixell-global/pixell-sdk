@@ -36,7 +36,6 @@ Example implementation using OpenAI:
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class Translator(ABC):

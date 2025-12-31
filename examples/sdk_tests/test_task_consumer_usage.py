@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test TaskConsumer usage."""
 
-import asyncio
 from pixell.sdk import TaskConsumer, UserContext
 
 

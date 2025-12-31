@@ -2,7 +2,7 @@
 
 import pytest
 import json
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 from pixell.sdk.progress import ProgressReporter
 from pixell.sdk.errors import ProgressError

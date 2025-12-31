@@ -2,8 +2,7 @@
 
 import pytest
 import asyncio
-from typing import AsyncGenerator, Any
-from unittest.mock import AsyncMock, MagicMock
+from typing import AsyncGenerator
 
 # A2A Protocol fixtures
 from pixell.sdk.a2a.protocol import (
@@ -11,10 +10,9 @@ from pixell.sdk.a2a.protocol import (
     TextPart,
     DataPart,
     JSONRPCRequest,
-    TaskState,
 )
 from pixell.sdk.a2a.streaming import SSEStream
-from pixell.sdk.a2a.handlers import A2AHandler, MessageContext, ResponseContext
+from pixell.sdk.a2a.handlers import A2AHandler
 
 # Plan Mode fixtures
 from pixell.sdk.plan_mode import (
@@ -24,9 +22,6 @@ from pixell.sdk.plan_mode import (
     QuestionType,
     QuestionOption,
     DiscoveredItem,
-    ClarificationNeeded,
-    SelectionRequired,
-    SearchPlanPreview,
 )
 
 # Translation fixtures
