@@ -214,8 +214,7 @@ class AgentServer:
             from fastapi.middleware.cors import CORSMiddleware
         except ImportError:
             raise ImportError(
-                "FastAPI is required for AgentServer. "
-                "Install it with: pip install fastapi uvicorn"
+                "FastAPI is required for AgentServer. Install it with: pip install fastapi uvicorn"
             )
 
         app = FastAPI(
@@ -492,7 +491,7 @@ class AgentServer:
             import uvicorn
         except ImportError:
             raise ImportError(
-                "Uvicorn is required for AgentServer. " "Install it with: pip install uvicorn"
+                "Uvicorn is required for AgentServer. Install it with: pip install uvicorn"
             )
 
         if self._app is None:
@@ -516,7 +515,7 @@ class AgentServer:
             import uvicorn
         except ImportError:
             raise ImportError(
-                "Uvicorn is required for AgentServer. " "Install it with: pip install uvicorn"
+                "Uvicorn is required for AgentServer. Install it with: pip install uvicorn"
             )
 
         if self._app is None:

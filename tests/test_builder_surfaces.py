@@ -570,9 +570,9 @@ def handler(context):
 
                 # Check that agents_config.json does NOT exist
                 agents_config_path = extract_path / "agents_config.json"
-                assert (
-                    not agents_config_path.exists()
-                ), "agents_config.json should not be included when absent"
+                assert not agents_config_path.exists(), (
+                    "agents_config.json should not be included when absent"
+                )
 
     def test_build_with_invalid_agents_config_json(self):
         """Test that build succeeds even with malformed agents_config.json (validation is runtime concern)."""
@@ -625,6 +625,6 @@ def handler(context):
 
                 extract_path = Path(extract_dir)
                 agents_config_path = extract_path / "agents_config.json"
-                assert (
-                    agents_config_path.exists()
-                ), "agents_config.json should be included even if invalid"
+                assert agents_config_path.exists(), (
+                    "agents_config.json should be included even if invalid"
+                )

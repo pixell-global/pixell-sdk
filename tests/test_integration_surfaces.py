@@ -362,6 +362,6 @@ class TestIntegrationSurfaces:
                         with zf.open("deploy.json") as f:
                             deploy_data = json.load(f)
 
-                    assert set(deploy_data["expose"]) == set(
-                        expected_expose
-                    ), f"Expose mismatch for surfaces: {surfaces}"
+                    assert set(deploy_data["expose"]) == set(expected_expose), (
+                        f"Expose mismatch for surfaces: {surfaces}"
+                    )

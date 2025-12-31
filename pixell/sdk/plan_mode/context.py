@@ -264,8 +264,7 @@ class PlanModeContext:
         """
         if selection_id and selection_id != self._pending_selection_id:
             logger.warning(
-                f"Selection ID mismatch: expected {self._pending_selection_id}, "
-                f"got {selection_id}"
+                f"Selection ID mismatch: expected {self._pending_selection_id}, got {selection_id}"
             )
 
         self.selected_ids = selected_ids
@@ -317,7 +316,7 @@ class PlanModeContext:
             modifications: Optional modifications requested by user
         """
         if plan_id and plan_id != self._pending_plan_id:
-            logger.warning(f"Plan ID mismatch: expected {self._pending_plan_id}, " f"got {plan_id}")
+            logger.warning(f"Plan ID mismatch: expected {self._pending_plan_id}, got {plan_id}")
 
         self._pending_plan_id = None
 
