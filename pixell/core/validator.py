@@ -68,11 +68,9 @@ class AgentValidator:
                 "Missing required .env file at project root. Create a `.env` with placeholders or real values. See `.env.example`."
             )
 
-        # Check for source directory
+        # Check for source directory (optional)
         src_dir = self.project_dir / "src"
-        if not src_dir.exists():
-            self.errors.append("Source directory 'src/' not found")
-        elif not src_dir.is_dir():
+        if src_dir.exists() and not src_dir.is_dir():
             self.errors.append("'src' exists but is not a directory")
 
         # Check for requirements.txt (warning if missing)
@@ -131,7 +129,7 @@ class AgentValidator:
 
         # Basic check: look for function definition
         try:
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 if f"def {function_name}" not in content:
                     self.warnings.append(f"Function '{function_name}' not found in {file_path}")
@@ -142,34 +140,46 @@ class AgentValidator:
         """Validate A2A, REST, and UI configuration."""
         # REST
         if manifest.rest:
-            try:
-                rest_module, rest_func = manifest.rest.entry.split(":", 1)
-                rest_file = self.project_dir / (rest_module.replace(".", "/") + ".py")
-                if not rest_file.exists():
-                    self.errors.append(f"REST entry module not found: {rest_file}")
+            rest_entry = manifest.rest.entry
+            # If rest.entry doesn't have ':', try to use entrypoint's module
+            if ":" not in rest_entry:
+                if manifest.entrypoint and ":" in manifest.entrypoint:
+                    # Use entrypoint's module with rest.entry as function name
+                    entrypoint_module, _ = manifest.entrypoint.split(":", 1)
+                    rest_module = entrypoint_module
+                    rest_func = rest_entry
                 else:
-                    try:
-                        with open(rest_file, "r") as f:
-                            content = f.read()
-                            if f"def {rest_func}" not in content:
-                                self.warnings.append(
-                                    f"REST entry function '{rest_func}' not found in {rest_file}"
-                                )
-                    except Exception as exc:
-                        self.warnings.append(f"Could not read REST entry file: {exc}")
-            except ValueError:
-                self.errors.append("REST entry must be in 'module:function' format")
+                    self.errors.append(
+                        "REST entry must be in 'module:function' format, or entrypoint must be specified"
+                    )
+                    return
+            else:
+                rest_module, rest_func = rest_entry.split(":", 1)
+            
+            rest_file = self.project_dir / (rest_module.replace(".", "/") + ".py")
+            if not rest_file.exists():
+                self.errors.append(f"REST entry module not found: {rest_file}")
+            else:
+                try:
+                    with open(rest_file, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        if f"def {rest_func}" not in content:
+                            self.warnings.append(
+                                f"REST entry function '{rest_func}' not found in {rest_file}"
+                            )
+                except Exception as exc:
+                    self.warnings.append(f"Could not read REST entry file: {exc}")
 
         # A2A
-        if manifest.a2a:
+        if manifest.a2a and getattr(manifest.a2a, "entry", None):
             try:
-                a2a_module, a2a_func = manifest.a2a.service.split(":", 1)
+                a2a_module, a2a_func = manifest.a2a.entry.split(":", 1)
                 a2a_file = self.project_dir / (a2a_module.replace(".", "/") + ".py")
                 if not a2a_file.exists():
                     self.errors.append(f"A2A service module not found: {a2a_file}")
                 else:
                     try:
-                        with open(a2a_file, "r") as f:
+                        with open(a2a_file, "r", encoding="utf-8") as f:
                             content = f.read()
                             if f"def {a2a_func}" not in content:
                                 self.warnings.append(

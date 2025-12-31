@@ -18,6 +18,140 @@ class MetadataConfig(BaseModel):
     homepage: Optional[str] = Field(default=None)
     repository: Optional[str] = Field(default=None)
     tags: List[str] = Field(default_factory=list)
+    author_email: Optional[str] = Field(default=None, description="Author email address")
+
+
+class PermissionsConfig(BaseModel):
+    """Permission requirements for the agent.
+
+    Permissions define what data and APIs the agent needs access to.
+    Required permissions must be granted for the agent to function.
+    Optional permissions enhance functionality but aren't mandatory.
+    """
+
+    required: List[str] = Field(
+        default_factory=list,
+        description="Permissions that must be granted for the agent to function",
+    )
+    optional: List[str] = Field(
+        default_factory=list,
+        description="Permissions that enhance functionality but aren't required",
+    )
+
+    @field_validator("required", "optional")
+    @classmethod
+    def validate_permissions(cls, v: List[str]) -> List[str]:
+        """Validate permission format."""
+        valid_prefixes = [
+            "user.profile",
+            "user.files",
+            "user.conversations",
+            "oauth.",
+            "files.",
+            "conversations.",
+            "tasks.",
+        ]
+        for perm in v:
+            if not any(perm.startswith(prefix) for prefix in valid_prefixes):
+                # Allow custom permissions but warn
+                pass
+        return v
+
+
+class DataAccessConfig(BaseModel):
+    """Data access documentation for the agent.
+
+    Documents what external services and user data the agent accesses.
+    This is primarily for transparency and user consent.
+    """
+
+    oauth_providers: List[str] = Field(
+        default_factory=list,
+        description="OAuth providers the agent uses (e.g., google, github, tiktok)",
+    )
+    user_data: List[str] = Field(
+        default_factory=list,
+        description="Types of user data accessed (e.g., profile, files, conversations)",
+    )
+    external_apis: List[str] = Field(
+        default_factory=list,
+        description="External APIs the agent calls",
+    )
+
+
+class PlanModeConfig(BaseModel):
+    """Plan mode configuration for multi-phase workflows.
+
+    Plan mode enables agents to implement interactive workflows with
+    clarification, discovery, selection, and preview phases.
+    """
+
+    supported: bool = Field(
+        default=True,
+        description="Whether plan mode is supported by this agent",
+    )
+    phases: List[str] = Field(
+        default_factory=list,
+        description="Supported phases (clarification, discovery, selection, preview, executing)",
+    )
+    discovery_type: Optional[str] = Field(
+        default=None,
+        description="Type of items discovered (subreddits, hashtags, channels, etc.)",
+    )
+
+    @field_validator("phases")
+    @classmethod
+    def validate_phases(cls, v: List[str]) -> List[str]:
+        """Validate phase names."""
+        valid_phases = [
+            "clarification",
+            "discovery",
+            "selection",
+            "preview",
+            "executing",
+        ]
+        for phase in v:
+            if phase not in valid_phases:
+                raise ValueError(
+                    f"Invalid phase: {phase}. Valid phases: {', '.join(valid_phases)}"
+                )
+        return v
+
+
+class TranslationConfig(BaseModel):
+    """Translation configuration for i18n support.
+
+    Agents can opt into translation support. The SDK provides the interface,
+    but agents bring their own LLM for translation (they pay for tokens).
+    """
+
+    supported: bool = Field(
+        default=True,
+        description="Whether translation is supported by this agent",
+    )
+    default_language: str = Field(
+        default="en",
+        description="Default/working language for the agent (ISO 639-1)",
+    )
+    supported_languages: List[str] = Field(
+        default_factory=lambda: ["en"],
+        description="List of supported language codes (ISO 639-1)",
+    )
+
+    @field_validator("default_language", "supported_languages", mode="before")
+    @classmethod
+    def validate_language_codes(cls, v):
+        """Validate ISO 639-1 language codes."""
+        import re
+
+        if isinstance(v, str):
+            if not re.match(r"^[a-z]{2}$", v):
+                raise ValueError(f"Invalid language code: {v}. Use ISO 639-1 (e.g., 'en', 'ko')")
+        elif isinstance(v, list):
+            for lang in v:
+                if not re.match(r"^[a-z]{2}$", lang):
+                    raise ValueError(f"Invalid language code: {lang}. Use ISO 639-1 (e.g., 'en', 'ko')")
+        return v
 
 
 class AgentManifest(BaseModel):
@@ -42,26 +176,55 @@ class AgentManifest(BaseModel):
     dependencies: List[str] = Field(default_factory=list, description="Python dependencies")
     mcp: Optional[MCPConfig] = Field(default=None)
     metadata: MetadataConfig = Field(..., description="Agent metadata")
+    permissions: Optional[PermissionsConfig] = Field(
+        default=None, description="Permission requirements for the agent"
+    )
+    data_access: Optional[DataAccessConfig] = Field(
+        default=None, description="Data access documentation for the agent"
+    )
 
     # Surfaces (optional)
     class A2AConfig(BaseModel):
-        service: str = Field(description="Module:function for A2A gRPC server entry")
+        # Prefer 'entry' for consistency with REST; keep 'service' for backwards compatibility
+        entry: Optional[str] = Field(
+            default=None,
+            description="Module:function for A2A gRPC server entry (optional)",
+        )
+        # Backwards compatible alias for manifests that still use `service`
+        service: Optional[str] = Field(
+            default=None,
+            description="DEPRECATED: use 'entry' instead",
+            alias="service",
+        )
+        # HTTP-based A2A server (JSON-RPC over HTTP instead of gRPC)
+        http_server: Optional[str] = Field(
+            default=None,
+            description="Module:function for A2A HTTP server entry (returns handlers dict)",
+        )
 
-        @field_validator("service")
+        @field_validator("entry", "http_server")
         @classmethod
-        def validate_service(cls, v):  # type: ignore[no-redef]
-            if ":" not in v:
-                raise ValueError("A2A service must be in format 'module:function'")
+        def validate_entry(cls, v):  # type: ignore[no-redef]
+            # Allow omission; full path validation is handled in Validator/Builder
+            if v is not None and ":" not in v:
+                raise ValueError("A2A entry must be in format 'module:function'")
             return v
 
+        @model_validator(mode="after")
+        def _populate_entry_from_service(self):  # type: ignore[no-redef]
+            # If only legacy `service` is provided, mirror it into `entry`
+            if self.entry is None and self.service is not None:
+                self.entry = self.service
+            return self
+
     class RestConfig(BaseModel):
-        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app")
+        entry: str = Field(description="Module:function that mounts REST routes on FastAPI app, or just function name to use entrypoint's module")
 
         @field_validator("entry")
         @classmethod
         def validate_entry(cls, v):  # type: ignore[no-redef]
-            if ":" not in v:
-                raise ValueError("REST entry must be in format 'module:function'")
+            # Allow function name only (will use entrypoint's module in validator)
+            # Full validation happens in AgentValidator._validate_surfaces
             return v
 
     class UIConfig(BaseModel):
@@ -76,6 +239,14 @@ class AgentManifest(BaseModel):
     )
     required_ui_capabilities: Optional[List[str]] = Field(
         default=None, description="Capabilities this agent requires from the UI client"
+    )
+
+    # Plan mode and translation (optional)
+    plan_mode: Optional[PlanModeConfig] = Field(
+        default=None, description="Plan mode configuration for multi-phase workflows"
+    )
+    translation: Optional[TranslationConfig] = Field(
+        default=None, description="Translation/i18n configuration"
     )
 
     @field_validator("name")

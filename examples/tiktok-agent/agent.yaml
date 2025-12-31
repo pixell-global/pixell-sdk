@@ -1,0 +1,46 @@
+version: "1.0"
+name: tiktok-analyzer
+display_name: TikTok Profile Analyzer
+description: Analyzes TikTok profiles for engagement metrics and trends
+author: Pixell Team
+license: MIT
+entrypoint: src.main:handle_task
+
+runtime: python3.11
+
+capabilities:
+  - analyze_profile
+  - track_engagement
+  - compare_history
+
+dependencies:
+  - pixell-sdk>=0.4.12
+  - redis>=5.0.0
+  - httpx>=0.25.0
+
+metadata:
+  version: "1.0.0"
+  homepage: https://github.com/pixell-global/tiktok-analyzer
+  repository: https://github.com/pixell-global/tiktok-analyzer
+  tags:
+    - tiktok
+    - analytics
+    - social-media
+  author_email: dev@pixell.global
+
+permissions:
+  required:
+    - oauth.tiktok.read
+    - user.profile.read
+  optional:
+    - files.read
+    - conversations.read
+
+data_access:
+  oauth_providers:
+    - tiktok
+  user_data:
+    - profile
+    - files
+  external_apis:
+    - https://open.tiktokapis.com

@@ -1,0 +1,24 @@
+Package Name,Description,License,URL
+click,CLI framework - implements pixell command-line interface (build,BSD-3-Clause,https://github.com/pallets/click
+pydantic,Data validation and settings management - validates agent.yaml manifests,MIT,https://github.com/pydantic/pydantic
+pyyaml,YAML parser - reads/writes agent.yaml and pak.yaml configuration files,MIT,https://github.com/yaml/pyyaml
+jsonschema,JSON schema validation - validates protocol envelopes (ui.event,MIT,https://github.com/python-jsonschema/jsonschema
+fastapi,Web framework - development server REST API support and agent endpoint mounting,MIT,https://github.com/tiangolo/fastapi
+uvicorn,ASGI server - runs FastAPI development server with hot-reload for local agent serving,BSD-3-Clause,https://github.com/encode/uvicorn
+watchdog,File system monitoring - hot-reload functionality in dev server,Apache-2.0,Apache-2.0
+python-dotenv,Environment variable management - loads environment variables from .env files and reads secret configuration,BSD-3-Clause,https://github.com/theskumar/python-dotenv
+tabulate,Table output formatting - displays agent lists in pixell list command and formats secret tables,MIT,https://github.com/astanin/python-tabulate
+jinja2,Template engine - generates setup.py files and creates project scaffolding (pixell init),BSD-3-Clause,https://github.com/pallets/jinja
+requests,HTTP client - makes API calls to Pixell Agent Cloud,Apache-2.0,https://github.com/psf/requests
+setuptools,Package building and distribution - builds pixell-kit package and auto-generates setup.py for agent packages,MIT,https://github.com/pypa/setuptools
+wheel,Python package distribution format - creates wheel distributions for faster installation,MIT,https://github.com/pypa/wheel
+pytest,Testing framework - runs unit tests and integration tests,MIT,https://github.com/pytest-dev/pytest
+pytest-cov,Test coverage plugin - measures code coverage and generates coverage reports,MIT,https://github.com/pytest-dev/pytest-cov
+pytest-asyncio,Async test support - tests async/await code (deployment and server tests),Apache-2.0,https://github.com/pytest-dev/pytest-asyncio
+black,Code formatter - automatically formats Python code (100 character line length),MIT,https://github.com/psf/black
+mypy,Static type checker - type checks Python code and catches errors before runtime,MIT,https://github.com/python/mypy
+ruff,Fast Python linter - code linting and style checking (Rust-based),MIT,https://github.com/astral-sh/ruff
+build,Package build frontend - PEP 517/518 compliant build tool,MIT,https://github.com/pypa/build
+twine,PyPI uploader - publishes pixell-kit to PyPI,Apache-2.0,https://github.com/pypa/twine
+types-PyYAML,PyYAML type stubs - enables type checking for YAML-related code with mypy,Apache-2.0,https://github.com/python/typeshed
+python-gnupg,GnuPG Python wrapper - cryptographic signing and verification of APKG packages (security feature),BSD-3-Clause,https://github.com/vsajip/python-gnupg

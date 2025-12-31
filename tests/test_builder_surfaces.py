@@ -79,21 +79,17 @@ def mount(app):
                 assert (extract_path / "agent.yaml").exists()
                 assert (extract_path / "src").exists()
 
-                # Check dist layout
-                assert (extract_path / "dist").exists()
-                assert (extract_path / "dist" / "a2a").exists()
-                assert (extract_path / "dist" / "rest").exists()
-                assert (extract_path / "dist" / "ui").exists()
+                # Check files copied to APKG root (no dist/ folder)
+                # A2A server file at root
+                assert (extract_path / "server.py").exists()
 
-                # Check A2A files in dist
-                assert (extract_path / "dist" / "a2a" / "server.py").exists()
+                # REST index file at root
+                assert (extract_path / "index.py").exists()
 
-                # Check REST files in dist
-                assert (extract_path / "dist" / "rest" / "index.py").exists()
-
-                # Check UI files in dist
-                assert (extract_path / "dist" / "ui" / "index.html").exists()
-                assert (extract_path / "dist" / "ui" / "style.css").exists()
+                # UI files in original path structure
+                assert (extract_path / "ui").exists()
+                assert (extract_path / "ui" / "index.html").exists()
+                assert (extract_path / "ui" / "style.css").exists()
 
                 # Check deploy.json
                 deploy_json_path = extract_path / "deploy.json"
@@ -156,11 +152,10 @@ def mount(app):
 
                 extract_path = Path(extract_dir)
 
-                # Check dist layout
-                assert (extract_path / "dist").exists()
-                assert (extract_path / "dist" / "rest").exists()
-                assert not (extract_path / "dist" / "a2a").exists()
-                assert not (extract_path / "dist" / "ui").exists()
+                # Check REST file copied to APKG root (no dist/ folder)
+                assert (extract_path / "index.py").exists()
+                # No A2A or UI directories
+                assert not (extract_path / "ui").exists()
 
                 # Check deploy.json
                 deploy_json_path = extract_path / "deploy.json"
@@ -215,15 +210,10 @@ def mount(app):
 
                 extract_path = Path(extract_dir)
 
-                # Check dist layout
-                assert (extract_path / "dist").exists()
-                assert (extract_path / "dist" / "ui").exists()
-                assert not (extract_path / "dist" / "a2a").exists()
-                assert not (extract_path / "dist" / "rest").exists()
-
-                # Check UI files are copied
-                assert (extract_path / "dist" / "ui" / "index.html").exists()
-                assert (extract_path / "dist" / "ui" / "app.js").exists()
+                # Check UI files copied to original path (no dist/ folder)
+                assert (extract_path / "ui").exists()
+                assert (extract_path / "ui" / "index.html").exists()
+                assert (extract_path / "ui" / "app.js").exists()
 
                 # Check deploy.json
                 deploy_json_path = extract_path / "deploy.json"
@@ -282,11 +272,8 @@ def handler(context):
                 assert (extract_path / "src").exists()
                 assert (extract_path / "src" / "main.py").exists()
 
-                # Check dist directory exists but is empty
-                assert (extract_path / "dist").exists()
-                assert not (extract_path / "dist" / "a2a").exists()
-                assert not (extract_path / "dist" / "rest").exists()
-                assert not (extract_path / "dist" / "ui").exists()
+                # Check no surface-specific directories (no dist/ folder created)
+                assert not (extract_path / "ui").exists()
 
                 # Check deploy.json
                 deploy_json_path = extract_path / "deploy.json"

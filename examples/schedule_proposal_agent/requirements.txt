@@ -1,0 +1,4 @@
+# Schedule Proposal Test Agent dependencies
+# Install pixell-sdk from local path or PyPI
+# pip install -e ../../  # For local development
+uvicorn>=0.30.0

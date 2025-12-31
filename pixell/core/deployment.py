@@ -103,7 +103,7 @@ class DeploymentClient:
 
     # Environment configurations
     ENVIRONMENTS = {
-        "local": {"base_url": "http://localhost:4000", "name": "Local Development"},
+        "local": {"base_url": "http://localhost:3000", "name": "Local Development"},
         "prod": {"base_url": "https://cloud.pixell.global", "name": "Production"},
     }
 

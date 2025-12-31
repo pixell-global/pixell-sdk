@@ -26,7 +26,7 @@ class TestDeploymentClient:
         """Test initialization with valid environment."""
         client = DeploymentClient(environment="local")
         assert client.environment == "local"
-        assert client.base_url == "http://localhost:4000"
+        assert client.base_url == "http://localhost:3000"
 
         client = DeploymentClient(environment="prod")
         assert client.environment == "prod"
