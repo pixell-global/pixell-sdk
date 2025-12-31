@@ -463,6 +463,12 @@ class PlanModeContext:
         interval_value: Optional[int] = None,
         interval_unit: Optional[str] = None,
         next_runs_preview: Optional[list[str]] = None,
+        # Execution plan fields (for plan mode integration)
+        agent_name: Optional[str] = None,
+        agent_description: Optional[str] = None,
+        task_explanation: Optional[str] = None,
+        expected_outputs: Optional[list[dict[str, Any]]] = None,
+        execution_plan: Optional[dict[str, Any]] = None,
     ) -> str:
         """Propose a schedule to the user for approval.
 
@@ -481,6 +487,11 @@ class PlanModeContext:
             interval_value: For interval type, the numeric value
             interval_unit: For interval type, the unit ('minutes', 'hours', 'days', 'weeks')
             next_runs_preview: Optional list of next run times (ISO strings)
+            agent_name: Human-readable agent name (for display)
+            agent_description: Agent description (for display)
+            task_explanation: Explanation of what the scheduled task will do
+            expected_outputs: List of expected outputs (type, name, description)
+            execution_plan: Full execution plan with task parameters from plan mode
 
         Returns:
             The proposal ID for tracking the response
@@ -494,6 +505,9 @@ class PlanModeContext:
                 schedule_type="cron",
                 rationale="You asked for daily reports",
                 timezone="America/New_York",
+                task_explanation="I'll search r/gaming for trending posts",
+                expected_outputs=[{"type": "html", "name": "Report"}],
+                execution_plan={"taskType": "research", "parameters": {...}},
             )
         """
         # Build interval spec if provided
@@ -514,6 +528,12 @@ class PlanModeContext:
             one_time_at=schedule if schedule_type == "one_time" else None,
             timezone=timezone,
             next_runs_preview=next_runs_preview,
+            # Execution plan fields
+            agent_name=agent_name,
+            agent_description=agent_description,
+            task_explanation=task_explanation,
+            expected_outputs=expected_outputs,
+            execution_plan=execution_plan,
         )
 
         self._pending_schedule_proposal_id = proposal.proposal_id

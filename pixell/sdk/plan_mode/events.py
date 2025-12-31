@@ -338,6 +338,13 @@ class ScheduleProposal:
     next_runs_preview: Optional[list[str]] = None  # Preview of next 5 runs
     timeout_ms: int = 300000  # 5 minutes for user response
 
+    # Execution plan fields (for plan mode integration)
+    agent_name: Optional[str] = None
+    agent_description: Optional[str] = None
+    task_explanation: Optional[str] = None
+    expected_outputs: Optional[list[dict[str, Any]]] = None
+    execution_plan: Optional[dict[str, Any]] = None
+
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
             "type": "schedule_proposal",
@@ -364,6 +371,17 @@ class ScheduleProposal:
             result["oneTimeAt"] = self.one_time_at
         if self.next_runs_preview:
             result["nextRunsPreview"] = self.next_runs_preview
+        # Execution plan fields
+        if self.agent_name:
+            result["agentName"] = self.agent_name
+        if self.agent_description:
+            result["agentDescription"] = self.agent_description
+        if self.task_explanation:
+            result["taskExplanation"] = self.task_explanation
+        if self.expected_outputs:
+            result["expectedOutputs"] = self.expected_outputs
+        if self.execution_plan:
+            result["executionPlan"] = self.execution_plan
         return result
 
 
