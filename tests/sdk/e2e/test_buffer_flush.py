@@ -20,7 +20,7 @@ from pixell.sdk import AgentServer, MessageContext
 # Skip E2E tests in CI environments
 CI_SKIP = pytest.mark.skipif(
     os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true",
-    reason="E2E tests with async servers are flaky in CI"
+    reason="E2E tests with async servers are flaky in CI",
 )
 
 
@@ -49,9 +49,7 @@ class TestBufferFlushE2E:
 
         from uvicorn import Config, Server
 
-        config = Config(
-            app=server.app, host="127.0.0.1", port=port, log_level="warning"
-        )
+        config = Config(app=server.app, host="127.0.0.1", port=port, log_level="warning")
         server_instance = Server(config)
         server_task = asyncio.create_task(server_instance.serve())
 
@@ -105,12 +103,12 @@ class TestBufferFlushE2E:
 
                 # First chunk should be the padding (starts with ":")
                 first_chunk = chunks[0]
-                assert first_chunk.startswith(
-                    ":"
-                ), f"First chunk should be SSE comment, got: {first_chunk[:100]}"
-                assert (
-                    len(first_chunk) >= 2048
-                ), f"Padding should be >= 2KB, got {len(first_chunk)} bytes"
+                assert first_chunk.startswith(":"), (
+                    f"First chunk should be SSE comment, got: {first_chunk[:100]}"
+                )
+                assert len(first_chunk) >= 2048, (
+                    f"Padding should be >= 2KB, got {len(first_chunk)} bytes"
+                )
 
     @pytest.mark.asyncio
     async def test_buffer_flush_is_valid_sse_comment(self, simple_server: str):
@@ -221,17 +219,13 @@ class TestBufferFlushE2E:
 
                 # First message should be the padding comment
                 first_message = messages[0].strip()
-                assert first_message.startswith(
-                    ":"
-                ), f"First SSE message should be comment, got: {first_message[:50]}"
+                assert first_message.startswith(":"), (
+                    f"First SSE message should be comment, got: {first_message[:50]}"
+                )
 
                 # Should have at least one real event after padding
-                real_events = [
-                    m for m in messages[1:] if m.strip() and "event:" in m
-                ]
-                assert (
-                    len(real_events) > 0
-                ), "Should have at least one real event after padding"
+                real_events = [m for m in messages[1:] if m.strip() and "event:" in m]
+                assert len(real_events) > 0, "Should have at least one real event after padding"
 
 
 @CI_SKIP
@@ -274,9 +268,7 @@ class TestBufferFlushRespondEndpoint:
 
         from uvicorn import Config, Server
 
-        config = Config(
-            app=server.app, host="127.0.0.1", port=port, log_level="warning"
-        )
+        config = Config(app=server.app, host="127.0.0.1", port=port, log_level="warning")
         server_instance = Server(config)
         server_task = asyncio.create_task(server_instance.serve())
 
@@ -350,7 +342,7 @@ class TestBufferFlushRespondEndpoint:
                 # First chunk should be buffer flush padding
                 if chunks:
                     first_chunk = chunks[0]
-                    assert first_chunk.startswith(
-                        ":"
-                    ), f"Respond endpoint should also send padding, got: {first_chunk[:100]}"
+                    assert first_chunk.startswith(":"), (
+                        f"Respond endpoint should also send padding, got: {first_chunk[:100]}"
+                    )
                     assert len(first_chunk) >= 2048
