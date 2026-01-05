@@ -9,6 +9,27 @@ from datetime import datetime
 from pixell.sdk.a2a.protocol import A2AMessage
 
 
+# SSE buffer flush - 2KB padding to flush proxy buffers (AWS ALB, nginx, CloudFront)
+# Proxies buffer small chunks; this padding forces immediate flush
+SSE_BUFFER_FLUSH_SIZE = 2048
+
+
+def buffer_flush_padding(size: int = SSE_BUFFER_FLUSH_SIZE) -> str:
+    """Generate SSE comment padding to flush proxy buffers.
+
+    SSE specification allows comment lines starting with ":" that are
+    ignored by clients. This padding flushes intermediate proxy buffers
+    so real events arrive without delay.
+
+    Args:
+        size: Number of padding characters (default 2048 for 2KB)
+
+    Returns:
+        SSE-formatted comment string ending with double newline
+    """
+    return f": {'-' * size}\n\n"
+
+
 @dataclass
 class SSEEvent:
     """Server-Sent Event."""

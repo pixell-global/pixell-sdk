@@ -379,3 +379,57 @@ class TestSSEStreamConcurrency:
         )
 
         assert len(received) == 10
+
+
+class TestBufferFlushPadding:
+    """Tests for SSE buffer flush padding."""
+
+    def test_buffer_flush_padding_default_size(self):
+        """Test default 2KB buffer flush padding."""
+        from pixell.sdk.a2a.streaming import buffer_flush_padding, SSE_BUFFER_FLUSH_SIZE
+
+        padding = buffer_flush_padding()
+
+        # Should start with ":" (SSE comment marker)
+        assert padding.startswith(":")
+        # Should end with double newline (SSE event separator)
+        assert padding.endswith("\n\n")
+        # Should be approximately 2KB (2048 chars + ": " prefix + "\n\n" suffix)
+        assert len(padding) >= SSE_BUFFER_FLUSH_SIZE
+
+    def test_buffer_flush_padding_custom_size(self):
+        """Test custom size buffer flush padding."""
+        from pixell.sdk.a2a.streaming import buffer_flush_padding
+
+        padding = buffer_flush_padding(size=1024)
+
+        # Should be approximately 1KB
+        assert len(padding) >= 1024
+        assert padding.startswith(":")
+        assert padding.endswith("\n\n")
+
+    def test_buffer_flush_padding_is_valid_sse_comment(self):
+        """Test that padding is valid SSE format (comment line)."""
+        from pixell.sdk.a2a.streaming import buffer_flush_padding
+
+        padding = buffer_flush_padding()
+
+        # SSE comments start with ":"
+        # The padding should be a single line (excluding the trailing newlines)
+        content = padding.rstrip("\n")
+        assert content.startswith(":"), f"SSE comment must start with ':', got: {content[:50]}"
+
+    def test_buffer_flush_constant_value(self):
+        """Test the SSE_BUFFER_FLUSH_SIZE constant."""
+        from pixell.sdk.a2a.streaming import SSE_BUFFER_FLUSH_SIZE
+
+        assert SSE_BUFFER_FLUSH_SIZE == 2048
+
+    def test_buffer_flush_padding_content(self):
+        """Test the padding content is dashes."""
+        from pixell.sdk.a2a.streaming import buffer_flush_padding
+
+        padding = buffer_flush_padding(size=10)
+
+        # Should be ": ----------\n\n" (with 10 dashes)
+        assert padding == ": ----------\n\n"

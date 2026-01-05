@@ -512,17 +512,32 @@ setup(
             raise BuildError("Manifest not loaded")
 
         # A2A: copy entry file directly to APKG root
-        if (
-            getattr(self.manifest, "a2a", None)
-            and self.manifest.a2a
-            and getattr(self.manifest.a2a, "entry", None)
-        ):
-            module_path, _func = self.manifest.a2a.entry.split(":", 1)
-            src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
-            if src_file.exists():
-                dest_file = build_dir / src_file.name
-                shutil.copy2(src_file, dest_file)
-                print(f"[A2A] Copied {src_file.name} to APKG root")
+        # Handle both a2a.entry (gRPC) and a2a.http_server (HTTP/JSON-RPC)
+        if getattr(self.manifest, "a2a", None) and self.manifest.a2a:
+            a2a_entry = getattr(self.manifest.a2a, "entry", None)
+            a2a_http_server = getattr(self.manifest.a2a, "http_server", None)
+
+            # Copy gRPC entry file if specified
+            if a2a_entry:
+                module_path, _func = a2a_entry.split(":", 1)
+                src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
+                if src_file.exists():
+                    dest_file = build_dir / src_file.name
+                    shutil.copy2(src_file, dest_file)
+                    print(f"[A2A] Copied {src_file.name} to APKG root (gRPC entry)")
+
+            # Copy HTTP server file if specified (different from entry)
+            if a2a_http_server:
+                module_path, _attr = a2a_http_server.split(":", 1)
+                src_file = self.project_dir / (module_path.replace(".", "/") + ".py")
+                if src_file.exists():
+                    dest_file = build_dir / src_file.name
+                    # Only copy if not already copied (entry and http_server could be same file)
+                    if not dest_file.exists():
+                        shutil.copy2(src_file, dest_file)
+                        print(f"[A2A] Copied {src_file.name} to APKG root (HTTP server)")
+                    else:
+                        print(f"[A2A] {src_file.name} already in APKG (HTTP server)")
 
         # REST: copy entry file directly to APKG root
         if getattr(self.manifest, "rest", None) and self.manifest.rest:

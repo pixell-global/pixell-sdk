@@ -350,6 +350,11 @@ class AgentServer:
 
                     # Return SSE stream
                     async def handle_and_stream():
+                        # Yield 2KB padding first to flush proxy buffers
+                        from pixell.sdk.a2a.streaming import buffer_flush_padding
+
+                        yield buffer_flush_padding()
+
                         # Start handler in background
                         asyncio.create_task(
                             self._handler.handle_request(
@@ -454,6 +459,11 @@ class AgentServer:
                     )
 
                 async def handle_and_stream():
+                    # Yield 2KB padding first to flush proxy buffers
+                    from pixell.sdk.a2a.streaming import buffer_flush_padding
+
+                    yield buffer_flush_padding()
+
                     asyncio.create_task(
                         self._handler.handle_request(rpc_request, stream, plan_mode, translation)
                     )
