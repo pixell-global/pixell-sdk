@@ -28,7 +28,7 @@ Example:
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Optional, Union
 import logging
 
 from pixell.sdk.server import AgentServer
