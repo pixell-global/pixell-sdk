@@ -193,6 +193,59 @@ class PXUIDataClient:
 
     # File Methods
 
+    async def register_file(
+        self,
+        *,
+        name: str,
+        url: str,
+        mime_type: str,
+        size: int,
+        source: str = "agent",
+    ) -> dict[str, Any]:
+        """Register a file that was uploaded to S3.
+
+        This method is used by agents that upload files directly to S3
+        and need to register them with the platform so they appear in
+        the user's Files panel.
+
+        Args:
+            name: Display name for the file (e.g., "Reddit Research: Tesla")
+            url: S3 URL where file is stored
+            mime_type: MIME type (e.g., "text/html", "application/pdf")
+            size: File size in bytes
+            source: Source identifier (e.g., "reddit-research-agent")
+
+        Returns:
+            File metadata from API including:
+            - id: File ID in the database
+            - name: Display name
+            - url: S3 URL
+            - mime_type: MIME type
+            - size: Size in bytes
+            - source: Source identifier
+            - created_at: Creation timestamp
+
+        Example:
+            await client.register_file(
+                name="Reddit Research: Tesla",
+                url="https://pixell-reports.s3.amazonaws.com/reports/tesla_20240115.html",
+                mime_type="text/html",
+                size=45678,
+                source="reddit-research-agent",
+            )
+        """
+        return await self._request(
+            "POST",
+            "/api/v1/files/register",
+            json={
+                "name": name,
+                "url": url,
+                "mime_type": mime_type,
+                "size": size,
+                "source": source,
+            },
+        )
+
     async def list_files(
         self,
         user_id: str,

@@ -30,6 +30,21 @@ from pixell.sdk.plan_mode.ui import (
     selection_grid,
     preview_card,
 )
+from pixell.sdk.plan_mode.agent import (
+    PlanModeAgent,
+    Discovery,
+    Clarification,
+    Preview,
+    Result,
+    Error,
+    AgentState,
+    AgentResponse,
+    discovery,
+    clarify,
+    preview,
+    result,
+    error,
+)
 
 __all__ = [
     # Phases
@@ -61,4 +76,18 @@ __all__ = [
     "discovery_list",
     "selection_grid",
     "preview_card",
+    # PlanModeAgent base class
+    "PlanModeAgent",
+    "Discovery",
+    "Clarification",
+    "Preview",
+    "Result",
+    "Error",
+    "AgentState",
+    "AgentResponse",
+    "discovery",
+    "clarify",
+    "preview",
+    "result",
+    "error",
 ]

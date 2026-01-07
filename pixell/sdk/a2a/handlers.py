@@ -13,10 +13,12 @@ from pixell.sdk.a2a.protocol import (
     JSONRPCError,
 )
 from pixell.sdk.a2a.streaming import SSEStream
+from pixell.sdk.errors import ContextError
 
 if TYPE_CHECKING:
     from pixell.sdk.plan_mode import PlanModeContext
     from pixell.sdk.translation import TranslationContext
+    from pixell.sdk.data_client import PXUIDataClient
 
 
 @dataclass
@@ -24,15 +26,34 @@ class MessageContext:
     """Context for handling incoming messages.
 
     Provides access to the message, plan mode context, translation context,
-    and SSE stream for emitting events.
+    SSE stream for emitting events, and user context for data access.
 
     Attributes:
         message: The incoming A2A message
         session_id: Session identifier
-        metadata: Request metadata (user preferences, language, etc.)
+        metadata: Request metadata (user_id, jwt_token, language, etc.)
         plan_mode: Plan mode context for phase management
         translation: Translation context for i18n
         stream: SSE stream for emitting events
+
+    User Context (via metadata):
+        The frontend passes user context in the metadata dict:
+        - user_id: User's ID for data access
+        - jwt_token: JWT token for authenticated API calls
+        - pxui_base_url: Base URL of the PXUI API
+
+    Example:
+        @server.on_message
+        async def handle_message(ctx: MessageContext):
+            # Access user context
+            if ctx.user_id:
+                # Register a file the agent created
+                await ctx.data_client.register_file(
+                    name="Report.html",
+                    url="https://s3.../report.html",
+                    mime_type="text/html",
+                    size=12345,
+                )
     """
 
     message: A2AMessage
@@ -41,6 +62,7 @@ class MessageContext:
     metadata: dict[str, Any] = field(default_factory=dict)
     plan_mode: Optional["PlanModeContext"] = None
     translation: Optional["TranslationContext"] = None
+    _data_client: Optional["PXUIDataClient"] = field(default=None, repr=False)
 
     @property
     def text(self) -> str:
@@ -51,6 +73,72 @@ class MessageContext:
     def user_language(self) -> str:
         """Get user's preferred language from metadata."""
         return self.metadata.get("language", "en")
+
+    @property
+    def user_id(self) -> Optional[str]:
+        """Get user ID from metadata (passed by frontend).
+
+        Returns:
+            User ID string if available, None otherwise.
+        """
+        return self.metadata.get("user_id")
+
+    @property
+    def jwt_token(self) -> Optional[str]:
+        """Get JWT token from metadata (passed by frontend).
+
+        Returns:
+            JWT token string if available, None otherwise.
+        """
+        return self.metadata.get("jwt_token")
+
+    @property
+    def pxui_base_url(self) -> str:
+        """Get PXUI API base URL from metadata.
+
+        Returns:
+            Base URL, defaults to https://api.pixell.ai
+        """
+        return self.metadata.get("pxui_base_url", "https://api.pixell.ai")
+
+    @property
+    def data_client(self) -> "PXUIDataClient":
+        """Get data client for making authenticated API calls.
+
+        The data client provides methods for:
+        - register_file(): Register files uploaded to S3
+        - list_files(): List user's files
+        - get_user_profile(): Get user profile data
+
+        Returns:
+            PXUIDataClient instance configured with user's JWT token.
+
+        Raises:
+            ContextError: If no JWT token is available in metadata.
+
+        Example:
+            await ctx.data_client.register_file(
+                name="Research Report",
+                url="https://s3.../report.html",
+                mime_type="text/html",
+                size=12345,
+                source="reddit-research-agent",
+            )
+        """
+        if self._data_client is None:
+            if not self.jwt_token:
+                raise ContextError(
+                    "No JWT token available - cannot make authenticated API calls. "
+                    "Ensure the frontend passes jwt_token in the A2A request metadata."
+                )
+            # Lazy import to avoid circular dependency
+            from pixell.sdk.data_client import PXUIDataClient
+
+            self._data_client = PXUIDataClient(
+                base_url=self.pxui_base_url,
+                jwt_token=self.jwt_token,
+            )
+        return self._data_client
 
     async def emit_status(self, state: str, message: str, **data: Any) -> None:
         """Emit a status update event."""

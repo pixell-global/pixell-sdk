@@ -109,6 +109,19 @@ from pixell.sdk.plan_mode import (
     IntervalSpec,
     ScheduleProposal,
     ScheduleResponse,
+    # PlanModeAgent base class and response types
+    PlanModeAgent,
+    Discovery,
+    Clarification,
+    Preview,
+    Result,
+    Error,
+    AgentState,
+    discovery,
+    clarify,
+    preview,
+    result,
+    error,
 )
 
 __all__ = [
@@ -136,6 +149,19 @@ __all__ = [
     "IntervalSpec",
     "ScheduleProposal",
     "ScheduleResponse",
+    # PlanModeAgent base class and response types
+    "PlanModeAgent",
+    "Discovery",
+    "Clarification",
+    "Preview",
+    "Result",
+    "Error",
+    "AgentState",
+    "discovery",
+    "clarify",
+    "preview",
+    "result",
+    "error",
     # Core components (backwards compatible)
     "UserContext",
     "TaskMetadata",

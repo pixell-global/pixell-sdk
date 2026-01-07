@@ -85,7 +85,6 @@ class ClarificationNeeded:
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
-            "type": "clarification_needed",
             "clarificationId": self.clarification_id,
             "agentId": self.agent_id,
             "questions": [q.to_dict() for q in self.questions],
@@ -145,7 +144,6 @@ class DiscoveryResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "type": "discovery_result",
             "discoveryId": self.discovery_id,
             "discoveryType": self.discovery_type,
             "items": [item.to_dict() for item in self.items],
@@ -166,7 +164,6 @@ class SelectionRequired:
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
-            "type": "selection_required",
             "selectionId": self.selection_id,
             "discoveryType": self.discovery_type,
             "items": [item.to_dict() for item in self.items],
@@ -234,7 +231,6 @@ class PlanProposed:
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
-            "type": "plan_proposed",
             "planId": self.plan_id,
             "agentId": self.agent_id,
             "title": self.title,
@@ -285,7 +281,6 @@ class SearchPlanPreview:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "type": "search_plan",
             "planId": self.plan_id,
             "agentId": self.agent_id,
             "agentUrl": self.agent_url,
@@ -362,7 +357,6 @@ class ScheduleProposal:
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
-            "type": "schedule_proposal",
             "proposalId": self.proposal_id,
             "agentId": self.agent_id,
             "name": self.name,

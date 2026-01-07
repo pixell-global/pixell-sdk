@@ -71,6 +71,7 @@ class SSEStream:
         self,
         workflow_id: Optional[str] = None,
         session_id: Optional[str] = None,
+        interaction_to_session: Optional[dict[str, str]] = None,
     ) -> None:
         """Initialize SSE stream with correlation IDs.
 
@@ -79,12 +80,26 @@ class SSEStream:
                          If provided, auto-injected into all events.
             session_id: Session ID from orchestrator.
                         If provided, auto-injected into all events.
+            interaction_to_session: Optional dict to register interaction ID → session ID mappings.
+                                    When events with selectionId/clarificationId/planId are emitted,
+                                    mappings are stored here for session lookup in subsequent requests.
         """
         self._queue: asyncio.Queue[SSEEvent] = asyncio.Queue()
         self._closed = False
         self._event_id = 0
         self._workflow_id = workflow_id
         self._session_id = session_id
+        self._interaction_to_session = interaction_to_session
+
+    @property
+    def session_id(self) -> Optional[str]:
+        """Get the session ID."""
+        return self._session_id
+
+    @session_id.setter
+    def session_id(self, value: str) -> None:
+        """Set the session ID."""
+        self._session_id = value
 
     def _next_id(self) -> str:
         """Generate next event ID."""
@@ -117,11 +132,20 @@ class SSEStream:
         if self._session_id:
             payload["sessionId"] = self._session_id
 
+        # Register interaction ID → session ID mappings for session lookup
+        # (frontend may not send sessionId, but does send these IDs)
+        if self._interaction_to_session is not None and self._session_id:
+            for id_field in ("selectionId", "clarificationId", "planId", "selection_id", "clarification_id", "plan_id"):
+                if id_field in data and data[id_field]:
+                    self._interaction_to_session[data[id_field]] = self._session_id
+
         sse_event = SSEEvent(
             event=event,
             data=payload,
             id=self._next_id(),
         )
+        import logging
+        logging.getLogger(__name__).info(f"[SSEStream] Emitting event: {event}, state={payload.get('state')}")
         await self._queue.put(sse_event)
 
     async def emit_status(

@@ -158,7 +158,8 @@ class AgentManifest(BaseModel):
     """Agent manifest schema for agent.yaml files."""
 
     # Required fields
-    version: str = Field(description="Manifest version", default="1.0")
+    # Note: version is synced from metadata.version via model validator below
+    version: Optional[str] = Field(default=None, description="Agent version (synced from metadata.version)")
     name: str = Field(description="Agent package name (lowercase, hyphens)")
     display_name: str = Field(description="Human-readable agent name")
     description: str = Field(description="Agent description")
@@ -183,7 +184,19 @@ class AgentManifest(BaseModel):
         default=None, description="Data access documentation for the agent"
     )
 
-    # Surfaces (optional)
+    # =============================================================================
+    # HTTP SERVER - Primary entry point for pixell-sdk agents
+    # =============================================================================
+    # This is the recommended way to expose agents. The http_server serves
+    # all traffic: JSON-RPC, SSE streaming, plan mode, health endpoints.
+    # Example: http_server: "main:app"
+    # =============================================================================
+    http_server: Optional[str] = Field(
+        default=None,
+        description="HTTP server entry point (pixell-sdk AgentServer.app). Example: 'main:app'"
+    )
+
+    # Surfaces (optional - DEPRECATED, use http_server instead)
     class A2AConfig(BaseModel):
         # Prefer 'entry' for consistency with REST; keep 'service' for backwards compatibility
         entry: Optional[str] = Field(
@@ -211,10 +224,13 @@ class AgentManifest(BaseModel):
             return v
 
         @model_validator(mode="after")
-        def _populate_entry_from_service(self):  # type: ignore[no-redef]
+        def _populate_entry_from_service_or_http_server(self):  # type: ignore[no-redef]
             # If only legacy `service` is provided, mirror it into `entry`
             if self.entry is None and self.service is not None:
                 self.entry = self.service
+            # If only `http_server` is provided, mirror it into `entry` for server compatibility
+            if self.entry is None and self.http_server is not None:
+                self.entry = self.http_server
             return self
 
     class RestConfig(BaseModel):
@@ -305,6 +321,14 @@ class AgentManifest(BaseModel):
             )
             if not has_surfaces:
                 raise ValueError("Entrypoint is required when no surfaces are configured")
+        return self
+
+    @model_validator(mode="after")
+    def sync_version_from_metadata(self):  # type: ignore[no-redef]
+        # Sync top-level version from metadata.version for server compatibility
+        # The server expects version field to match the agent version
+        if self.version is None and self.metadata and self.metadata.version:
+            self.version = self.metadata.version
         return self
 
     model_config = {"extra": "forbid"}  # Don't allow extra fields

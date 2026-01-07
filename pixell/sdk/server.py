@@ -27,6 +27,7 @@ Example:
 import logging
 import asyncio
 import inspect
+import uuid
 from typing import Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -136,6 +137,8 @@ class AgentServer:
         self._handler = A2AHandler()
         self._app: Any = None  # FastAPI app instance
         self._sessions: dict[str, "PlanModeContext"] = {}
+        # Mapping from interaction IDs to sessionId (for session lookup when frontend doesn't send sessionId)
+        self._interaction_to_session: dict[str, str] = {}
 
         # Resolve outputs_dir to absolute path relative to caller's file
         self._outputs_dir: Optional[Path] = None
@@ -307,6 +310,7 @@ class AgentServer:
                 stream = SSEStream(
                     workflow_id=workflow_id,
                     session_id=session_id,
+                    interaction_to_session=self._interaction_to_session,
                 )
 
                 # Create plan mode context if configured
@@ -314,9 +318,30 @@ class AgentServer:
                 if self.plan_mode_config:
                     from pixell.sdk.plan_mode import PlanModeContext
 
-                    session_id = body.get("params", {}).get("sessionId")
+                    params = body.get("params", {})
+                    session_id = params.get("sessionId")
+
+                    # If no sessionId, try to find it via interaction IDs
+                    # (frontend may not send sessionId, but does send selectionId/clarificationId/planId)
+                    if not session_id:
+                        for id_field in ("selectionId", "clarificationId", "planId"):
+                            interaction_id = params.get(id_field)
+                            if interaction_id and interaction_id in self._interaction_to_session:
+                                session_id = self._interaction_to_session[interaction_id]
+                                logger.info(f"[session-lookup] Found session via {id_field}: {session_id}")
+                                break
+
+                    logger.info(
+                        f"[session-lookup] method={rpc_request.method}, "
+                        f"sessionId={session_id}, "
+                        f"available_sessions={list(self._sessions.keys())}"
+                    )
+
                     if session_id and session_id in self._sessions:
                         plan_mode = self._sessions[session_id]
+                        # Update the stream reference (new request = new stream)
+                        plan_mode.stream = stream
+                        logger.info(f"[session-lookup] Found existing session, phase={plan_mode.phase}")
                     else:
                         plan_mode = PlanModeContext(
                             stream=stream,
@@ -335,18 +360,36 @@ class AgentServer:
                     )
 
                 # Check if streaming is requested
+                # Both "message/stream" and "respond" need SSE streaming
+                # because agents emit events (preview, status, etc.) via the stream
                 method = rpc_request.method
-                if method == "message/stream":
-                    # Store session immediately for streaming requests
-                    session_id = body.get("params", {}).get("sessionId")
-                    logger.info(
-                        f"[message/stream] Attempting to store session: {session_id}, plan_mode exists: {plan_mode is not None}"
-                    )
-                    if session_id and plan_mode:
-                        self._sessions[session_id] = plan_mode
-                        logger.info(
-                            f"[message/stream] Session stored! Total sessions: {len(self._sessions)}, Keys: {list(self._sessions.keys())}"
-                        )
+                if method in ("message/stream", "respond"):
+                    # For new messages, generate sessionId if not provided
+                    # For respond, use the existing sessionId (already looked up above)
+                    if method == "message/stream":
+                        session_id = body.get("params", {}).get("sessionId") or str(uuid.uuid4())
+
+                        # Store session with the (possibly generated) sessionId
+                        if plan_mode:
+                            self._sessions[session_id] = plan_mode
+                            logger.info(
+                                f"[message/stream] Session stored: {session_id}, Total sessions: {len(self._sessions)}"
+                            )
+
+                        # Also inject into request params so handler returns same sessionId
+                        if "params" not in body:
+                            body["params"] = {}
+                        body["params"]["sessionId"] = session_id
+                        rpc_request = JSONRPCRequest.from_dict(body)
+                    else:
+                        # For respond, get sessionId from the plan_mode context lookup
+                        session_id = body.get("params", {}).get("sessionId")
+                        if not session_id and plan_mode and hasattr(plan_mode, 'stream'):
+                            session_id = getattr(plan_mode.stream, '_session_id', None)
+
+                    # Inject sessionId into stream so it's included in SSE events
+                    if session_id:
+                        stream.session_id = session_id
 
                     # Return SSE stream
                     async def handle_and_stream():
