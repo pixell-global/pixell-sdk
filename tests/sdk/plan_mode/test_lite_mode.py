@@ -1,8 +1,5 @@
 """Unit tests for lite mode in PlanModeAgent."""
 
-import pytest
-from dataclasses import field
-
 from pixell.sdk.plan_mode.agent import (
     AgentState,
     LiteModeConfig,

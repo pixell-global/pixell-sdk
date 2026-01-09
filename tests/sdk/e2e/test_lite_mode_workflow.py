@@ -321,7 +321,7 @@ class TestLiteModeAutoSelection:
                 json=request,
                 headers={"Accept": "text/event-stream"},
             ) as response:
-                events = await collect_sse_until(
+                _events = await collect_sse_until(
                     response,
                     lambda e: e.get("data", {}).get("state") == "completed",
                     max_events=50,
