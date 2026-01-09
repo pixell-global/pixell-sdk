@@ -151,6 +151,20 @@ AgentResponse = Union[Discovery, Clarification, Preview, Result, Error]
 
 
 @dataclass
+class LiteModeConfig:
+    """Configuration for lite mode behavior.
+
+    Lite mode automatically handles interactive phases without user input:
+    - Clarification: Auto-select first option for each question
+    - Discovery/Selection: Auto-select top N items by relevance
+    - Preview: Auto-approve and proceed to execution
+    """
+
+    max_select: int = 5  # Max items to auto-select from discovery
+    auto_approve_plan: bool = True  # Auto-approve preview
+
+
+@dataclass
 class AgentState:
     """State for a single workflow. Persisted across session changes."""
 
@@ -158,6 +172,7 @@ class AgentState:
     context: dict = field(default_factory=dict)
     discovered: list[dict] = field(default_factory=list)
     selected: list[str] = field(default_factory=list)
+    metadata: dict = field(default_factory=dict)  # Request metadata (includes lite_mode_enabled)
 
     # PlanModeContext state (also needs to persist across requests)
     phase: str = "idle"
@@ -171,6 +186,7 @@ class AgentState:
         self.context = {}
         self.discovered = []
         self.selected = []
+        self.metadata = {}
         self.phase = "idle"
         self.pending_selection_id = None
         self.pending_clarification_id = None
@@ -215,6 +231,7 @@ class PlanModeAgent(ABC):
         host: str = "0.0.0.0",
         discovery_type: str = "items",
         outputs_dir: Optional[str] = None,
+        lite_mode_config: Optional[LiteModeConfig] = None,
     ):
         """
         Initialize the agent.
@@ -227,10 +244,12 @@ class PlanModeAgent(ABC):
             host: Host to bind to
             discovery_type: Type of items discovered (e.g., "subreddits", "hashtags")
             outputs_dir: Directory for output files
+            lite_mode_config: Configuration for lite mode behavior (auto-responses)
         """
         self._discovery_type = discovery_type
         self._current_ctx: Optional[Union[MessageContext, ResponseContext]] = None
         self._current_workflow_id: Optional[str] = None
+        self._lite_mode_config = lite_mode_config or LiteModeConfig()
 
         self._server = AgentServer(
             agent_id=agent_id,
@@ -398,10 +417,12 @@ class PlanModeAgent(ABC):
         state = _workflow_states[self._current_workflow_id]
         state.clear()
         state.query = ctx.text
+        state.metadata = ctx.metadata or {}  # Store request metadata (includes lite_mode_enabled)
 
+        lite_mode = state.metadata.get("lite_mode_enabled", False)
         logger.info(
             f"[PlanModeAgent] New query: {ctx.text[:50]}... "
-            f"(workflow={self._current_workflow_id})"
+            f"(workflow={self._current_workflow_id}, lite_mode={lite_mode})"
         )
 
         try:
@@ -464,9 +485,68 @@ class PlanModeAgent(ABC):
             await plan.error("handler_failed", str(e))
 
     async def _emit_response(self, plan: PlanModeContext, response: AgentResponse):
-        """Convert agent response to SDK calls."""
-        logger.info(f"[PlanModeAgent] _emit_response called with {type(response).__name__}")
+        """Convert agent response to SDK calls, with lite mode handling.
 
+        In lite mode (metadata.lite_mode_enabled=True), interactive phases are
+        automatically handled without requiring user input:
+        - Clarification: Auto-select first option for each question, re-run on_query
+        - Discovery: Auto-select top N items, call on_selection
+        - Preview: Auto-approve, call on_execute
+        """
+        lite_mode = self.state.metadata.get("lite_mode_enabled", False)
+        logger.info(
+            f"[PlanModeAgent] _emit_response called with {type(response).__name__} "
+            f"(lite_mode={lite_mode})"
+        )
+
+        # =====================================================================
+        # LITE MODE: Skip clarification - use defaults and re-run on_query
+        # =====================================================================
+        if isinstance(response, Clarification) and lite_mode:
+            logger.info("[PlanModeAgent] Lite mode: Skipping clarification, using defaults")
+            default_answers = self._get_default_clarification_answers(response)
+            self.state.context.update(default_answers)
+            # Re-run on_query with the context updated
+            new_response = await self.on_query(self.state.query)
+            return await self._emit_response(plan, new_response)  # Recurse
+
+        # =====================================================================
+        # LITE MODE: Auto-select from discovery
+        # =====================================================================
+        if isinstance(response, Discovery) and lite_mode:
+            logger.info("[PlanModeAgent] Lite mode: Auto-selecting items from discovery")
+            self.state.discovered = response.items
+            items = self._to_discovered_items(response.items)
+
+            # Auto-select top N items (respecting max_select constraint)
+            max_select = min(
+                self._lite_mode_config.max_select,
+                response.max_select or len(items),
+            )
+            selected_ids = [item.id for item in items[:max_select]]
+            self.state.selected = selected_ids
+
+            logger.info(
+                f"[PlanModeAgent] Lite mode: Auto-selected {len(selected_ids)} items: "
+                f"{selected_ids[:3]}{'...' if len(selected_ids) > 3 else ''}"
+            )
+
+            # Call on_selection with auto-selected items
+            new_response = await self.on_selection(selected_ids)
+            return await self._emit_response(plan, new_response)  # Recurse
+
+        # =====================================================================
+        # LITE MODE: Auto-approve preview
+        # =====================================================================
+        if isinstance(response, Preview) and lite_mode and self._lite_mode_config.auto_approve_plan:
+            logger.info("[PlanModeAgent] Lite mode: Auto-approving plan, starting execution")
+            await plan.start_execution("Starting (lite mode)...")
+            new_response = await self.on_execute()
+            return await self._emit_response(plan, new_response)  # Recurse
+
+        # =====================================================================
+        # NORMAL MODE: Emit interactive events as usual
+        # =====================================================================
         if isinstance(response, Discovery):
             items = self._to_discovered_items(response.items)
             self.state.discovered = response.items
@@ -517,6 +597,28 @@ class PlanModeAgent(ABC):
             await plan.error(
                 "agent_error", response.message, recoverable=response.recoverable
             )
+
+    def _get_default_clarification_answers(self, clarification: Clarification) -> dict:
+        """Generate default answers for clarification in lite mode.
+
+        Priority:
+        1. First option if options are available
+        2. 'default' for free text questions
+        """
+        answers = {}
+        questions = self._to_questions(clarification)
+
+        for q in questions:
+            if q.options:
+                # Select first option
+                answers[q.id] = q.options[0].id
+                logger.debug(f"[LiteMode] Question '{q.id}': selected first option '{q.options[0].id}'")
+            else:
+                # Free text: use 'default'
+                answers[q.id] = "default"
+                logger.debug(f"[LiteMode] Question '{q.id}': using 'default' for free text")
+
+        return answers
 
     # -------------------------------------------------------------------------
     # Converters
