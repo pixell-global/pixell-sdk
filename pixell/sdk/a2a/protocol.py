@@ -236,9 +236,12 @@ class RespondParams:
     clarificationId: Optional[str] = None
     selectionId: Optional[str] = None
     planId: Optional[str] = None
+    permissionId: Optional[str] = None
     answers: Optional[dict[str, Any]] = None
     selectedIds: Optional[list[str]] = None
     approved: Optional[bool] = None
+    permissionAction: Optional[str] = None  # Action type for permission responses
+    permissionDetails: Optional[dict[str, Any]] = None  # Details for permission responses
     sessionId: Optional[str] = None
     workflowId: Optional[str] = None  # Root correlation ID from orchestrator
 
@@ -248,9 +251,28 @@ class RespondParams:
             clarificationId=data.get("clarificationId"),
             selectionId=data.get("selectionId"),
             planId=data.get("planId"),
+            permissionId=data.get("permissionId"),
             answers=data.get("answers"),
             selectedIds=data.get("selectedIds"),
             approved=data.get("approved"),
+            permissionAction=data.get("permissionAction"),
+            permissionDetails=data.get("permissionDetails"),
             sessionId=data.get("sessionId"),
             workflowId=data.get("workflowId"),
+        )
+
+
+@dataclass
+class GetCapabilitiesParams:
+    """Parameters for agent/getCapabilities method."""
+
+    # Optional filters
+    category: Optional[str] = None  # Filter by category
+    tier: Optional[str] = None      # Filter by tier (light/heavy)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GetCapabilitiesParams":
+        return cls(
+            category=data.get("category"),
+            tier=data.get("tier"),
         )

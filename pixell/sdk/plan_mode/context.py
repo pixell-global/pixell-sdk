@@ -16,6 +16,8 @@ from pixell.sdk.plan_mode.events import (
     IntervalSpec,
     ScheduleProposal,
     ScheduleResponse,
+    PermissionRequest,
+    PermissionResponse,
 )
 
 if TYPE_CHECKING:
@@ -64,6 +66,7 @@ class PlanModeContext:
     _pending_selection_id: Optional[str] = None
     _pending_plan_id: Optional[str] = None
     _pending_schedule_proposal_id: Optional[str] = None
+    _pending_permission_id: Optional[str] = None
 
     def _transition_to(self, new_phase: Phase) -> bool:
         """Transition to a new phase.
@@ -566,5 +569,88 @@ class PlanModeContext:
         self._pending_schedule_proposal_id = None
 
         logger.debug(f"Schedule response received: {action}")
+
+        return response
+
+    async def request_permission(
+        self,
+        action: str,
+        description: str,
+        details: dict[str, Any],
+        message: str = "",
+        *,
+        timeout_ms: int = 300000,
+    ) -> str:
+        """Request permission from the user for an action.
+
+        This emits a permission_request event that will show a card in the UI
+        allowing the user to approve or deny the action.
+
+        Args:
+            action: The action type (e.g., "add_competitor", "delete_file")
+            description: Human-readable description of the action
+            details: Action-specific details to pass back when approved
+            message: Optional message explaining why permission is needed
+            timeout_ms: Timeout in milliseconds (default 5 minutes)
+
+        Returns:
+            The permission ID for tracking the response
+
+        Example:
+            permission_id = await ctx.request_permission(
+                action="add_competitor",
+                description="Add 'Nike' as a competitor",
+                details={"competitor_name": "Nike", "website": "nike.com"},
+                message="I noticed Nike is frequently mentioned in discussions."
+            )
+        """
+        permission = PermissionRequest(
+            action=action,
+            description=description,
+            details=details,
+            message=message,
+            agent_id=self.agent_id,
+            timeout_ms=timeout_ms,
+        )
+
+        self._pending_permission_id = permission.permission_id
+
+        await self.stream.emit_permission(permission.to_dict())
+
+        return permission.permission_id
+
+    def set_permission_response(
+        self,
+        approved: bool,
+        permission_id: Optional[str] = None,
+        reason: Optional[str] = None,
+    ) -> PermissionResponse:
+        """Set the permission response from the user.
+
+        Call this when user responds to permission request.
+
+        Args:
+            approved: Whether the user approved the action
+            permission_id: Optional ID to verify (logs warning if mismatch)
+            reason: Optional reason for denial
+
+        Returns:
+            The PermissionResponse object
+        """
+        if permission_id and permission_id != self._pending_permission_id:
+            logger.warning(
+                f"Permission ID mismatch: expected {self._pending_permission_id}, "
+                f"got {permission_id}"
+            )
+
+        response = PermissionResponse(
+            permission_id=permission_id or self._pending_permission_id or "",
+            approved=approved,
+            reason=reason,
+        )
+
+        self._pending_permission_id = None
+
+        logger.debug(f"Permission response received: {'approved' if approved else 'denied'}")
 
         return response

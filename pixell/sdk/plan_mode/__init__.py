@@ -37,6 +37,7 @@ from pixell.sdk.plan_mode.agent import (
     Preview,
     Result,
     Error,
+    Permission,
     AgentState,
     AgentResponse,
     discovery,
@@ -44,6 +45,7 @@ from pixell.sdk.plan_mode.agent import (
     preview,
     result,
     error,
+    permission,
 )
 
 __all__ = [
@@ -83,6 +85,7 @@ __all__ = [
     "Preview",
     "Result",
     "Error",
+    "Permission",
     "AgentState",
     "AgentResponse",
     "discovery",
@@ -90,4 +93,5 @@ __all__ = [
     "preview",
     "result",
     "error",
+    "permission",
 ]

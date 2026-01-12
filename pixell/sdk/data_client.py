@@ -356,6 +356,128 @@ class PXUIDataClient:
         )
         return response.get("tasks", [])
 
+    # Brand Methods
+
+    async def get_brand(self) -> Optional[dict[str, Any]]:
+        """Get the user's brand (from their primary organization).
+
+        Returns:
+            Brand data including competitors, or None if no brand exists
+        """
+        try:
+            return await self._request("GET", "/api/v1/brands")
+        except APIError as e:
+            if e.status_code == 404:
+                return None
+            raise
+
+    async def get_brand_by_id(self, brand_id: str) -> dict[str, Any]:
+        """Get brand by ID.
+
+        Args:
+            brand_id: The brand ID
+
+        Returns:
+            Brand data including competitors
+        """
+        return await self._request("GET", f"/api/v1/brands/{brand_id}")
+
+    async def get_brand_competitors(
+        self,
+        brand_id: str,
+        *,
+        confirmed_only: bool = True,
+    ) -> list[dict[str, Any]]:
+        """Get competitors for a brand.
+
+        Args:
+            brand_id: The brand ID
+            confirmed_only: If True, only return confirmed competitors
+
+        Returns:
+            List of competitor data
+        """
+        response = await self._request(
+            "GET",
+            f"/api/v1/brands/{brand_id}/competitors",
+            params={"confirmed_only": confirmed_only},
+        )
+        # Response is already a list
+        return response if isinstance(response, list) else response.get("competitors", [])
+
+    async def get_brand_context(self) -> Optional[dict[str, Any]]:
+        """Get brand context for use in agents.
+
+        This is a convenience method that fetches the user's brand
+        and formats it for use in agent context.
+
+        Returns:
+            Brand context dict with:
+            - brand_name: str
+            - brand_id: str
+            - industry: str | None
+            - competitors: list[str]
+            Or None if no brand exists
+        """
+        brand = await self.get_brand()
+        if not brand:
+            return None
+
+        # Get confirmed competitors
+        competitors = await self.get_brand_competitors(
+            brand["id"],
+            confirmed_only=True,
+        )
+
+        return {
+            "brand_name": brand["name"],
+            "brand_id": brand["id"],
+            "industry": brand.get("industry"),
+            "website": brand.get("website"),
+            "competitors": [c["competitor_name"] for c in competitors],
+        }
+
+    async def add_competitor(
+        self,
+        brand_id: str,
+        *,
+        competitor_name: str,
+        competitor_website: Optional[str] = None,
+        discovery_source: str = "reddit_mentioned",
+    ) -> dict[str, Any]:
+        """Add a competitor to a brand.
+
+        Args:
+            brand_id: The brand ID to add competitor to
+            competitor_name: Name of the competitor
+            competitor_website: Optional website URL
+            discovery_source: How competitor was discovered
+                - 'manual': User added manually
+                - 'tavily_auto': Auto-discovered via Tavily search
+                - 'reddit_mentioned': Discovered from Reddit mentions
+
+        Returns:
+            The created competitor record including:
+            - id: Competitor ID
+            - competitor_name: Name
+            - competitor_website: Website URL (if provided)
+            - discovery_source: Source of discovery
+            - is_confirmed: Whether user has confirmed this competitor
+            - created_at: Creation timestamp
+
+        Raises:
+            APIError: If the API returns an error (e.g., 402 for limit reached)
+        """
+        return await self._request(
+            "POST",
+            f"/api/v1/brands/{brand_id}/competitors",
+            json={
+                "competitor_name": competitor_name,
+                "competitor_website": competitor_website,
+                "discovery_source": discovery_source,
+            },
+        )
+
     # Lifecycle Methods
 
     async def close(self) -> None:

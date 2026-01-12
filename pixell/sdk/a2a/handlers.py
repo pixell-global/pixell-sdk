@@ -214,15 +214,18 @@ class MessageContext:
 class ResponseContext:
     """Context for handling user responses to input-required states.
 
-    This is used when the user responds to clarification, selection, or preview.
+    This is used when the user responds to clarification, selection, preview, or permission.
 
     Attributes:
         clarification_id: ID of the clarification being responded to
         selection_id: ID of the selection being responded to
         plan_id: ID of the plan being approved/rejected
+        permission_id: ID of the permission request being responded to
         answers: User answers to clarification questions
         selected_ids: Selected item IDs
-        approved: Whether plan was approved
+        approved: Whether plan/permission was approved
+        permission_action: The action type for permission responses
+        permission_details: The details for permission responses
         session_id: Session identifier
         stream: SSE stream for emitting events
     """
@@ -232,9 +235,12 @@ class ResponseContext:
     clarification_id: Optional[str] = None
     selection_id: Optional[str] = None
     plan_id: Optional[str] = None
+    permission_id: Optional[str] = None
     answers: Optional[dict[str, Any]] = None
     selected_ids: Optional[list[str]] = None
     approved: Optional[bool] = None
+    permission_action: Optional[str] = None
+    permission_details: Optional[dict[str, Any]] = None
     plan_mode: Optional["PlanModeContext"] = None
     translation: Optional["TranslationContext"] = None
 
@@ -247,6 +253,8 @@ class ResponseContext:
             return "selection"
         elif self.plan_id:
             return "plan"
+        elif self.permission_id:
+            return "permission"
         return "unknown"
 
     async def emit_status(self, state: str, message: str, **data: Any) -> None:
@@ -468,9 +476,12 @@ class A2AHandler:
             clarification_id=params.clarificationId,
             selection_id=params.selectionId,
             plan_id=params.planId,
+            permission_id=params.permissionId,
             answers=params.answers,
             selected_ids=params.selectedIds,
             approved=params.approved,
+            permission_action=params.permissionAction,
+            permission_details=params.permissionDetails,
             plan_mode=plan_mode,
             translation=translation,
         )

@@ -116,12 +116,14 @@ from pixell.sdk.plan_mode import (
     Preview,
     Result,
     Error,
+    Permission,
     AgentState,
     discovery,
     clarify,
     preview,
     result,
     error,
+    permission,
 )
 
 __all__ = [
@@ -156,12 +158,14 @@ __all__ = [
     "Preview",
     "Result",
     "Error",
+    "Permission",
     "AgentState",
     "discovery",
     "clarify",
     "preview",
     "result",
     "error",
+    "permission",
     # Core components (backwards compatible)
     "UserContext",
     "TaskMetadata",

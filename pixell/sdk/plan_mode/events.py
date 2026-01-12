@@ -416,3 +416,58 @@ class ScheduleResponse:
             modifications=data.get("modifications"),
             cancel_reason=data.get("cancelReason"),
         )
+
+
+@dataclass
+class PermissionRequest:
+    """Agent request for user permission to perform an action.
+
+    This is a generic permission request that can be used for various agent actions
+    that require user approval before proceeding (e.g., adding competitors, deleting data,
+    posting comments, etc.).
+
+    Example:
+        permission = PermissionRequest(
+            action="add_competitor",
+            description="Add 'Nike' as a competitor",
+            details={"competitor_name": "Nike", "competitor_website": "nike.com"},
+            message="I noticed Nike is frequently mentioned. Add as competitor?",
+        )
+    """
+
+    action: str  # Action type (e.g., "add_competitor", "delete_file", "post_comment")
+    description: str  # Human-readable description of the action
+    details: dict[str, Any] = field(default_factory=dict)  # Action-specific details
+    message: str = ""  # Optional message explaining why permission is needed
+    agent_id: str = ""
+    permission_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    timeout_ms: int = 300000  # 5 minutes
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "type": "permission_request",
+            "permissionId": self.permission_id,
+            "agentId": self.agent_id,
+            "action": self.action,
+            "description": self.description,
+            "details": self.details,
+            "message": self.message,
+            "timeoutMs": self.timeout_ms,
+        }
+
+
+@dataclass
+class PermissionResponse:
+    """User response to a permission request."""
+
+    permission_id: str
+    approved: bool
+    reason: Optional[str] = None  # Optional reason for denial
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "PermissionResponse":
+        return cls(
+            permission_id=data.get("permissionId", ""),
+            approved=data.get("approved", False),
+            reason=data.get("reason"),
+        )

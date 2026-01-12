@@ -85,6 +85,8 @@ class Result:
 
     answer: str
     data: dict = field(default_factory=dict)
+    recommended_actions: list[dict] = field(default_factory=list)
+    # Each dict: {"objective": "Compare competitors", "prompt": "Compare Nike vs Adidas"}
 
 
 @dataclass
@@ -93,6 +95,22 @@ class Error:
 
     message: str
     recoverable: bool = True
+
+
+@dataclass
+class Permission:
+    """Return to request user permission before performing an action.
+
+    This is used when an agent needs explicit user approval before proceeding
+    with an action (e.g., adding a competitor, deleting data, posting content).
+
+    The permission will be shown as a card in the chat UI with Approve/Deny buttons.
+    """
+
+    action: str  # Action type (e.g., "add_competitor", "delete_file")
+    description: str  # Human-readable description of the action
+    details: dict = field(default_factory=dict)  # Action-specific details
+    message: str = ""  # Optional message explaining why permission is needed
 
 
 # Helper functions for cleaner syntax
@@ -131,9 +149,25 @@ def preview(
     return Preview(intent=intent, plan=plan or {}, message=message)
 
 
-def result(answer: str, data: Optional[dict] = None) -> Result:
-    """Create a Result response."""
-    return Result(answer=answer, data=data or {})
+def result(
+    answer: str,
+    data: Optional[dict] = None,
+    recommended_actions: Optional[list[dict]] = None,
+) -> Result:
+    """Create a Result response.
+
+    Args:
+        answer: The main response text
+        data: Additional data to include in the result
+        recommended_actions: List of follow-up suggestions, each with:
+            - objective: What the user can accomplish (e.g., "Compare with competitors")
+            - prompt: The suggested query to send (e.g., "Compare Nike vs Adidas")
+    """
+    return Result(
+        answer=answer,
+        data=data or {},
+        recommended_actions=recommended_actions or [],
+    )
 
 
 def error(message: str, recoverable: bool = True) -> Error:
@@ -141,8 +175,38 @@ def error(message: str, recoverable: bool = True) -> Error:
     return Error(message=message, recoverable=recoverable)
 
 
+def permission(
+    action: str,
+    description: str,
+    details: Optional[dict] = None,
+    message: str = "",
+) -> Permission:
+    """Create a Permission response to request user approval.
+
+    Args:
+        action: The action type (e.g., "add_competitor", "delete_file")
+        description: Human-readable description of the action
+        details: Action-specific details to pass back when approved
+        message: Optional message explaining why permission is needed
+
+    Example:
+        return permission(
+            action="add_competitor",
+            description="Add 'Nike' as a competitor",
+            details={"competitor_name": "Nike", "website": "nike.com"},
+            message="I noticed Nike is frequently mentioned in discussions."
+        )
+    """
+    return Permission(
+        action=action,
+        description=description,
+        details=details or {},
+        message=message,
+    )
+
+
 # Type alias for response types
-AgentResponse = Union[Discovery, Clarification, Preview, Result, Error]
+AgentResponse = Union[Discovery, Clarification, Preview, Result, Error, Permission]
 
 
 # =============================================================================
@@ -179,6 +243,7 @@ class AgentState:
     pending_selection_id: Optional[str] = None
     pending_clarification_id: Optional[str] = None
     pending_plan_id: Optional[str] = None
+    pending_permission_id: Optional[str] = None
 
     def clear(self):
         """Reset state for new workflow."""
@@ -191,17 +256,19 @@ class AgentState:
         self.pending_selection_id = None
         self.pending_clarification_id = None
         self.pending_plan_id = None
+        self.pending_permission_id = None
 
 
 # Workflow-based state store (key = workflow_id)
 _workflow_states: dict[str, AgentState] = {}
 
 # Mapping from interaction IDs to workflow IDs (for session correlation)
-# When the frontend sends a response with selection_id/clarification_id/plan_id,
+# When the frontend sends a response with selection_id/clarification_id/plan_id/permission_id,
 # we use these mappings to find the original workflow state
 _selection_to_workflow: dict[str, str] = {}
 _clarification_to_workflow: dict[str, str] = {}
 _plan_to_workflow: dict[str, str] = {}
+_permission_to_workflow: dict[str, str] = {}
 
 
 # =============================================================================
@@ -303,11 +370,13 @@ class PlanModeAgent(ABC):
         plan._pending_selection_id = state.pending_selection_id
         plan._pending_clarification_id = state.pending_clarification_id
         plan._pending_plan_id = state.pending_plan_id
+        plan._pending_permission_id = state.pending_permission_id
 
         logger.debug(
             f"Restored PlanModeContext: phase={state.phase}, "
             f"selection_id={state.pending_selection_id}, "
-            f"plan_id={state.pending_plan_id}"
+            f"plan_id={state.pending_plan_id}, "
+            f"permission_id={state.pending_permission_id}"
         )
 
     def _save_plan_mode_context(self, plan: PlanModeContext) -> None:
@@ -317,11 +386,13 @@ class PlanModeAgent(ABC):
         state.pending_selection_id = plan._pending_selection_id
         state.pending_clarification_id = plan._pending_clarification_id
         state.pending_plan_id = plan._pending_plan_id
+        state.pending_permission_id = plan._pending_permission_id
 
         logger.debug(
             f"Saved PlanModeContext: phase={state.phase}, "
             f"selection_id={state.pending_selection_id}, "
-            f"plan_id={state.pending_plan_id}"
+            f"plan_id={state.pending_plan_id}, "
+            f"permission_id={state.pending_permission_id}"
         )
 
     # -------------------------------------------------------------------------
@@ -401,6 +472,42 @@ class PlanModeAgent(ABC):
         self.state.context.update(answers)
         return await self.on_query(self.state.query)
 
+    async def on_permission(
+        self,
+        approved: bool,
+        action: str,
+        details: dict,
+    ) -> AgentResponse:
+        """
+        Handle permission response from user.
+
+        Override this method to perform the action when permission is granted,
+        or to handle denial gracefully.
+
+        Args:
+            approved: Whether the user approved the action
+            action: The action type (e.g., "add_competitor")
+            details: Action-specific details passed to the permission request
+
+        Return:
+        - Result: If action was performed (or denied with a message)
+        - Error: If something went wrong
+
+        Example:
+            async def on_permission(self, approved, action, details):
+                if action == "add_competitor" and approved:
+                    await self.add_competitor(details["competitor_name"])
+                    return result(answer=f"Added '{details['competitor_name']}' as a competitor.")
+                elif not approved:
+                    return result(answer="No problem, I won't add the competitor.")
+                return error(f"Unknown action: {action}")
+        """
+        # Default implementation: just acknowledge the response
+        if approved:
+            return result(answer=f"Permission granted for {action}.")
+        else:
+            return result(answer=f"Permission denied for {action}.")
+
     # -------------------------------------------------------------------------
     # Internal Handlers (route SDK events to agent methods)
     # -------------------------------------------------------------------------
@@ -446,6 +553,8 @@ class PlanModeAgent(ABC):
             original_workflow_id = _clarification_to_workflow.get(ctx.clarification_id)
         elif ctx.response_type == "plan" and ctx.plan_id:
             original_workflow_id = _plan_to_workflow.get(ctx.plan_id)
+        elif ctx.response_type == "permission" and ctx.permission_id:
+            original_workflow_id = _permission_to_workflow.get(ctx.permission_id)
 
         # Use the original workflow ID if found, otherwise fall back to session ID
         self._current_workflow_id = original_workflow_id or self._get_workflow_id(ctx)
@@ -478,6 +587,15 @@ class PlanModeAgent(ABC):
 
                 await plan.start_execution("Starting...")
                 response = await self.on_execute()
+                await self._emit_response(plan, response)
+
+            elif ctx.response_type == "permission":
+                plan.set_permission_response(ctx.approved or False, ctx.permission_id)
+                response = await self.on_permission(
+                    approved=ctx.approved or False,
+                    action=ctx.permission_action or "",
+                    details=ctx.permission_details or {},
+                )
                 await self._emit_response(plan, response)
 
         except Exception as e:
@@ -589,7 +707,11 @@ class PlanModeAgent(ABC):
 
         elif isinstance(response, Result):
             await plan.complete(
-                result={"answer": response.answer, **response.data},
+                result={
+                    "answer": response.answer,
+                    "recommended_actions": response.recommended_actions,
+                    **response.data,
+                },
                 message=response.answer,
             )
 
@@ -597,6 +719,19 @@ class PlanModeAgent(ABC):
             await plan.error(
                 "agent_error", response.message, recoverable=response.recoverable
             )
+
+        elif isinstance(response, Permission):
+            # Request permission from user
+            permission_id = await plan.request_permission(
+                action=response.action,
+                description=response.description,
+                details=response.details,
+                message=response.message,
+            )
+            # Store mapping: permission_id → workflow_id
+            if self._current_workflow_id:
+                _permission_to_workflow[permission_id] = self._current_workflow_id
+                logger.debug(f"Stored mapping: permission {permission_id} → workflow {self._current_workflow_id}")
 
     def _get_default_clarification_answers(self, clarification: Clarification) -> dict:
         """Generate default answers for clarification in lite mode.

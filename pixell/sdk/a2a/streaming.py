@@ -135,7 +135,7 @@ class SSEStream:
         # Register interaction ID → session ID mappings for session lookup
         # (frontend may not send sessionId, but does send these IDs)
         if self._interaction_to_session is not None and self._session_id:
-            for id_field in ("selectionId", "clarificationId", "planId", "selection_id", "clarification_id", "plan_id"):
+            for id_field in ("selectionId", "clarificationId", "planId", "permissionId", "selection_id", "clarification_id", "plan_id", "permission_id"):
                 if id_field in data and data[id_field]:
                     self._interaction_to_session[data[id_field]] = self._session_id
 
@@ -283,6 +283,26 @@ class SSEStream:
             {
                 "state": "input-required",
                 **proposal,
+            },
+        )
+
+    async def emit_permission(
+        self,
+        permission: dict[str, Any],
+    ) -> None:
+        """Emit a permission request event for user approval.
+
+        This transitions the task to input-required state, prompting the user
+        to approve or deny the requested action.
+
+        Args:
+            permission: PermissionRequest.to_dict() data
+        """
+        await self._emit(
+            "permission_request",
+            {
+                "state": "input-required",
+                **permission,
             },
         )
 
