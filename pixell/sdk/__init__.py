@@ -126,6 +126,15 @@ from pixell.sdk.plan_mode import (
     permission,
 )
 
+# Tool Mode - LLM tool-calling based agents
+from pixell.sdk.tool_mode import (
+    ToolBasedAgent,
+    Tool,
+    ToolCall,
+    ToolResult,
+    tool,
+)
+
 __all__ = [
     # New A2A Server
     "AgentServer",
@@ -166,6 +175,12 @@ __all__ = [
     "result",
     "error",
     "permission",
+    # Tool Mode - LLM tool-calling based agents
+    "ToolBasedAgent",
+    "Tool",
+    "ToolCall",
+    "ToolResult",
+    "tool",
     # Core components (backwards compatible)
     "UserContext",
     "TaskMetadata",

@@ -317,11 +317,20 @@ class SSEStream:
             message: A2A message with results
             final: Whether this is the final message
         """
+        # Extract result data from message parts for frontend compatibility
+        # Frontend expects event.result.answer at top level
+        result_data = {}
+        for part in message.parts:
+            if hasattr(part, "data"):
+                result_data = part.data
+                break
+
         await self._emit(
             "message",
             {
                 "state": "completed" if final else "working",
                 "message": message.to_dict(),
+                "result": result_data,  # Include at top level for frontend
                 "final": final,
             },
         )
