@@ -584,39 +584,77 @@ class ToolBasedAgent(ABC):
             await plan.error("handler_failed", str(e))
 
     async def _emit_response(self, plan: PlanModeContext, response: AgentResponse):
-        """Convert agent response to SDK calls."""
+        """Convert agent response to SDK calls.
+
+        In lite mode, interactive responses (Discovery, Clarification, Preview)
+        are auto-handled without waiting for user input.
+        """
+        lite_mode = self.state.metadata.get("lite_mode_enabled", False)
+
         if isinstance(response, Discovery):
-            items = self._to_discovered_items(response.items)
-            self.state.discovered = response.items
-            await plan.emit_discovery(items, response.item_type)
-            selection_id = await plan.request_selection(
-                items=items,
-                discovery_type=response.item_type,
-                min_select=response.min_select,
-                max_select=response.max_select,
-                message=response.message,
-            )
-            if self._current_workflow_id:
-                _selection_to_workflow[selection_id] = self._current_workflow_id
+            if lite_mode:
+                # Auto-select top items and continue without user interaction
+                items = response.items[:5]  # Top 5
+                selected_ids = [
+                    item.get("id", item.get("name", ""))
+                    for item in items
+                    if item.get("id") or item.get("name")
+                ]
+                logger.info(f"[Lite Mode] Auto-selecting {len(selected_ids)} items from discovery")
+                self.state.discovered = response.items
+                self.state.selected = selected_ids
+                new_response = await self.on_selection(selected_ids)
+                return await self._emit_response(plan, new_response)  # Recurse
+            else:
+                # Normal: emit discovery + request selection
+                items = self._to_discovered_items(response.items)
+                self.state.discovered = response.items
+                await plan.emit_discovery(items, response.item_type)
+                selection_id = await plan.request_selection(
+                    items=items,
+                    discovery_type=response.item_type,
+                    min_select=response.min_select,
+                    max_select=response.max_select,
+                    message=response.message,
+                )
+                if self._current_workflow_id:
+                    _selection_to_workflow[selection_id] = self._current_workflow_id
 
         elif isinstance(response, Clarification):
-            questions = self._to_questions(response)
-            clarification_id = await plan.request_clarification(
-                questions, message=response.question
-            )
-            if self._current_workflow_id:
-                _clarification_to_workflow[clarification_id] = self._current_workflow_id
+            if lite_mode:
+                # Auto-answer with defaults and continue
+                default_answers = self._get_default_clarification_answers(response)
+                logger.info(f"[Lite Mode] Auto-answering clarification: {default_answers}")
+                self.state.context.update(default_answers)
+                new_response = await self.on_clarification(default_answers)
+                return await self._emit_response(plan, new_response)  # Recurse
+            else:
+                # Normal: request clarification from user
+                questions = self._to_questions(response)
+                clarification_id = await plan.request_clarification(
+                    questions, message=response.question
+                )
+                if self._current_workflow_id:
+                    _clarification_to_workflow[clarification_id] = self._current_workflow_id
 
         elif isinstance(response, Preview):
-            preview_obj = SearchPlanPreview(
-                user_intent=response.intent,
-                subreddits=response.plan.get("targets", []),
-                search_keywords=response.plan.get("keywords", []),
-                message=response.message,
-            )
-            plan_id = await plan.emit_preview(preview_obj)
-            if self._current_workflow_id:
-                _plan_to_workflow[plan_id] = self._current_workflow_id
+            if lite_mode:
+                # Auto-approve and execute
+                logger.info("[Lite Mode] Auto-approving preview, starting execution")
+                await plan.start_execution("Starting...")
+                new_response = await self.on_execute()
+                return await self._emit_response(plan, new_response)  # Recurse
+            else:
+                # Normal: emit preview and wait for approval
+                preview_obj = SearchPlanPreview(
+                    user_intent=response.intent,
+                    subreddits=response.plan.get("targets", []),
+                    search_keywords=response.plan.get("keywords", []),
+                    message=response.message,
+                )
+                plan_id = await plan.emit_preview(preview_obj)
+                if self._current_workflow_id:
+                    _plan_to_workflow[plan_id] = self._current_workflow_id
 
         elif isinstance(response, Result):
             await plan.complete(
@@ -632,6 +670,19 @@ class ToolBasedAgent(ABC):
             await plan.error(
                 "agent_error", response.message, recoverable=response.recoverable
             )
+
+    def _get_default_clarification_answers(self, clarification: Clarification) -> dict:
+        """Generate default answers for lite mode clarification auto-response."""
+        answers = {}
+        questions = self._to_questions(clarification)
+        for q in questions:
+            if q.options:
+                # Select first option
+                answers[q.id] = q.options[0].id
+            else:
+                # Free text fallback
+                answers[q.id] = "default"
+        return answers
 
     def _to_discovered_items(self, items: list[dict]) -> list[DiscoveredItem]:
         """Convert dicts to DiscoveredItem objects."""
