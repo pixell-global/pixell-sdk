@@ -47,6 +47,8 @@ class Question:
     min: Optional[float] = None
     max: Optional[float] = None
     step: Optional[float] = None
+    # Structured preview data (e.g., change tables)
+    preview: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -69,6 +71,8 @@ class Question:
             result["max"] = self.max
         if self.step is not None:
             result["step"] = self.step
+        if self.preview:
+            result["preview"] = self.preview
         return result
 
 

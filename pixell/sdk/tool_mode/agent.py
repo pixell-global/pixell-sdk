@@ -719,6 +719,7 @@ class ToolBasedAgent(ABC):
                 question=clarification.question,
                 header=clarification.header,
                 options=options,
+                preview=clarification.preview,
             )
         ]
 

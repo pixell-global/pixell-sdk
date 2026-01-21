@@ -68,6 +68,7 @@ class Clarification:
     question: str
     options: Optional[list[dict]] = None
     header: str = "Question"
+    preview: Optional[dict] = None  # Structured preview data (e.g., change tables)
 
 
 @dataclass
@@ -794,6 +795,7 @@ class PlanModeAgent(ABC):
                 question=clarification.question,
                 header=clarification.header,
                 options=options,
+                preview=clarification.preview,
             )
         ]
 
