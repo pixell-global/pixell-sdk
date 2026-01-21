@@ -65,6 +65,15 @@ from pixell.sdk.context import UserContext, TaskMetadata
 from pixell.sdk.task_consumer import TaskConsumer
 from pixell.sdk.data_client import PXUIDataClient
 from pixell.sdk.progress import ProgressReporter
+
+# OAuth client for direct API access
+from pixell.sdk.oauth import (
+    OAuthClient,
+    OAuthToken,
+    OAuthError,
+    OAuthNotConnectedError,
+    OAuthTokenExpiredError,
+)
 from pixell.sdk.errors import (
     SDKError,
     ConsumerError,
@@ -187,6 +196,12 @@ __all__ = [
     "TaskConsumer",
     "PXUIDataClient",
     "ProgressReporter",
+    # OAuth client for direct API access
+    "OAuthClient",
+    "OAuthToken",
+    "OAuthError",
+    "OAuthNotConnectedError",
+    "OAuthTokenExpiredError",
     # Errors
     "SDKError",
     "ConsumerError",
