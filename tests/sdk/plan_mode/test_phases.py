@@ -43,7 +43,7 @@ class TestValidTransitions:
         assert Phase.DISCOVERY in valid
         assert Phase.EXECUTING in valid
         assert Phase.ERROR in valid
-        assert Phase.COMPLETED not in valid
+        assert Phase.COMPLETED in valid  # IDLE can go directly to COMPLETED for fast-path results
 
     def test_clarification_transitions(self):
         valid = VALID_TRANSITIONS[Phase.CLARIFICATION]
@@ -120,9 +120,9 @@ class TestValidateTransition:
     def test_valid_executing_to_completed(self):
         assert validate_transition(Phase.EXECUTING, Phase.COMPLETED) is True
 
-    def test_invalid_idle_to_completed(self):
-        # Can't skip to completed from idle
-        assert validate_transition(Phase.IDLE, Phase.COMPLETED) is False
+    def test_valid_idle_to_completed(self):
+        # IDLE can go directly to COMPLETED for fast-path results (no plan mode needed)
+        assert validate_transition(Phase.IDLE, Phase.COMPLETED) is True
 
     def test_invalid_completed_to_anything(self):
         for phase in Phase:
