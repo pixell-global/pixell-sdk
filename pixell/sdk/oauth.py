@@ -35,7 +35,8 @@ class OAuthToken:
     """OAuth access token with metadata.
 
     Attributes:
-        access_token: The OAuth access token for API calls
+        access_token: The OAuth access token for API calls (bot token for Slack)
+        user_token: User OAuth token for user actions (Slack only, xoxp- token)
         expires_at: When the token expires (UTC)
         provider: OAuth provider name (google, reddit, etc.)
         scopes: List of scopes granted to this token (if available)
@@ -45,6 +46,7 @@ class OAuthToken:
     expires_at: datetime
     provider: str
     scopes: list[str] | None = None
+    user_token: str | None = None  # User token for platforms that support it (e.g., Slack)
 
     @property
     def is_expired(self) -> bool:
@@ -159,14 +161,27 @@ class OAuthClient:
         try:
             response = await self._api._request("GET", f"/api/v1/oauth/{provider}/token")
         except Exception as e:
-            error_code = getattr(e, "status_code", None)
-            if error_code == 404:
-                # Check if it's "not connected" vs "unknown provider"
-                raise OAuthNotConnectedError(provider)
-            elif error_code == 401:
-                raise OAuthTokenExpiredError(provider)
-            else:
-                raise OAuthError(str(e), provider=provider)
+            # Import here to avoid circular imports
+            from pixell.sdk.errors import AuthenticationError, APIError
+
+            # Check for authentication errors (JWT invalid/expired)
+            if isinstance(e, AuthenticationError):
+                raise OAuthError(
+                    f"Invalid or expired JWT token. Please log in again.",
+                    code="jwt_expired",
+                    provider=provider,
+                )
+
+            # Check for API errors with status codes
+            if isinstance(e, APIError):
+                status_code = e.details.get("status_code")
+                if status_code == 404:
+                    raise OAuthNotConnectedError(provider)
+                elif status_code == 401:
+                    raise OAuthTokenExpiredError(provider)
+
+            # Fall back to generic OAuth error
+            raise OAuthError(str(e), provider=provider)
 
         # Parse response into OAuthToken
         expires_at_str = response.get("expires_at", "")
@@ -186,6 +201,7 @@ class OAuthClient:
             expires_at=expires_at,
             provider=provider,
             scopes=response.get("scopes"),
+            user_token=response.get("user_token"),  # User token for Slack
         )
 
         # Cache the token
