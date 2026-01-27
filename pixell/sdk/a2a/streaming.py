@@ -361,6 +361,41 @@ class SSEStream:
             },
         )
 
+    async def emit_file_registered(
+        self,
+        file_id: str,
+        name: str,
+        url: str,
+        size: int,
+        mime_type: str = "text/html",
+        agent_id: Optional[str] = None,
+    ) -> None:
+        """Emit a file_registered event when a file is registered with the platform.
+
+        This notifies the frontend to refresh the files list immediately,
+        providing real-time feedback when reports are generated.
+
+        Args:
+            file_id: The ID assigned to the file by the platform
+            name: Display name for the file
+            url: URL where the file is stored
+            size: File size in bytes
+            mime_type: MIME type of the file
+            agent_id: ID of the agent that created the file
+        """
+        await self._emit(
+            "file_registered",
+            {
+                "state": "working",
+                "id": file_id,
+                "name": name,
+                "url": url,
+                "size": size,
+                "mime_type": mime_type,
+                "agent_id": agent_id,
+            },
+        )
+
     async def events(self) -> AsyncGenerator[SSEEvent, None]:
         """Async generator yielding SSE events.
 

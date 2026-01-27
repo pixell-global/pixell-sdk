@@ -201,6 +201,7 @@ class PXUIDataClient:
         mime_type: str,
         size: int,
         source: str = "agent",
+        agent_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Register a file that was uploaded to S3.
 
@@ -214,6 +215,7 @@ class PXUIDataClient:
             mime_type: MIME type (e.g., "text/html", "application/pdf")
             size: File size in bytes
             source: Source identifier (e.g., "reddit-research-agent")
+            agent_id: Agent identifier for grouping in Files panel (e.g., "reddit-agent")
 
         Returns:
             File metadata from API including:
@@ -223,6 +225,7 @@ class PXUIDataClient:
             - mime_type: MIME type
             - size: Size in bytes
             - source: Source identifier
+            - agent_id: Agent identifier
             - created_at: Creation timestamp
 
         Example:
@@ -232,18 +235,22 @@ class PXUIDataClient:
                 mime_type="text/html",
                 size=45678,
                 source="reddit-research-agent",
+                agent_id="reddit-agent",
             )
         """
+        payload = {
+            "name": name,
+            "url": url,
+            "mime_type": mime_type,
+            "size": size,
+            "source": source,
+        }
+        if agent_id:
+            payload["agent_id"] = agent_id
         return await self._request(
             "POST",
             "/api/v1/files/register",
-            json={
-                "name": name,
-                "url": url,
-                "mime_type": mime_type,
-                "size": size,
-                "source": source,
-            },
+            json=payload,
         )
 
     async def list_files(

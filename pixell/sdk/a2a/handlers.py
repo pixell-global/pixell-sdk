@@ -209,6 +209,37 @@ class MessageContext:
             size=size,
         )
 
+    async def emit_file_registered(
+        self,
+        file_id: str,
+        name: str,
+        url: str,
+        size: int,
+        mime_type: str = "text/html",
+        agent_id: Optional[str] = None,
+    ) -> None:
+        """Emit file_registered event to notify frontend of new file.
+
+        Call this after registering a file with the platform to trigger
+        an immediate refresh of the files list in the frontend.
+
+        Args:
+            file_id: The ID assigned to the file by the platform
+            name: Display name for the file
+            url: URL where the file is stored
+            size: File size in bytes
+            mime_type: MIME type of the file
+            agent_id: ID of the agent that created the file
+        """
+        await self.stream.emit_file_registered(
+            file_id=file_id,
+            name=name,
+            url=url,
+            size=size,
+            mime_type=mime_type,
+            agent_id=agent_id,
+        )
+
 
 @dataclass
 class ResponseContext:
