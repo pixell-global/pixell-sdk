@@ -478,6 +478,112 @@ class PXUIDataClient:
             },
         )
 
+    # ==================== Agent File Methods ====================
+
+    async def list_agent_files(self, agent_id: str) -> list[dict[str, Any]]:
+        """List files in an agent's folder for the current user.
+
+        Args:
+            agent_id: Agent identifier (e.g., "reddit-agent")
+
+        Returns:
+            List of file info dicts with:
+            - id: File ID
+            - name: Display name
+            - agent_id: Agent identifier
+            - size: Size in bytes
+            - metadata: Dict with item_count, finding_type, etc.
+            - created_at: Creation timestamp
+        """
+        response = await self._request("GET", f"/api/v1/files/agent/{agent_id}")
+        return response.get("items", [])
+
+    async def read_agent_file(self, agent_id: str, filename: str) -> dict[str, Any]:
+        """Read JSON content from an agent file.
+
+        Args:
+            agent_id: Agent identifier
+            filename: Name of the file (e.g., "engagement_opportunities.json")
+
+        Returns:
+            The parsed JSON content of the file.
+        """
+        response = await self._request(
+            "GET", f"/api/v1/files/agent/{agent_id}/{filename}"
+        )
+        return response.get("content", {})
+
+    async def write_agent_file(
+        self,
+        agent_id: str,
+        filename: str,
+        content: dict[str, Any],
+        description: str = "",
+    ) -> dict[str, Any]:
+        """Create or update a file in the agent's folder.
+
+        Args:
+            agent_id: Agent identifier
+            filename: Name of the file (e.g., "engagement_opportunities.json")
+            content: JSON-serializable data to write
+            description: Human-readable description for the Files panel
+
+        Returns:
+            File info with id, name, size, metadata, created_at
+        """
+        return await self._request(
+            "PUT",
+            f"/api/v1/files/agent/{agent_id}/{filename}",
+            json={"content": content, "description": description},
+        )
+
+    async def delete_agent_file(self, agent_id: str, filename: str) -> bool:
+        """Delete a file from the agent's folder.
+
+        Args:
+            agent_id: Agent identifier
+            filename: Name of the file to delete
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        try:
+            response = await self._request(
+                "DELETE", f"/api/v1/files/agent/{agent_id}/{filename}"
+            )
+            return response.get("deleted", False)
+        except APIError as e:
+            if e.status_code == 404:
+                return False
+            raise
+
+    async def append_to_agent_file(
+        self,
+        agent_id: str,
+        filename: str,
+        items: list[dict[str, Any]],
+        key: str = "items",
+    ) -> dict[str, Any]:
+        """Append items to an existing JSON file's array.
+
+        Args:
+            agent_id: Agent identifier
+            filename: Name of the file
+            items: Items to append
+            key: The array key in the JSON (default: "items")
+
+        Returns:
+            Updated file info with id, name, size, metadata, created_at
+
+        Notes:
+            Creates the file if it doesn't exist.
+        """
+        return await self._request(
+            "PATCH",
+            f"/api/v1/files/agent/{agent_id}/{filename}/append",
+            json={"items": items, "key": key},
+        )
+
     # Lifecycle Methods
 
     async def close(self) -> None:
