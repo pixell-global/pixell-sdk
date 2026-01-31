@@ -96,6 +96,18 @@ from pixell.sdk.server import AgentServer
 # A2A Protocol (contexts available at submodule level)
 from pixell.sdk.a2a.handlers import MessageContext, ResponseContext
 
+# A2A Client for agent-to-agent communication
+from pixell.sdk.a2a.client import (
+    A2AClient,
+    A2ASession,
+    A2AEvent,
+    A2AError,
+    A2AConnectionError,
+    A2ATimeoutError,
+    A2AClarificationNeeded,
+    AgentInfo,
+)
+
 # Plan Mode - Core types exported directly for external developer convenience
 # These are the primary types developers need for multi-phase workflows
 from pixell.sdk.plan_mode import (
@@ -149,6 +161,15 @@ __all__ = [
     "AgentServer",
     "MessageContext",
     "ResponseContext",
+    # A2A Client for agent-to-agent communication
+    "A2AClient",
+    "A2ASession",
+    "A2AEvent",
+    "A2AError",
+    "A2AConnectionError",
+    "A2ATimeoutError",
+    "A2AClarificationNeeded",
+    "AgentInfo",
     # Plan Mode - exported directly for convenience
     "PlanModeContext",
     "Question",

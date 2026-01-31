@@ -591,6 +591,163 @@ class PXUIDataClient:
             json={"items": items, "key": key},
         )
 
+    # Conversation Context Methods
+
+    async def get_conversation_context(
+        self,
+        conversation_id: str,
+        *,
+        token_budget: int = 8000,
+        agent_id: Optional[str] = None,
+        include_full_artifacts: bool = False,
+    ) -> dict[str, Any]:
+        """Get optimized conversation context for agent consumption.
+
+        This method retrieves context including brand info, artifact summaries,
+        and recent messages within the specified token budget.
+
+        Args:
+            conversation_id: The conversation ID
+            token_budget: Maximum tokens to return (1000-32000, default 8000)
+            agent_id: Optional filter artifacts by agent ID
+            include_full_artifacts: Include full artifact content
+
+        Returns:
+            Context dict with:
+            - conversation_id: str
+            - token_count: int (estimated tokens in context)
+            - system_context: dict with:
+                - brand_context: dict with brand_name, competitors
+                - artifact_summaries: list of recent artifacts
+            - messages: list of recent messages
+            - historical_summary: str | None (summary of older messages)
+            - messages_summarized: int (count of summarized messages)
+            - total_messages: int
+            - messages_included: int
+            - artifacts_included: int
+
+        Example:
+            context = await client.get_conversation_context(
+                conversation_id="123",
+                token_budget=8000,
+                agent_id="reddit-agent",
+            )
+            # Use context.system_context.artifact_summaries to find
+            # previously generated content for refinement flows
+        """
+        params: dict[str, Any] = {"token_budget": token_budget}
+        if agent_id:
+            params["agent_id"] = agent_id
+        if include_full_artifacts:
+            params["include_full_artifacts"] = include_full_artifacts
+
+        return await self._request(
+            "GET",
+            f"/api/v1/conversations/{conversation_id}/context",
+            params=params,
+        )
+
+    async def create_artifact(
+        self,
+        conversation_id: str,
+        *,
+        artifact_type: str,
+        title: Optional[str] = None,
+        summary: Optional[str] = None,
+        content_json: Optional[dict[str, Any]] = None,
+        agent_id: Optional[str] = None,
+        entity_name: Optional[str] = None,
+        message_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Create an artifact in a conversation.
+
+        Artifacts store structured outputs from agent responses, enabling
+        context persistence for refinement flows like "make the title punchier".
+
+        Args:
+            conversation_id: The conversation ID
+            artifact_type: Type of artifact:
+                - 'research_report': Research findings
+                - 'generated_content': Generated posts, emails, etc.
+                - 'data_query_result': Query results from data agent
+                - 'email_draft': Email draft
+                - 'slack_message': Slack message draft
+            title: Human-readable title
+            summary: LLM-generated summary for context injection
+            content_json: Full structured content
+            agent_id: Agent that created this artifact
+            entity_name: Brand/topic being discussed
+            message_id: Optional associated message ID
+
+        Returns:
+            Created artifact with id, created_at, etc.
+
+        Example:
+            await client.create_artifact(
+                conversation_id="123",
+                artifact_type="generated_content",
+                title="Post for r/longevity",
+                summary="Generated 2 post variations about geroscience",
+                content_json={"posts": [...]},
+                agent_id="reddit-agent",
+            )
+        """
+        payload = {"artifact_type": artifact_type}
+        if title:
+            payload["title"] = title
+        if summary:
+            payload["summary"] = summary
+        if content_json:
+            payload["content_json"] = content_json
+        if agent_id:
+            payload["agent_id"] = agent_id
+        if entity_name:
+            payload["entity_name"] = entity_name
+
+        params = {}
+        if message_id:
+            params["message_id"] = message_id
+
+        return await self._request(
+            "POST",
+            f"/api/v1/conversations/{conversation_id}/artifacts",
+            json=payload,
+            params=params if params else None,
+        )
+
+    async def list_artifacts(
+        self,
+        conversation_id: str,
+        *,
+        artifact_type: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        page: int = 1,
+        per_page: int = 20,
+    ) -> dict[str, Any]:
+        """List artifacts in a conversation.
+
+        Args:
+            conversation_id: The conversation ID
+            artifact_type: Optional filter by type
+            agent_id: Optional filter by agent
+            page: Page number (1-indexed)
+            per_page: Items per page
+
+        Returns:
+            Paginated response with items, total, page, per_page, has_more
+        """
+        params: dict[str, Any] = {"page": page, "per_page": per_page}
+        if artifact_type:
+            params["artifact_type"] = artifact_type
+        if agent_id:
+            params["agent_id"] = agent_id
+
+        return await self._request(
+            "GET",
+            f"/api/v1/conversations/{conversation_id}/artifacts",
+            params=params,
+        )
+
     # Lifecycle Methods
 
     async def close(self) -> None:

@@ -6,9 +6,17 @@ Tools are organized by purpose:
 
 - presentation: LLM-driven presentation tools for structured output
 - file_tools: Agent file storage for persistent data across sessions
+- file_reader: Read schema and data from spreadsheets
 """
 
 from pixell.tools.file_tools import AgentFileTools, FileInfo
+from pixell.tools.file_reader import (
+    FileReaderService,
+    SheetSchema,
+    SheetData,
+    ColumnSchema,
+    normalize_column_name,
+)
 from pixell.tools.presentation import (
     # Core exports
     PresentationOutput,
@@ -38,6 +46,12 @@ __all__ = [
     # File tools
     "AgentFileTools",
     "FileInfo",
+    # File reader
+    "FileReaderService",
+    "SheetSchema",
+    "SheetData",
+    "ColumnSchema",
+    "normalize_column_name",
     # Presentation - Core
     "PresentationOutput",
     "presentation_tool",

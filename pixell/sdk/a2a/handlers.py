@@ -102,6 +102,20 @@ class MessageContext:
         return self.metadata.get("pxui_base_url", "https://api.pixell.ai")
 
     @property
+    def conversation_id(self) -> Optional[str]:
+        """Get conversation ID from metadata (passed by frontend).
+
+        This is the pixell-api conversation ID, used for:
+        - Fetching conversation context via GET /conversations/{id}/context
+        - Creating artifacts that persist across messages
+        - Enabling refinement flows like "make the title punchier"
+
+        Returns:
+            Conversation ID string if available, None otherwise.
+        """
+        return self.metadata.get("conversation_id")
+
+    @property
     def data_client(self) -> "PXUIDataClient":
         """Get data client for making authenticated API calls.
 

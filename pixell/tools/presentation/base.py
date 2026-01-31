@@ -35,8 +35,13 @@ class PresentationOutput:
     data: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict for agent response."""
+        """Convert to dict for agent response.
+
+        Presentation tools are terminal - displaying results completes the action.
+        The _action: complete signals the ReAct loop to stop.
+        """
         return {
+            "_action": "complete",
             "__output_type__": self.output_type,
             **self.data,
         }
