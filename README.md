@@ -295,10 +295,53 @@ See the [full documentation](https://docs.pixell.global/pixell) for detailed usa
 
 For SDK tutorials and advanced patterns, see [SDK_TUTORIAL.md](https://github.com/pixell-global/pixell-kit/blob/main/docs/SDK_TUTORIAL.md).
 
+## Release & Deployment
+
+The pixell-sdk package is **automatically published to PyPI via GitHub Actions** (not manual PyPI API uploads).
+
+### Automatic Publishing
+
+Every push to `main` triggers the publish workflow:
+
+1. **Tests run** - All tests must pass
+2. **Version check** - Compares version in `pyproject.toml` against PyPI
+3. **Publish** - If version is new, automatically publishes to PyPI
+
+### Publishing a New Version
+
+```bash
+# 1. Update version in pyproject.toml
+# 2. Commit and push to main
+git add pyproject.toml
+git commit -m "chore: bump version to X.Y.Z"
+git push origin main
+
+# 3. GitHub Actions handles the rest automatically
+```
+
+### Manual Trigger
+
+You can also trigger publishing manually via GitHub Actions:
+
+1. Go to **Actions** → **Publish to PyPI on Main Push**
+2. Click **Run workflow**
+3. Optionally check **Force publish** to republish an existing version
+
+### Workflow Files
+
+- `.github/workflows/publish-main.yml` - Main publish workflow (push to main)
+- `.github/workflows/publish.yml` - Release-based publish (on GitHub releases)
+- `.github/workflows/test.yml` - CI tests
+
+### Required Secrets
+
+The following secret must be configured in GitHub repository settings:
+
+- `PYPI_API_TOKEN` - PyPI API token for publishing
+
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
 For organizations that do not wish to comply with AGPL-3.0 requirements,
-commercial licensing options are available. Contact us at engineering@pixell.global .
-# Trigger publish workflow
+commercial licensing options are available. Contact us at engineering@pixell.global.
