@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixell-sdk"
-version = "0.4.30"
+version = "0.4.31"
 description = "A lightweight developer kit for packaging AI agents into portable APKG files"
 readme = "README.md"
 authors = [
@@ -87,7 +87,9 @@ packages = [
   "pixell.sdk.plan_mode",
   "pixell.sdk.tool_mode",
   "pixell.sdk.translation",
+  "pixell.services",
   "pixell.tools",
+  "pixell.tools.file_reader",
   "pixell.tools.presentation",
   "pixell.tools.presentation.domains",
   "pixell.tools.presentation.examples",
