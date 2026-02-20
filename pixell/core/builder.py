@@ -113,6 +113,7 @@ class AgentBuilder:
             "LICENSE",
             "core",
             "app",
+            "cli",  # CLI tools for sandbox execution
             "setup.py",
             "pak.yaml",
             "agents_config.json",  # Multi-agent coordination config

@@ -170,6 +170,18 @@ class MessageContext:
             msg = A2AMessage.agent(text)
         await self.stream.emit_result(msg)
 
+    async def emit_content(self, delta: str) -> None:
+        """Emit a streaming content delta."""
+        await self.stream.emit_content(delta)
+
+    async def emit_tool_use(self, name: str, arguments: str, call_id: str) -> None:
+        """Emit a tool call started event."""
+        await self.stream.emit_tool_use(name, arguments, call_id)
+
+    async def emit_tool_result(self, name: str, result: str, call_id: str) -> None:
+        """Emit a tool call completed event."""
+        await self.stream.emit_tool_result(name, result, call_id)
+
     async def emit_file_created(
         self,
         path: str,

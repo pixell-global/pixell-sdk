@@ -335,6 +335,51 @@ class SSEStream:
             },
         )
 
+    async def emit_content(self, delta: str) -> None:
+        """Emit a streaming content delta.
+
+        Used by agents that stream text incrementally (e.g., LLM token output).
+
+        Args:
+            delta: The text chunk to stream
+        """
+        await self._emit("content", {"state": "working", "delta": delta})
+
+    async def emit_tool_use(self, name: str, arguments: str, call_id: str) -> None:
+        """Emit a tool call started event.
+
+        Notifies the frontend that a tool is being invoked, enabling
+        real-time tool progress display (e.g., "Searching workspace").
+
+        Args:
+            name: Tool name (e.g., "workspace_search")
+            arguments: JSON-encoded arguments string
+            call_id: Unique identifier for this tool call
+        """
+        await self._emit("tool_use", {
+            "state": "working",
+            "name": name,
+            "arguments": arguments,
+            "call_id": call_id,
+        })
+
+    async def emit_tool_result(self, name: str, result: str, call_id: str) -> None:
+        """Emit a tool call completed event.
+
+        Notifies the frontend that a tool call has finished.
+
+        Args:
+            name: Tool name (e.g., "workspace_search")
+            result: JSON-encoded result string
+            call_id: Unique identifier matching the emit_tool_use call
+        """
+        await self._emit("tool_result", {
+            "state": "working",
+            "name": name,
+            "result": result,
+            "call_id": call_id,
+        })
+
     async def emit_error(
         self,
         error_type: str,
