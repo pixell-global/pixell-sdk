@@ -355,6 +355,36 @@ class ToolBasedAgent(ABC):
         return AgentState()
 
     # -------------------------------------------------------------------------
+    # System Prompt Hooks
+    # -------------------------------------------------------------------------
+
+    def get_base_system_prompt(self) -> str:
+        """Override in subclass to set agent-specific system prompt.
+
+        Returns:
+            The agent's static/dynamic system prompt string.
+        """
+        return ""
+
+    def get_system_prompt(self) -> str:
+        """Build final system prompt with auto-injected brand context.
+
+        Subclasses should override get_base_system_prompt() instead of this.
+        This method automatically prepends brand context if available in metadata.
+        """
+        base = self.get_base_system_prompt()
+        brand_ctx = self.state.metadata.get("brand_context") if self.state.metadata else None
+        if not brand_ctx and self._current_ctx and hasattr(self._current_ctx, "brand_context"):
+            brand_ctx = self._current_ctx.brand_context
+        if brand_ctx:
+            from pixell.sdk.prompts.brand import build_brand_context_section
+
+            brand_section = build_brand_context_section(brand_ctx)
+            if brand_section:
+                return brand_section + base
+        return base
+
+    # -------------------------------------------------------------------------
     # Abstract Methods (implement these)
     # -------------------------------------------------------------------------
 

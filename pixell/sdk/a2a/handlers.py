@@ -97,9 +97,25 @@ class MessageContext:
         """Get PXUI API base URL from metadata.
 
         Returns:
-            Base URL, defaults to https://api.pixell.ai
+            Base URL from metadata. Raises if not provided.
         """
-        return self.metadata.get("pxui_base_url", "https://api.pixell.ai")
+        url = self.metadata.get("pxui_base_url")
+        if not url:
+            raise ValueError(
+                "pxui_base_url not found in metadata. "
+                "Frontend must pass pxui_base_url in A2A metadata."
+            )
+        return url
+
+    @property
+    def brand_context(self) -> Optional[dict[str, Any]]:
+        """Get brand context from metadata (passed by frontend).
+
+        Returns:
+            Brand context dict with brand_name, competitors, etc.
+            None if not available.
+        """
+        return self.metadata.get("brand_context")
 
     @property
     def conversation_id(self) -> Optional[str]:
