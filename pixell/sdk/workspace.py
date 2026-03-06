@@ -31,7 +31,9 @@ class WorkspaceClient:
         if not api_url:
             raise ValueError("api_url is required")
         self._api_key = api_key
-        self._base_url = api_url.rstrip("/") + "/api/v1"
+        base = api_url.rstrip("/")
+        # Don't double-append /api/v1 if caller already included it
+        self._base_url = base if base.endswith("/api/v1") else base + "/api/v1"
         self._client: httpx.AsyncClient | None = None
 
     async def _get_client(self) -> httpx.AsyncClient:
