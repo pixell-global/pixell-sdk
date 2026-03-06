@@ -1,7 +1,11 @@
-"""Platform tools mixin: workspace access, web fetch, and brand context.
+"""Platform tools mixin: web fetch and brand context.
 
 Provides @tool-decorated methods that agents inherit by mixing in PlatformToolsMixin.
 These tools use the authenticated data_client from the A2A MessageContext.
+
+NOTE: Workspace tools (search, read, list, write) have been moved to
+pixell.sdk.executors.workspace and are now registered directly in each
+agent's internal LLM loop via WorkspaceClient + workspace executors.
 
 Usage:
     class MyAgent(PlatformToolsMixin, ToolBasedAgent):
@@ -9,8 +13,7 @@ Usage:
         async def my_tool(self, query: str) -> Result:
             ...
 
-    # The agent now also has workspace_search, workspace_read,
-    # workspace_list, workspace_write, web_fetch, and get_brand_context tools.
+    # The agent now also has web_fetch and get_brand_context tools.
 """
 
 import logging
@@ -26,92 +29,6 @@ class PlatformToolsMixin:
 
     Requires self._current_ctx to be a MessageContext with data_client.
     """
-
-    @tool(
-        name="workspace_search",
-        description="Search the user's workspace files by keyword. Returns matching files with snippets.",
-        parameters={
-            "query": {"type": "string", "description": "Search query"},
-        },
-    )
-    async def workspace_search(self, query: str):
-        """Search workspace files."""
-        from pixell.sdk.plan_mode.agent import Result
-
-        try:
-            client = await self._get_workspace_client()
-            result = await client._request("GET", "/api/v1/workspace/search", params={"query": query})
-            return Result(answer=f"Found workspace results for '{query}'.", data=result)
-        except Exception as e:
-            logger.warning("workspace_search failed: %s", e)
-            return Result(answer=f"Search failed: {e}")
-
-    @tool(
-        name="workspace_read",
-        description="Read a file from the user's workspace. Returns file content.",
-        parameters={
-            "path": {"type": "string", "description": "File path (e.g., /brand-persona.yaml)"},
-        },
-    )
-    async def workspace_read(self, path: str):
-        """Read a workspace file."""
-        from pixell.sdk.plan_mode.agent import Result
-
-        try:
-            client = await self._get_workspace_client()
-            result = await client._request(
-                "GET", "/api/v1/workspace/files",
-                params={"path": path, "token_budget": 4000},
-            )
-            return Result(answer=f"Read file: {path}", data=result)
-        except Exception as e:
-            logger.warning("workspace_read failed: %s", e)
-            return Result(answer=f"Failed to read {path}: {e}")
-
-    @tool(
-        name="workspace_list",
-        description="List files and folders in the user's workspace directory.",
-        parameters={
-            "path": {"type": "string", "description": "Directory path (default: /)"},
-        },
-    )
-    async def workspace_list(self, path: str = "/"):
-        """List workspace directory."""
-        from pixell.sdk.plan_mode.agent import Result
-
-        try:
-            client = await self._get_workspace_client()
-            result = await client._request(
-                "GET", "/api/v1/workspace/tree",
-                params={"path": path, "recursive": False},
-            )
-            return Result(answer=f"Listed directory: {path}", data=result)
-        except Exception as e:
-            logger.warning("workspace_list failed: %s", e)
-            return Result(answer=f"Failed to list {path}: {e}")
-
-    @tool(
-        name="workspace_write",
-        description="Write content to a file in the user's workspace.",
-        parameters={
-            "path": {"type": "string", "description": "File path to write"},
-            "content": {"type": "string", "description": "File content"},
-        },
-    )
-    async def workspace_write(self, path: str, content: str):
-        """Write a workspace file."""
-        from pixell.sdk.plan_mode.agent import Result
-
-        try:
-            client = await self._get_workspace_client()
-            result = await client._request(
-                "PUT", "/api/v1/workspace/files",
-                json={"path": path, "content": content, "source": "agent"},
-            )
-            return Result(answer=f"Wrote file: {path}", data=result)
-        except Exception as e:
-            logger.warning("workspace_write failed: %s", e)
-            return Result(answer=f"Failed to write {path}: {e}")
 
     @tool(
         name="web_fetch",

@@ -180,6 +180,14 @@ class PXUIDataClient:
 
     # User Methods
 
+    async def get_me(self) -> dict[str, Any]:
+        """Get the current authenticated user's profile.
+
+        Returns:
+            User profile data including primary_organization_id.
+        """
+        return await self._request("GET", "/api/v1/users/me")
+
     async def get_user_profile(self, user_id: str) -> dict[str, Any]:
         """Get user profile information.
 

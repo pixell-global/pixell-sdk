@@ -132,6 +132,22 @@ class MessageContext:
         return self.metadata.get("conversation_id")
 
     @property
+    def sayou_api_key(self) -> Optional[str]:
+        """Get Sayou API key from metadata (passed by frontend).
+
+        Used to create WorkspaceClient for agent workspace access.
+        """
+        return self.metadata.get("sayou_api_key")
+
+    @property
+    def sayou_api_url(self) -> Optional[str]:
+        """Get Sayou API URL from metadata (passed by frontend).
+
+        Must be explicitly set — no default to avoid wrong-environment bugs.
+        """
+        return self.metadata.get("sayou_api_url")
+
+    @property
     def data_client(self) -> "PXUIDataClient":
         """Get data client for making authenticated API calls.
 

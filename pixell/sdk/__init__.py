@@ -156,6 +156,17 @@ from pixell.sdk.tool_mode import (
     tool,
 )
 
+# Workspace client and executors
+from pixell.sdk.workspace import WorkspaceClient
+from pixell.sdk.executors.workspace import (
+    WorkspaceSearchExecutor,
+    WorkspaceReadExecutor,
+    WorkspaceListExecutor,
+    WorkspaceWriteExecutor,
+    create_workspace_executors,
+    as_function_tools as workspace_function_tools,
+)
+
 __all__ = [
     # New A2A Server
     "AgentServer",
@@ -223,6 +234,14 @@ __all__ = [
     "OAuthError",
     "OAuthNotConnectedError",
     "OAuthTokenExpiredError",
+    # Workspace client and executors
+    "WorkspaceClient",
+    "WorkspaceSearchExecutor",
+    "WorkspaceReadExecutor",
+    "WorkspaceListExecutor",
+    "WorkspaceWriteExecutor",
+    "create_workspace_executors",
+    "workspace_function_tools",
     # Errors
     "SDKError",
     "ConsumerError",

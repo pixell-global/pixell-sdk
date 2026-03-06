@@ -35,6 +35,7 @@ Example:
 """
 
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, Union, TypeVar, get_type_hints
 import logging
@@ -70,6 +71,15 @@ from pixell.sdk.plan_mode.events import (
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+# Request-scoped context variable (replaces instance-level _current_ctx)
+# Each asyncio task (i.e. each concurrent request) gets its own value.
+_current_ctx_var: ContextVar[Optional[Union["MessageContext", "ResponseContext"]]] = ContextVar(
+    "_current_ctx", default=None
+)
+_current_workflow_id_var: ContextVar[Optional[str]] = ContextVar(
+    "_current_workflow_id", default=None
+)
 
 
 # =============================================================================
@@ -269,8 +279,6 @@ class ToolBasedAgent(ABC):
             host: Host to bind to
             outputs_dir: Directory for output files
         """
-        self._current_ctx: Optional[Union[MessageContext, ResponseContext]] = None
-        self._current_workflow_id: Optional[str] = None
         self._registered_tools: dict[str, Tool] = {}
 
         # Auto-discover tools from decorated methods
@@ -292,6 +300,26 @@ class ToolBasedAgent(ABC):
         # Register handlers
         self._server.on_message(self._handle_message)
         self._server.on_respond(self._handle_response)
+
+    # -------------------------------------------------------------------------
+    # Request-scoped context (thread-safe via contextvars)
+    # -------------------------------------------------------------------------
+
+    @property
+    def _current_ctx(self) -> Optional[Union[MessageContext, ResponseContext]]:
+        return _current_ctx_var.get()
+
+    @_current_ctx.setter
+    def _current_ctx(self, value: Optional[Union[MessageContext, ResponseContext]]):
+        _current_ctx_var.set(value)
+
+    @property
+    def _current_workflow_id(self) -> Optional[str]:
+        return _current_workflow_id_var.get()
+
+    @_current_workflow_id.setter
+    def _current_workflow_id(self, value: Optional[str]):
+        _current_workflow_id_var.set(value)
 
     # -------------------------------------------------------------------------
     # Tool Registration
