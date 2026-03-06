@@ -83,7 +83,7 @@ class WorkspaceClient:
         """List files and folders in a workspace directory."""
         client = await self._get_client()
         resp = await client.get(
-            "/workspace/tree",
+            "/workspace/files",
             params={"path": path, "recursive": recursive},
         )
         resp.raise_for_status()
@@ -97,7 +97,7 @@ class WorkspaceClient:
     ) -> dict[str, Any]:
         """Write content to a workspace file."""
         client = await self._get_client()
-        resp = await client.put(
+        resp = await client.post(
             "/workspace/files",
             json={"path": path, "content": content, "source": source},
         )
